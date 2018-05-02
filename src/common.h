@@ -25,6 +25,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define ABORT {MPI_Abort(MPI_COMM_WORLD, 1); exit(1);}
 
+extern void swap(int *a, int *b);
 extern int order(const int nodes, const int a, const int b);
 extern long long sa(const int nodes, const int lines, const int degree, double temp, 
 		    const long long ncalcs, const double cooling_rate, const int low_diam, 

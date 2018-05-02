@@ -288,32 +288,21 @@ static void among_group_edge_exchange(const int based_nodes, const int based_lin
   line[0] = rand() % based_lines;
   line[1] = line[0] + based_lines;
 
-  int tmp  = edge[line[0]][1];
-  int pattern = rand()%2;
-  if(pattern == 0){
-    edge[line[0]][1] = edge[line[1]][1];
-    edge[line[1]][1] = tmp;
-  }
-  else{
-    edge[line[0]][1] = edge[line[1]][0];
-    edge[line[1]][0] = tmp;
-  }
+  if(rand()%2 == 0) swap(&edge[line[0]][1], &edge[line[1]][1]);
+  else              swap(&edge[line[0]][1], &edge[line[1]][0]);
 
-  if(order(nodes, edge[line[0]][0], edge[line[0]][1]) != order(nodes, edge[line[1]][0], edge[line[1]][1])){
-    int tmp = edge[line[1]][0];
-    edge[line[1]][0] = edge[line[1]][1];
-    edge[line[1]][1] = tmp;
-  }
+  if(order(nodes, edge[line[0]][0], edge[line[0]][1]) != order(nodes, edge[line[1]][0], edge[line[1]][1]))
+    swap(&edge[line[1]][0], &edge[line[1]][1]);
 }
 
 static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines, 
 				  int (*based_edge)[2], const int groups)
 {
-  memcpy(edge, based_edge, sizeof(int)*based_lines*2);
-
-  for(int i=0;i<based_lines;i++){
-    edge[i+based_lines][0] = based_edge[i][0] + based_nodes;
-    edge[i+based_lines][1] = based_edge[i][1] + based_nodes;
+  for(int j=0;j<groups;j++){
+    for(int i=0;i<based_lines;i++){
+      edge[based_lines*j+i][0] = based_edge[i][0] + based_nodes*j;
+      edge[based_lines*j+i][1] = based_edge[i][1] + based_nodes*j;
+    }
   }
 
   if(groups >= 2)
@@ -375,6 +364,7 @@ int main(int argc, char *argv[])
   int nodes       = based_nodes * groups;
 
   create_symmetric_edge(edge, based_nodes, based_lines, based_edge, groups);
+
   free(based_edge);
   int degree = 2 * lines / nodes;
   int verify_exitcode;

@@ -4,7 +4,7 @@
 #define LEFT   1
 #define MIDDLE 2
 
-static void swap(int *a, int *b)
+void swap(int *a, int *b)
 {
   int tmp = *a;
   *a = *b;
@@ -116,11 +116,11 @@ static void edge_exchange(const int nodes, const int lines, int edge[lines][2], 
     while(1){
       line[0] = rand() % lines;
       line[1] = rand() % lines;
-      if(line[1] == line[0])                        continue;
-      else if(edge[line[0]][0] == edge[line[1]][0]) continue;
-      else if(edge[line[0]][0] == edge[line[1]][1]) continue;
-      else if(edge[line[0]][1] == edge[line[1]][0]) continue;
-      else if(edge[line[0]][1] == edge[line[1]][1]) continue;
+      if(line[1] == line[0])	                         continue;
+      else if(edge[line[0]][0] == edge[line[1]][0])      continue;
+      else if(edge[line[0]][0] == edge[line[1]][1])      continue;
+      else if(edge[line[0]][1] == edge[line[1]][0])      continue;
+      else if(edge[line[0]][1] == edge[line[1]][1])      continue;
       else if(abs(line[0] - line[1]) == lines/2){
 	if(rand()%2 == 0){
 	  tmp_edge[0][0] = edge[line[0]][0]; tmp_edge[0][1] = edge[line[1]][1];
@@ -131,18 +131,18 @@ static void edge_exchange(const int nodes, const int lines, int edge[lines][2], 
           tmp_edge[1][0] = edge[line[0]][1]; tmp_edge[1][1] = edge[line[1]][1];
 	}
 
-	bool flag = true;
+	bool tmp_flag = true;
 	for(int i=0;i<lines;i++){
 	  for(int j=0;j<2;j++){
 	    if((tmp_edge[j][0] == edge[i][0] && tmp_edge[j][1] == edge[i][1]) ||
 	       (tmp_edge[j][0] == edge[i][1] && tmp_edge[j][1] == edge[i][0])){
-	      flag = false;
+	      tmp_flag = false;
 	      break;
 	    }
 	  }
-	  if(!flag) break;
+	  if(!tmp_flag) break;
 	}
-	if(!flag) continue;
+	if(!tmp_flag) continue;
 	
 	edge[line[0]][0] = tmp_edge[0][0]; edge[line[0]][1] = tmp_edge[0][1];
 	edge[line[1]][0] = tmp_edge[1][0]; edge[line[1]][1] = tmp_edge[1][1];
@@ -155,26 +155,44 @@ static void edge_exchange(const int nodes, const int lines, int edge[lines][2], 
       else break;
     }
 
-    opp_line[0] = (line[0] >= lines/2)? line[0]-lines/2 : line[0]+lines/2;
-    opp_line[1] = (line[1] >= lines/2)? line[1]-lines/2 : line[1]+lines/2;
+    for(int i=0;i<2;i++)
+      opp_line[i] = (line[i] >= lines/2)? line[i]-lines/2 : line[i]+lines/2;
+
     bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1]) == nodes/2);
     bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1]) == nodes/2);
+    bool single_diameter_flag = (flag0 && !flag1) || (!flag0 && flag1);
+    bool double_diameter_flag = (flag0 && flag1);
 
-    if(flag0 && flag1){
-      if(rand()%2 == 0){
+    if(double_diameter_flag){
+      int pattern = rand() % 4;
+      if(pattern == 0){
 	tmp_edge[0][0] = edge[line[0]][0];       tmp_edge[0][1] = edge[line[1]][1];
-	tmp_edge[1][0] = edge[opp_line[0]][0];   tmp_edge[1][1] = edge[opp_line[1]][1];
-	tmp_edge[2][0] = edge[line[1]][0];       tmp_edge[2][1] = edge[line[0]][1];
+	tmp_edge[1][0] = edge[line[1]][0];       tmp_edge[1][1] = edge[line[0]][1];
+	tmp_edge[2][0] = edge[opp_line[0]][0];   tmp_edge[2][1] = edge[opp_line[0]][1];
+	tmp_edge[3][0] = edge[opp_line[1]][0];   tmp_edge[3][1] = edge[opp_line[1]][1];
+      }
+      else if(pattern == 1){
+	tmp_edge[0][0] = edge[line[0]][0];       tmp_edge[0][1] = edge[line[1]][0];
+	tmp_edge[1][0] = edge[line[0]][1];       tmp_edge[1][1] = edge[line[1]][1];
+	tmp_edge[2][0] = edge[opp_line[0]][0];   tmp_edge[2][1] = edge[opp_line[0]][1];
+	tmp_edge[3][0] = edge[opp_line[1]][0];   tmp_edge[3][1] = edge[opp_line[1]][1];
+      }
+      else if(pattern == 2){
+	tmp_edge[0][0] = edge[line[0]][0];       tmp_edge[0][1] = edge[line[0]][1];
+	tmp_edge[1][0] = edge[line[1]][0];       tmp_edge[1][1] = edge[line[1]][1];
+	tmp_edge[2][0] = edge[opp_line[0]][0];   tmp_edge[2][1] = edge[opp_line[1]][1];
 	tmp_edge[3][0] = edge[opp_line[1]][0];   tmp_edge[3][1] = edge[opp_line[0]][1];
       }
       else{
-	tmp_edge[0][0] = edge[line[0]][0];       tmp_edge[0][1] = edge[line[1]][0];
-	tmp_edge[1][0] = edge[opp_line[0]][0];   tmp_edge[1][1] = edge[opp_line[1]][0];
-	tmp_edge[2][0] = edge[line[0]][1];       tmp_edge[2][1] = edge[line[1]][1];
-        tmp_edge[3][0] = edge[opp_line[0]][1];   tmp_edge[3][1] = edge[opp_line[1]][1];
+	tmp_edge[0][0] = edge[line[0]][0];       tmp_edge[0][1] = edge[line[0]][1];
+	tmp_edge[1][0] = edge[line[1]][0];       tmp_edge[1][1] = edge[line[1]][1];
+	tmp_edge[2][0] = edge[opp_line[0]][0];   tmp_edge[2][1] = edge[opp_line[1]][0];
+	tmp_edge[3][0] = edge[opp_line[0]][1];   tmp_edge[3][1] = edge[opp_line[1]][1];
       }
+      swap(&tmp_edge[1][0], &tmp_edge[2][0]);
+      swap(&tmp_edge[1][1], &tmp_edge[2][1]);
     }
-    else if(flag0 || flag1){
+    else if(single_diameter_flag){
       if(flag0){
 	swap(&line[0], &line[1]);
 	swap(&opp_line[0], &opp_line[1]);
@@ -245,20 +263,23 @@ static void edge_exchange(const int nodes, const int lines, int edge[lines][2], 
       }
     }
 
-    bool flag = true;
+    bool tmp_flag = true;
     for(int i=0;i<lines;i++){
       if(i != line[0] && i != line[1] && i != opp_line[0] && i != opp_line[1]){
 	for(int j=0;j<4;j++){
 	  if((tmp_edge[j][0] == edge[i][0] && tmp_edge[j][1] == edge[i][1]) ||
 	     (tmp_edge[j][0] == edge[i][1] && tmp_edge[j][1] == edge[i][0])){
-	    flag = false;
+	    tmp_flag = false;
 	    break;
 	  }
 	}
-	if(!flag) break;
+	if(!tmp_flag) break;
       }
     }
-    if(!flag) continue;
+    if(!tmp_flag) continue;
+
+    if((tmp_edge[0][0] == tmp_edge[0][1]) || (tmp_edge[1][0] == tmp_edge[1][1]) ||
+       (tmp_edge[2][0] == tmp_edge[2][1]) || (tmp_edge[3][0] == tmp_edge[3][1])) continue;
 
     if((tmp_edge[0][0] == tmp_edge[2][0] && tmp_edge[0][1] == tmp_edge[2][1]) ||
        (tmp_edge[0][0] == tmp_edge[2][1] && tmp_edge[0][1] == tmp_edge[2][0])) continue;
