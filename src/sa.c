@@ -101,7 +101,8 @@ static void check3(const int lines, int edge[lines][2], int ii)
     for(int j=i+1;j<lines;j++){
       if((edge[i][0] == edge[j][0] && edge[i][1] == edge[j][1]) ||
          (edge[i][0] == edge[j][1] && edge[i][1] == edge[j][0])){
-	printf("i = %d The same node conbination in the edge. %d %d\n", ii, i, j);
+	printf("check 3: %d\n", ii);
+	printf("The same node conbination in the edge. %d %d\n", i, j);
 	exit(0);
       }
     }
@@ -131,18 +132,20 @@ static void edge_exchange(const int nodes, const int lines, int edge[lines][2], 
           tmp_edge[1][0] = edge[line[0]][1]; tmp_edge[1][1] = edge[line[1]][1];
 	}
 
-	bool tmp_flag = true;
+	bool flag = true;
 	for(int i=0;i<lines;i++){
-	  for(int j=0;j<2;j++){
-	    if((tmp_edge[j][0] == edge[i][0] && tmp_edge[j][1] == edge[i][1]) ||
-	       (tmp_edge[j][0] == edge[i][1] && tmp_edge[j][1] == edge[i][0])){
-	      tmp_flag = false;
-	      break;
+	  if(i != line[0] && i != line[1]){ // Not needed
+	    for(int j=0;j<2;j++){
+	      if((edge[i][0] == tmp_edge[j][0] && edge[i][1] == tmp_edge[j][1]) ||
+		 (edge[i][1] == tmp_edge[j][0] && edge[i][0] == tmp_edge[j][1])){
+		flag = false;
+		break;
+	      }
 	    }
 	  }
-	  if(!tmp_flag) break;
+	  if(!flag) break;
 	}
-	if(!tmp_flag) continue;
+	if(!flag) continue;
 	
 	edge[line[0]][0] = tmp_edge[0][0]; edge[line[0]][1] = tmp_edge[0][1];
 	edge[line[1]][0] = tmp_edge[1][0]; edge[line[1]][1] = tmp_edge[1][1];
@@ -263,29 +266,39 @@ static void edge_exchange(const int nodes, const int lines, int edge[lines][2], 
       }
     }
 
-    bool tmp_flag = true;
-    for(int i=0;i<lines;i++){
-      if(i != line[0] && i != line[1] && i != opp_line[0] && i != opp_line[1]){
-	for(int j=0;j<4;j++){
-	  if((tmp_edge[j][0] == edge[i][0] && tmp_edge[j][1] == edge[i][1]) ||
-	     (tmp_edge[j][0] == edge[i][1] && tmp_edge[j][1] == edge[i][0])){
-	    tmp_flag = false;
-	    break;
-	  }
-	}
-	if(!tmp_flag) break;
-      }
-    }
-    if(!tmp_flag) continue;
-
+    // Remove loop
     if((tmp_edge[0][0] == tmp_edge[0][1]) || (tmp_edge[1][0] == tmp_edge[1][1]) ||
        (tmp_edge[2][0] == tmp_edge[2][1]) || (tmp_edge[3][0] == tmp_edge[3][1])) continue;
 
-    if((tmp_edge[0][0] == tmp_edge[2][0] && tmp_edge[0][1] == tmp_edge[2][1]) ||
-       (tmp_edge[0][0] == tmp_edge[2][1] && tmp_edge[0][1] == tmp_edge[2][0])) continue;
+    // Remove duplicate edge in tmp_edges
+    if((tmp_edge[0][0] == tmp_edge[1][0] && tmp_edge[0][1] == tmp_edge[1][1]) ||
+       (tmp_edge[0][0] == tmp_edge[1][1] && tmp_edge[0][1] == tmp_edge[1][0]) ||
+       (tmp_edge[0][0] == tmp_edge[2][0] && tmp_edge[0][1] == tmp_edge[2][1]) ||
+       (tmp_edge[0][0] == tmp_edge[2][1] && tmp_edge[0][1] == tmp_edge[2][0]) ||
+       (tmp_edge[0][0] == tmp_edge[3][0] && tmp_edge[0][1] == tmp_edge[3][1]) ||
+       (tmp_edge[0][0] == tmp_edge[3][1] && tmp_edge[0][1] == tmp_edge[3][0]) ||
+       (tmp_edge[1][0] == tmp_edge[2][0] && tmp_edge[1][1] == tmp_edge[2][1]) ||
+       (tmp_edge[1][0] == tmp_edge[2][1] && tmp_edge[1][1] == tmp_edge[2][0]) ||
+       (tmp_edge[1][0] == tmp_edge[3][0] && tmp_edge[1][1] == tmp_edge[3][1]) ||
+       (tmp_edge[1][0] == tmp_edge[3][1] && tmp_edge[1][1] == tmp_edge[3][0]) ||
+       (tmp_edge[2][0] == tmp_edge[3][0] && tmp_edge[2][1] == tmp_edge[3][1]) ||
+       (tmp_edge[2][0] == tmp_edge[3][1] && tmp_edge[2][1] == tmp_edge[3][0]) ) continue;
 
-    if((tmp_edge[1][0] == tmp_edge[3][0] && tmp_edge[1][1] == tmp_edge[3][1]) ||
-       (tmp_edge[1][0] == tmp_edge[3][1] && tmp_edge[1][1] == tmp_edge[3][0])) continue;
+    // Remove duplicate edge in current edges
+    bool flag = true;
+    for(int i=0;i<lines;i++){
+      if(i != line[0] && i != line[1] && i != opp_line[0] && i != opp_line[1]){
+        for(int j=0;j<4;j++){
+          if((edge[i][0] == tmp_edge[j][0] && edge[i][1] == tmp_edge[j][1]) ||
+             (edge[i][1] == tmp_edge[j][0] && edge[i][0] == tmp_edge[j][1])){
+            flag = false;
+            break;
+          }
+        }
+        if(!flag) break;
+      }
+    }
+    if(!flag) continue;
 
     edge[line[0]][0]     = tmp_edge[0][0];   edge[line[0]][1]     = tmp_edge[0][1];
     edge[line[1]][0]     = tmp_edge[1][0];   edge[line[1]][1]     = tmp_edge[1][1];
