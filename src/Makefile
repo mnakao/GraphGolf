@@ -17,6 +17,9 @@ GraphGolf: $(OBJS)
 %.o: %.c common.h
 	$(CC) $(CFLAGS) -c $<
 
+run: GraphGolf
+	nohup bash run.sh &
+
 check: GraphGolf
 	OMP_CANCELLATION=true ./GraphGolf -f data/n32d5k4l228.20170305-fimfgn.edges
 	OMP_CANCELLATION=true ./GraphGolf -f data/n256d18k3l218.20170305-fimf4z.edges

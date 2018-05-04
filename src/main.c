@@ -281,18 +281,44 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL,
   *low_ASPL = aspl;
 }
 
-static void among_group_edge_exchange(const int based_nodes, const int based_lines, int (*edge)[2], const int groups)
+static void edge_exchange_among_groups(const int based_nodes, const int based_lines, int (*edge)[2], const int groups)
 {
+  if(groups == 1) return;
+
+  int patterns = (groups%2==0)? groups : groups - 1;
+  int tmp_edge[groups][2];
   int nodes = based_nodes * groups;
-  int line[2];
+  int line[groups];
   line[0] = rand() % based_lines;
-  line[1] = line[0] + based_lines;
+  for(int i=1;i<groups;i++)
+    line[i] = line[0] + i * based_lines;
 
-  if(rand()%2 == 0) swap(&edge[line[0]][1], &edge[line[1]][1]);
-  else              swap(&edge[line[0]][1], &edge[line[1]][0]);
+  int pattern = rand()%patterns;
+  if(groups%2 == 1) pattern++;
 
-  if(order(nodes, edge[line[0]][0], edge[line[0]][1]) != order(nodes, edge[line[1]][0], edge[line[1]][1]))
-    swap(&edge[line[1]][0], &edge[line[1]][1]);
+  if(pattern == 0){
+    for(int i=0;i<groups/2;i++){
+      tmp_edge[i][0] = edge[line[i]][0];
+      tmp_edge[i][1] = edge[line[i]][0] + (groups/2) * based_nodes;
+    }
+    for(int i=groups/2;i<groups;i++){
+      tmp_edge[i][0] = edge[line[i]][1];
+      tmp_edge[i][1] = edge[line[i]][1] - (groups/2) * based_nodes;
+    }
+  }
+  else{
+    for(int i=0;i<groups;i++){
+      tmp_edge[i][0] = edge[line[i]][0];
+      tmp_edge[i][1] = edge[line[i]][1] + based_nodes * pattern;
+      if(tmp_edge[i][1] >= nodes) tmp_edge[i][1] -= nodes;
+    }
+  }
+
+  // Set vertexs
+  for(int i=0;i<groups;i++){
+    edge[line[i]][0] = tmp_edge[i][0];
+    edge[line[i]][1] = tmp_edge[i][1];
+  }
 }
 
 static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines, 
@@ -305,8 +331,7 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
     }
   }
 
-  if(groups >= 2)
-    among_group_edge_exchange(based_nodes, based_lines, edge, groups);
+  edge_exchange_among_groups(based_nodes, based_lines, edge, groups);
 }
 
 
@@ -364,8 +389,8 @@ int main(int argc, char *argv[])
   int nodes       = based_nodes * groups;
 
   create_symmetric_edge(edge, based_nodes, based_lines, based_edge, groups);
-
   free(based_edge);
+
   int degree = 2 * lines / nodes;
   int verify_exitcode;
   if(rank == 0)

@@ -4,6 +4,11 @@
 #define LEFT   1
 #define MIDDLE 2
 
+static bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11)
+{
+  return ((e00 == e10 && e01 == e11) || (e00 == e11 && e01 == e10));
+}
+
 void swap(int *a, int *b)
 {
   int tmp = *a;
@@ -136,8 +141,7 @@ static void edge_exchange(const int nodes, const int lines, int edge[lines][2], 
 	for(int i=0;i<lines;i++){
 	  if(i != line[0] && i != line[1]){ // Not needed
 	    for(int j=0;j<2;j++){
-	      if((edge[i][0] == tmp_edge[j][0] && edge[i][1] == tmp_edge[j][1]) ||
-		 (edge[i][1] == tmp_edge[j][0] && edge[i][0] == tmp_edge[j][1])){
+	      if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
 		flag = false;
 		break;
 	      }
@@ -271,26 +275,19 @@ static void edge_exchange(const int nodes, const int lines, int edge[lines][2], 
        (tmp_edge[2][0] == tmp_edge[2][1]) || (tmp_edge[3][0] == tmp_edge[3][1])) continue;
 
     // Remove duplicate edge in tmp_edges
-    if((tmp_edge[0][0] == tmp_edge[1][0] && tmp_edge[0][1] == tmp_edge[1][1]) ||
-       (tmp_edge[0][0] == tmp_edge[1][1] && tmp_edge[0][1] == tmp_edge[1][0]) ||
-       (tmp_edge[0][0] == tmp_edge[2][0] && tmp_edge[0][1] == tmp_edge[2][1]) ||
-       (tmp_edge[0][0] == tmp_edge[2][1] && tmp_edge[0][1] == tmp_edge[2][0]) ||
-       (tmp_edge[0][0] == tmp_edge[3][0] && tmp_edge[0][1] == tmp_edge[3][1]) ||
-       (tmp_edge[0][0] == tmp_edge[3][1] && tmp_edge[0][1] == tmp_edge[3][0]) ||
-       (tmp_edge[1][0] == tmp_edge[2][0] && tmp_edge[1][1] == tmp_edge[2][1]) ||
-       (tmp_edge[1][0] == tmp_edge[2][1] && tmp_edge[1][1] == tmp_edge[2][0]) ||
-       (tmp_edge[1][0] == tmp_edge[3][0] && tmp_edge[1][1] == tmp_edge[3][1]) ||
-       (tmp_edge[1][0] == tmp_edge[3][1] && tmp_edge[1][1] == tmp_edge[3][0]) ||
-       (tmp_edge[2][0] == tmp_edge[3][0] && tmp_edge[2][1] == tmp_edge[3][1]) ||
-       (tmp_edge[2][0] == tmp_edge[3][1] && tmp_edge[2][1] == tmp_edge[3][0]) ) continue;
+    if(has_duplicated_edge(tmp_edge[0][0], tmp_edge[0][1], tmp_edge[1][0], tmp_edge[1][1]) || 
+       has_duplicated_edge(tmp_edge[0][0], tmp_edge[0][1], tmp_edge[2][0], tmp_edge[2][1]) ||
+       has_duplicated_edge(tmp_edge[0][0], tmp_edge[0][1], tmp_edge[3][0], tmp_edge[3][1]) ||
+       has_duplicated_edge(tmp_edge[1][0], tmp_edge[1][1], tmp_edge[2][0], tmp_edge[2][1]) ||
+       has_duplicated_edge(tmp_edge[1][0], tmp_edge[1][1], tmp_edge[3][0], tmp_edge[3][1]) ||
+       has_duplicated_edge(tmp_edge[2][0], tmp_edge[2][1], tmp_edge[3][0], tmp_edge[3][1])) continue;
 
     // Remove duplicate edge in current edges
     bool flag = true;
     for(int i=0;i<lines;i++){
       if(i != line[0] && i != line[1] && i != opp_line[0] && i != opp_line[1]){
         for(int j=0;j<4;j++){
-          if((edge[i][0] == tmp_edge[j][0] && edge[i][1] == tmp_edge[j][1]) ||
-             (edge[i][1] == tmp_edge[j][0] && edge[i][0] == tmp_edge[j][1])){
+          if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
             flag = false;
             break;
           }
