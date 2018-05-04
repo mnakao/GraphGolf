@@ -444,7 +444,7 @@ int main(int argc, char *argv[])
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
-  long long step = sa(nodes, lines, degree, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
+  long long step = sa(nodes, lines, degree, groups, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
 		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, rank, size);
   timer_stop(TIMER_SA);
 

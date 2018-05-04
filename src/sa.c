@@ -9,6 +9,11 @@ static bool has_duplicated_edge(const int e00, const int e01, const int e10, con
   return ((e00 == e10 && e01 == e11) || (e00 == e11 && e01 == e10));
 }
 
+static bool not_has_duplicated_edge(const int e00, const int e01, const int e10, const int e11)
+{
+  return !(has_duplicated_edge(e00, e01, e10, e11));
+}
+
 void swap(int *a, int *b)
 {
   int tmp = *a;
@@ -68,55 +73,57 @@ static int distance(const int nodes, const int a, const int b)
   return (v < nodes/2)? v : nodes - v;
 }
 
-static void check2(const int nodes, const int lines, int edge[lines][2], int ii)
+static void check(const int nodes, const int lines, int edge[lines][2], int ii)
 {
   int based_lines = lines/2;
-  bool flag = true;
   for(int i=0;i<based_lines;i++){
     int j = i + based_lines;
     if(distance(nodes, edge[i][0], edge[i][1]) != distance(nodes, edge[j][0], edge[j][1])){
-      printf("check 2: %d\n", ii);
+      printf("check 1: %d\n", ii);
       printf("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", i, edge[i][0], i, edge[i][1], distance(nodes, edge[i][0], edge[i][1]));
       printf("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", j, edge[j][0], j, edge[j][1], distance(nodes, edge[j][0], edge[j][1]));
-      flag = false;
+      exit(0);
     }
   }
-  if(!flag) {exit(0);}
-}
 
-static void check1(const int nodes, const int lines, int edge[lines][2], int ii)
-{
-  int based_lines = lines/2;
-  bool flag = true;
   for(int i=0;i<based_lines;i++){
     int j = i + based_lines;
     if(order(nodes, edge[i][0], edge[i][1]) != order(nodes, edge[j][0], edge[j][1])){
-      printf("check 1 : %d\n", ii);
+      printf("check 2 : %d\n", ii);
       printf("edge[%d][0] = %d : edge[%d][1] = %d %d\n", i, edge[i][0], i, edge[i][1], order(nodes, edge[i][0], edge[i][1]));
       printf("edge[%d][0] = %d : edge[%d][1] = %d %d\n", j, edge[j][0], j, edge[j][1], order(nodes, edge[j][0], edge[j][1]));
-      flag = false;
+      exit(0);
     }
   }
-  if(!flag) exit(0);
-}
 
-static void check3(const int lines, int edge[lines][2], int ii)
-{
   for(int i=0;i<lines;i++){
     for(int j=i+1;j<lines;j++){
       if((edge[i][0] == edge[j][0] && edge[i][1] == edge[j][1]) ||
          (edge[i][0] == edge[j][1] && edge[i][1] == edge[j][0])){
-	printf("check 3: %d\n", ii);
-	printf("The same node conbination in the edge. %d %d\n", i, j);
-	exit(0);
+        printf("check 3: %d\n", ii);
+        printf("The same node conbination in the edge. %d %d\n", i, j);
+        exit(0);
       }
     }
   }
 }
 
-static void edge_exchange(const int nodes, const int lines, int edge[lines][2], int ii)
+static bool target_line(const int i, const int groups, const int line[2], const int opp_line[groups*2-2])
 {
-  int line[2] = {}, opp_line[2] = {}, tmp_edge[4][2] = {};
+  if(i == line[0] || i == line[1]) 
+    return false;
+
+  for(int j=0;j<groups*2-2;j++)
+    if(i == opp_line[j] || i == opp_line[j])
+      return false;
+
+  return true;
+}
+
+static void edge_exchange(const int nodes, const int lines, const int groups, 
+			  int edge[lines][2], const int ii)
+{
+  int line[2], opp_line[groups*2-2], tmp_edge[groups*2][2];
 
   while(1){
     while(1){
@@ -127,7 +134,7 @@ static void edge_exchange(const int nodes, const int lines, int edge[lines][2], 
       else if(edge[line[0]][0] == edge[line[1]][1])      continue;
       else if(edge[line[0]][1] == edge[line[1]][0])      continue;
       else if(edge[line[0]][1] == edge[line[1]][1])      continue;
-      else if(abs(line[0] - line[1]) == lines/2){
+      else if(abs(line[0] - line[1]) == lines/2 && groups%2 == 0){
 	if(rand()%2 == 0){
 	  tmp_edge[0][0] = edge[line[0]][0]; tmp_edge[0][1] = edge[line[1]][1];
 	  tmp_edge[1][0] = edge[line[1]][0]; tmp_edge[1][1] = edge[line[0]][1];
@@ -165,10 +172,10 @@ static void edge_exchange(const int nodes, const int lines, int edge[lines][2], 
     for(int i=0;i<2;i++)
       opp_line[i] = (line[i] >= lines/2)? line[i]-lines/2 : line[i]+lines/2;
 
-    bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1]) == nodes/2);
-    bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1]) == nodes/2);
-    bool single_diameter_flag = (flag0 && !flag1) || (!flag0 && flag1);
+    bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1]) == nodes/2 && groups%2 == 0);
+    bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1]) == nodes/2 && groups%2 == 0);
     bool double_diameter_flag = (flag0 && flag1);
+    bool single_diameter_flag = (flag0 && !flag1) || (!flag0 && flag1);
 
     if(double_diameter_flag){
       int pattern = rand() % 4;
@@ -271,36 +278,34 @@ static void edge_exchange(const int nodes, const int lines, int edge[lines][2], 
     }
 
     // Remove loop
-    if((tmp_edge[0][0] == tmp_edge[0][1]) || (tmp_edge[1][0] == tmp_edge[1][1]) ||
-       (tmp_edge[2][0] == tmp_edge[2][1]) || (tmp_edge[3][0] == tmp_edge[3][1])) continue;
-
-    // Remove duplicate edge in tmp_edges
-    if(has_duplicated_edge(tmp_edge[0][0], tmp_edge[0][1], tmp_edge[1][0], tmp_edge[1][1]) || 
-       has_duplicated_edge(tmp_edge[0][0], tmp_edge[0][1], tmp_edge[2][0], tmp_edge[2][1]) ||
-       has_duplicated_edge(tmp_edge[0][0], tmp_edge[0][1], tmp_edge[3][0], tmp_edge[3][1]) ||
-       has_duplicated_edge(tmp_edge[1][0], tmp_edge[1][1], tmp_edge[2][0], tmp_edge[2][1]) ||
-       has_duplicated_edge(tmp_edge[1][0], tmp_edge[1][1], tmp_edge[3][0], tmp_edge[3][1]) ||
-       has_duplicated_edge(tmp_edge[2][0], tmp_edge[2][1], tmp_edge[3][0], tmp_edge[3][1])) continue;
-
-    // Remove duplicate edge in current edges
     bool flag = true;
-    for(int i=0;i<lines;i++){
-      if(i != line[0] && i != line[1] && i != opp_line[0] && i != opp_line[1]){
-        for(int j=0;j<4;j++){
-          if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
-            flag = false;
-            break;
-          }
-        }
-        if(!flag) break;
-      }
-    }
+    for(int i=0;i<groups*2;i++)
+      flag &= (tmp_edge[i][0] != tmp_edge[i][1]);
+
     if(!flag) continue;
 
-    edge[line[0]][0]     = tmp_edge[0][0];   edge[line[0]][1]     = tmp_edge[0][1];
-    edge[line[1]][0]     = tmp_edge[1][0];   edge[line[1]][1]     = tmp_edge[1][1];
-    edge[opp_line[0]][0] = tmp_edge[2][0];   edge[opp_line[0]][1] = tmp_edge[2][1];
-    edge[opp_line[1]][0] = tmp_edge[3][0];   edge[opp_line[1]][1] = tmp_edge[3][1];
+    // Remove duplicate edge in tmp_edges
+    for(int i=0;i<groups*2;i++)
+      for(int j=i+1;j<groups*2;j++)
+	flag &= not_has_duplicated_edge(tmp_edge[i][0], tmp_edge[i][1], tmp_edge[j][0], tmp_edge[j][1]);
+
+    if(!flag) continue;
+
+    // Remove duplicate edge in current edges
+    for(int i=0;i<lines;i++)
+      if(target_line(i, groups, line, opp_line))
+        for(int j=0;j<groups*2;j++)
+          flag &= not_has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]);
+
+    if(!flag) continue;
+
+    edge[line[0]][0] = tmp_edge[0][0];   edge[line[0]][1] = tmp_edge[0][1];
+    edge[line[1]][0] = tmp_edge[1][0];   edge[line[1]][1] = tmp_edge[1][1];
+
+    for(int i=0;i<groups*2-2;i++){
+      edge[opp_line[i]][0] = tmp_edge[i+2][0];
+      edge[opp_line[i]][1] = tmp_edge[i+2][1];
+    }
     
     break;
   }
@@ -330,7 +335,7 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
     return false;
 }
 
-long long sa(const int nodes, const int lines, const int degree, double temp, 
+long long sa(const int nodes, const int lines, const int degree, const int groups, double temp, 
 	     const long long ncalcs, const double cooling_rate, 
 	     const int low_diam, const double low_ASPL, const bool hill_climbing_flag,
 	     const bool detect_temp_flag, double *max_diff_energy,
@@ -366,11 +371,9 @@ long long sa(const int nodes, const int lines, const int degree, double temp,
       memcpy(current_edge, edge, size_edge);
 
       if(rank == 0)
-	edge_exchange(nodes, lines, current_edge, (int)i);
+	edge_exchange(nodes, lines, groups, current_edge, (int)i);
 
-      check1(nodes, lines, current_edge, (int)i);
-      check2(nodes, lines, current_edge, (int)i);
-      check3(lines, current_edge, (int)i);
+      check(nodes, lines, current_edge, (int)i);
       create_adjacency(nodes, lines, degree, current_edge, adjacency);
 
       MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);

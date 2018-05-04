@@ -27,7 +27,7 @@
 
 extern void swap(int *a, int *b);
 extern int order(const int nodes, const int a, const int b);
-extern long long sa(const int nodes, const int lines, const int degree, double temp, 
+extern long long sa(const int nodes, const int lines, const int degree, const int groups,  double temp, 
 		    const long long ncalcs, const double cooling_rate, const int low_diam, 
 		    const double low_ASPL, const bool hill_climbing_flag, 
 		    const bool detect_temp_flag, double *max_diff_energy, int edge[lines][2],
