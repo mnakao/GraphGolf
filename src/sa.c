@@ -84,23 +84,27 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
     while(1){
       line[0] = getRandom(lines);
       line[1] = getRandom(lines);
-      if(line[1] == line[0])	                         continue;
-      else if(edge[line[0]][0] == edge[line[1]][0])      continue;
-      else if(edge[line[0]][0] == edge[line[1]][1])      continue;
-      else if(edge[line[0]][1] == edge[line[1]][0])      continue;
-      else if(edge[line[0]][1] == edge[line[1]][1])      continue;
+      if(line[1] == line[0])	                      continue;
+      else if(edge[line[0]][0] == edge[line[1]][0])   continue;
+      else if(edge[line[0]][0] == edge[line[1]][1])   continue;
+      else if(edge[line[0]][1] == edge[line[1]][0])   continue;
+      else if(edge[line[0]][1] == edge[line[1]][1])   continue;
       else if(abs(line[0] - line[1]) % based_lines == 0){
 	int start_line = line[0] % based_lines;
-	bool flag = edge_exchange_among_groups(based_nodes, based_lines, edge, groups, start_line);
-
-	if(flag)   return;
-	else	   continue;
+	if(edge_exchange_among_groups(based_nodes, based_lines, edge, groups, start_line))
+	  return;
+	else
+	  continue;
       }
       else break;
     }
 
-    for(int i=0;i<2;i++)
-      line[2+i] = (line[i] >= lines/2)? line[i]-lines/2 : line[i]+lines/2;
+    for(int i=1;i<groups;i++){
+      int tmp0 = line[0] + based_lines * i;
+      int tmp1 = line[1] + based_lines * i;
+      line[0+2*i] = (tmp0 >= lines)? tmp0 - lines : tmp0;
+      line[1+2*i] = (tmp1 >= lines)? tmp1 - lines : tmp1;
+    }
 
     bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1]) == nodes/2 && groups%2 == 0);
     bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1]) == nodes/2 && groups%2 == 0);
