@@ -1,40 +1,5 @@
 #include "common.h"
 
-#define RIGHT  0
-#define LEFT   1
-#define MIDDLE 2
-
-static bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11)
-{
-  return ((e00 == e10 && e01 == e11) || (e00 == e11 && e01 == e10));
-}
-
-static bool not_has_duplicated_edge(const int e00, const int e01, const int e10, const int e11)
-{
-  return !(has_duplicated_edge(e00, e01, e10, e11));
-}
-
-void swap(int *a, int *b)
-{
-  int tmp = *a;
-  *a = *b;
-  *b = tmp;
-}
-
-int order(const int nodes, const int a, const int b)
-{
-  if((a-b)%(nodes/2) == 0) return MIDDLE;
-
-  if(a < nodes/2){
-    if(a > b) return LEFT;
-    return (a+nodes/2 > b)? RIGHT : LEFT;
-  }
-  else{
-    if(a < b) return RIGHT;
-    return (0 <= b && b < a - nodes/2)? RIGHT : LEFT;
-  }
-}
-
 static void print_result_header()
 {
   printf("   Times\t    Temp\tCurrent ASPL (GAP)\tBest ASPL (GAP)\t\t");
@@ -108,69 +73,34 @@ static void check(const int nodes, const int lines, int edge[lines][2], int ii)
   }
 }
 
-static bool target_line(const int i, const int groups, const int line[2], const int opp_line[groups*2-2])
-{
-  if(i == line[0] || i == line[1]) 
-    return false;
-
-  for(int j=0;j<groups*2-2;j++)
-    if(i == opp_line[j] || i == opp_line[j])
-      return false;
-
-  return true;
-}
-
 static void edge_exchange(const int nodes, const int lines, const int groups, 
 			  int edge[lines][2], const int ii)
 {
-  int line[2], opp_line[groups*2-2], tmp_edge[groups*2][2];
-
+  int line[groups*2], tmp_edge[groups*2][2];
+  int based_nodes = nodes / groups;
+  int based_lines = lines / groups;
+  
   while(1){
     while(1){
-      line[0] = rand() % lines;
-      line[1] = rand() % lines;
+      line[0] = getRandom(lines);
+      line[1] = getRandom(lines);
       if(line[1] == line[0])	                         continue;
       else if(edge[line[0]][0] == edge[line[1]][0])      continue;
       else if(edge[line[0]][0] == edge[line[1]][1])      continue;
       else if(edge[line[0]][1] == edge[line[1]][0])      continue;
       else if(edge[line[0]][1] == edge[line[1]][1])      continue;
-      else if(abs(line[0] - line[1]) == lines/2 && groups%2 == 0){
-	if(rand()%2 == 0){
-	  tmp_edge[0][0] = edge[line[0]][0]; tmp_edge[0][1] = edge[line[1]][1];
-	  tmp_edge[1][0] = edge[line[1]][0]; tmp_edge[1][1] = edge[line[0]][1];
-	}
-	else{
-	  tmp_edge[0][0] = edge[line[0]][0]; tmp_edge[0][1] = edge[line[1]][0];
-          tmp_edge[1][0] = edge[line[0]][1]; tmp_edge[1][1] = edge[line[1]][1];
-	}
+      else if(abs(line[0] - line[1]) % based_lines == 0){
+	int start_line = line[0] % based_lines;
+	bool flag = edge_exchange_among_groups(based_nodes, based_lines, edge, groups, start_line);
 
-	bool flag = true;
-	for(int i=0;i<lines;i++){
-	  if(i != line[0] && i != line[1]){ // Not needed
-	    for(int j=0;j<2;j++){
-	      if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
-		flag = false;
-		break;
-	      }
-	    }
-	  }
-	  if(!flag) break;
-	}
-	if(!flag) continue;
-	
-	edge[line[0]][0] = tmp_edge[0][0]; edge[line[0]][1] = tmp_edge[0][1];
-	edge[line[1]][0] = tmp_edge[1][0]; edge[line[1]][1] = tmp_edge[1][1];
-	
-	if(order(nodes, edge[line[0]][0], edge[line[0]][1]) != order(nodes, edge[line[1]][0], edge[line[1]][1]))
-	  swap(&edge[line[1]][0], &edge[line[1]][1]);
-
-	return;
+	if(flag)   return;
+	else	   continue;
       }
       else break;
     }
 
     for(int i=0;i<2;i++)
-      opp_line[i] = (line[i] >= lines/2)? line[i]-lines/2 : line[i]+lines/2;
+      line[2+i] = (line[i] >= lines/2)? line[i]-lines/2 : line[i]+lines/2;
 
     bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1]) == nodes/2 && groups%2 == 0);
     bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1]) == nodes/2 && groups%2 == 0);
@@ -178,30 +108,30 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
     bool single_diameter_flag = (flag0 && !flag1) || (!flag0 && flag1);
 
     if(double_diameter_flag){
-      int pattern = rand() % 4;
+      int pattern = getRandom(4);
       if(pattern == 0){
-	tmp_edge[0][0] = edge[line[0]][0];       tmp_edge[0][1] = edge[line[1]][1];
-	tmp_edge[1][0] = edge[line[1]][0];       tmp_edge[1][1] = edge[line[0]][1];
-	tmp_edge[2][0] = edge[opp_line[0]][0];   tmp_edge[2][1] = edge[opp_line[0]][1];
-	tmp_edge[3][0] = edge[opp_line[1]][0];   tmp_edge[3][1] = edge[opp_line[1]][1];
+	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[1]][1];
+	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[0]][1];
+	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[2]][1];
+	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[3]][1];
       }
       else if(pattern == 1){
-	tmp_edge[0][0] = edge[line[0]][0];       tmp_edge[0][1] = edge[line[1]][0];
-	tmp_edge[1][0] = edge[line[0]][1];       tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[opp_line[0]][0];   tmp_edge[2][1] = edge[opp_line[0]][1];
-	tmp_edge[3][0] = edge[opp_line[1]][0];   tmp_edge[3][1] = edge[opp_line[1]][1];
+	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[1]][0];
+	tmp_edge[1][0] = edge[line[0]][1];  tmp_edge[1][1] = edge[line[1]][1];
+	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[2]][1];
+	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[3]][1];
       }
       else if(pattern == 2){
-	tmp_edge[0][0] = edge[line[0]][0];       tmp_edge[0][1] = edge[line[0]][1];
-	tmp_edge[1][0] = edge[line[1]][0];       tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[opp_line[0]][0];   tmp_edge[2][1] = edge[opp_line[1]][1];
-	tmp_edge[3][0] = edge[opp_line[1]][0];   tmp_edge[3][1] = edge[opp_line[0]][1];
+	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[0]][1];
+	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[1]][1];
+	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[3]][1];
+	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[2]][1];
       }
       else{
-	tmp_edge[0][0] = edge[line[0]][0];       tmp_edge[0][1] = edge[line[0]][1];
-	tmp_edge[1][0] = edge[line[1]][0];       tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[opp_line[0]][0];   tmp_edge[2][1] = edge[opp_line[1]][0];
-	tmp_edge[3][0] = edge[opp_line[0]][1];   tmp_edge[3][1] = edge[opp_line[1]][1];
+	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[0]][1];
+	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[1]][1];
+	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[3]][0];
+	tmp_edge[3][0] = edge[line[2]][1];  tmp_edge[3][1] = edge[line[3]][1];
       }
       swap(&tmp_edge[1][0], &tmp_edge[2][0]);
       swap(&tmp_edge[1][1], &tmp_edge[2][1]);
@@ -209,109 +139,89 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
     else if(single_diameter_flag){
       if(flag0){
 	swap(&line[0], &line[1]);
-	swap(&opp_line[0], &opp_line[1]);
+	swap(&line[2], &line[3]);
       }
 
-      int pattern = rand() % 8;
+      int pattern = getRandom(8);
       if(pattern == 0){
-	tmp_edge[0][0] = edge[line[1]][0];     tmp_edge[0][1] = edge[line[0]][1];
-	tmp_edge[1][0] = edge[line[0]][0];     tmp_edge[1][1] = edge[opp_line[0]][0];
-	tmp_edge[2][0] = edge[line[1]][1];     tmp_edge[2][1] = edge[opp_line[0]][1];
-	tmp_edge[3][0] = edge[opp_line[1]][0]; tmp_edge[3][1] = edge[opp_line[1]][1];
+	tmp_edge[0][0] = edge[line[1]][0];  tmp_edge[0][1] = edge[line[0]][1];
+	tmp_edge[1][0] = edge[line[0]][0];  tmp_edge[1][1] = edge[line[2]][0];
+	tmp_edge[2][0] = edge[line[1]][1];  tmp_edge[2][1] = edge[line[2]][1];
+	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[3]][1];
       }
       else if(pattern == 1){
-	tmp_edge[0][0] = edge[line[1]][1];     tmp_edge[0][1] = edge[line[0]][1];
-	tmp_edge[1][0] = edge[line[0]][0];     tmp_edge[1][1] = edge[opp_line[0]][0];
-	tmp_edge[2][0] = edge[line[1]][0];     tmp_edge[2][1] = edge[opp_line[0]][1];
-	tmp_edge[3][0] = edge[opp_line[1]][0]; tmp_edge[3][1] = edge[opp_line[1]][1];
+	tmp_edge[0][0] = edge[line[1]][1];  tmp_edge[0][1] = edge[line[0]][1];
+	tmp_edge[1][0] = edge[line[0]][0];  tmp_edge[1][1] = edge[line[2]][0];
+	tmp_edge[2][0] = edge[line[1]][0];  tmp_edge[2][1] = edge[line[2]][1];
+	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[3]][1];
       }
       else if(pattern == 2){
-	tmp_edge[0][0] = edge[line[0]][0];     tmp_edge[0][1] = edge[line[1]][0];
-	tmp_edge[1][0] = edge[line[0]][1];     tmp_edge[1][1] = edge[opp_line[0]][1];
-	tmp_edge[2][0] = edge[opp_line[0]][0]; tmp_edge[2][1] = edge[line[1]][1];
-	tmp_edge[3][0] = edge[opp_line[1]][0]; tmp_edge[3][1] = edge[opp_line[1]][1];
+	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[1]][0];
+	tmp_edge[1][0] = edge[line[0]][1];  tmp_edge[1][1] = edge[line[2]][1];
+	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[1]][1];
+	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[3]][1];
       }
       else if(pattern == 3){
-	tmp_edge[0][0] = edge[line[0]][0];     tmp_edge[0][1] = edge[line[1]][1];
-	tmp_edge[1][0] = edge[line[0]][1];     tmp_edge[1][1] = edge[opp_line[0]][1];
-	tmp_edge[2][0] = edge[opp_line[0]][0]; tmp_edge[2][1] = edge[line[1]][0];
-	tmp_edge[3][0] = edge[opp_line[1]][0]; tmp_edge[3][1] = edge[opp_line[1]][1];
+	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[1]][1];
+	tmp_edge[1][0] = edge[line[0]][1];  tmp_edge[1][1] = edge[line[2]][1];
+	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[1]][0];
+	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[3]][1];
       }
       else if(pattern == 4){
-	tmp_edge[0][0] = edge[opp_line[1]][0]; tmp_edge[0][1] = edge[line[0]][1];
-	tmp_edge[1][0] = edge[line[1]][0];     tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[opp_line[1]][1]; tmp_edge[2][1] = edge[opp_line[0]][1];
-	tmp_edge[3][0] = edge[line[0]][0];     tmp_edge[3][1] = edge[opp_line[0]][0];
+	tmp_edge[0][0] = edge[line[3]][0];  tmp_edge[0][1] = edge[line[0]][1];
+	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[1]][1];
+	tmp_edge[2][0] = edge[line[3]][1];  tmp_edge[2][1] = edge[line[2]][1];
+	tmp_edge[3][0] = edge[line[0]][0];  tmp_edge[3][1] = edge[line[2]][0];
       }
       else if(pattern == 5){
-	tmp_edge[0][0] = edge[opp_line[1]][1]; tmp_edge[0][1] = edge[line[0]][1];
-	tmp_edge[1][0] = edge[line[1]][0];     tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[opp_line[1]][0]; tmp_edge[2][1] = edge[opp_line[0]][1];
-	tmp_edge[3][0] = edge[line[0]][0];     tmp_edge[3][1] = edge[opp_line[0]][0];
+	tmp_edge[0][0] = edge[line[3]][1];  tmp_edge[0][1] = edge[line[0]][1];
+	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[1]][1];
+	tmp_edge[2][0] = edge[line[3]][0];  tmp_edge[2][1] = edge[line[2]][1];
+	tmp_edge[3][0] = edge[line[0]][0];  tmp_edge[3][1] = edge[line[2]][0];
       }
       else if(pattern == 6){
-	tmp_edge[0][0] = edge[line[0]][0];     tmp_edge[0][1] = edge[opp_line[1]][0];
-	tmp_edge[1][0] = edge[line[1]][0];     tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[opp_line[0]][0]; tmp_edge[2][1] = edge[opp_line[1]][1];
-	tmp_edge[3][0] = edge[line[0]][1];     tmp_edge[3][1] = edge[opp_line[0]][1];
+	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[3]][0];
+	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[1]][1];
+	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[3]][1];
+	tmp_edge[3][0] = edge[line[0]][1];  tmp_edge[3][1] = edge[line[2]][1];
       }
       else if(pattern == 7){
-	tmp_edge[0][0] = edge[line[0]][0];     tmp_edge[0][1] = edge[opp_line[1]][1];
-	tmp_edge[1][0] = edge[line[1]][0];     tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[opp_line[0]][0]; tmp_edge[2][1] = edge[opp_line[1]][0];
-	tmp_edge[3][0] = edge[line[0]][1];     tmp_edge[3][1] = edge[opp_line[0]][1];
+	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[3]][1];
+	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[1]][1];
+	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[3]][0];
+	tmp_edge[3][0] = edge[line[0]][1];  tmp_edge[3][1] = edge[line[2]][1];
       }
     }
     else{
-      if(rand()%2 == 0){
-	tmp_edge[0][0] = edge[line[0]][0];       tmp_edge[0][1] = edge[line[1]][1];
-	tmp_edge[1][0] = edge[line[1]][0];       tmp_edge[1][1] = edge[line[0]][1];
-	tmp_edge[2][0] = edge[opp_line[0]][0];   tmp_edge[2][1] = edge[opp_line[1]][1];
-	tmp_edge[3][0] = edge[opp_line[1]][0];   tmp_edge[3][1] = edge[opp_line[0]][1];
+      if(getRandom(2) == 0){
+	tmp_edge[0][0] = edge[line[0]][0];   tmp_edge[0][1] = edge[line[1]][1];
+	tmp_edge[1][0] = edge[line[1]][0];   tmp_edge[1][1] = edge[line[0]][1];
+	tmp_edge[2][0] = edge[line[2]][0];   tmp_edge[2][1] = edge[line[3]][1];
+	tmp_edge[3][0] = edge[line[3]][0];   tmp_edge[3][1] = edge[line[2]][1];
       }
       else{
-	tmp_edge[0][0] = edge[line[0]][0];       tmp_edge[0][1] = edge[line[1]][0];
-	tmp_edge[1][0] = edge[line[0]][1];       tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[opp_line[0]][0];   tmp_edge[2][1] = edge[opp_line[1]][0];
-	tmp_edge[3][0] = edge[opp_line[0]][1];   tmp_edge[3][1] = edge[opp_line[1]][1];
+	tmp_edge[0][0] = edge[line[0]][0];   tmp_edge[0][1] = edge[line[1]][0];
+	tmp_edge[1][0] = edge[line[0]][1];   tmp_edge[1][1] = edge[line[1]][1];
+	tmp_edge[2][0] = edge[line[2]][0];   tmp_edge[2][1] = edge[line[3]][0];
+	tmp_edge[3][0] = edge[line[2]][1];   tmp_edge[3][1] = edge[line[3]][1];
       }
     }
 
-    // Remove loop
-    bool flag = true;
-    for(int i=0;i<groups*2;i++)
-      flag &= (tmp_edge[i][0] != tmp_edge[i][1]);
+    if(!check_loop(groups*2, tmp_edge))            continue;
+    if(!check_duplicate_edge(groups*2, tmp_edge))  continue;
+    if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge))
+      continue;
 
-    if(!flag) continue;
-
-    // Remove duplicate edge in tmp_edges
-    for(int i=0;i<groups*2;i++)
-      for(int j=i+1;j<groups*2;j++)
-	flag &= not_has_duplicated_edge(tmp_edge[i][0], tmp_edge[i][1], tmp_edge[j][0], tmp_edge[j][1]);
-
-    if(!flag) continue;
-
-    // Remove duplicate edge in current edges
-    for(int i=0;i<lines;i++)
-      if(target_line(i, groups, line, opp_line))
-        for(int j=0;j<groups*2;j++)
-          flag &= not_has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]);
-
-    if(!flag) continue;
-
-    edge[line[0]][0] = tmp_edge[0][0];   edge[line[0]][1] = tmp_edge[0][1];
-    edge[line[1]][0] = tmp_edge[1][0];   edge[line[1]][1] = tmp_edge[1][1];
-
-    for(int i=0;i<groups*2-2;i++){
-      edge[opp_line[i]][0] = tmp_edge[i+2][0];
-      edge[opp_line[i]][1] = tmp_edge[i+2][1];
+    for(int i=0;i<groups*2;i++){
+      edge[line[i]][0] = tmp_edge[i][0];
+      edge[line[i]][1] = tmp_edge[i][1];
     }
-    
+
     break;
   }
 
   for(int i=0;i<2;i++)
-    if(order(nodes, edge[line[i]][0], edge[line[i]][1]) != order(nodes, edge[opp_line[i]][0], edge[opp_line[i]][1]))
+    if(order(nodes, edge[line[i]][0], edge[line[i]][1]) != order(nodes, edge[line[2+i]][0], edge[line[2+i]][1]))
       swap(&edge[line[i]][0], &edge[line[i]][1]);
 }
 
