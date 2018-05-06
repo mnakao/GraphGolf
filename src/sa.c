@@ -112,11 +112,11 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
     bool double_diameter_flag = (flag0 && flag1);
     bool single_diameter_flag = (flag0 && !flag1) || (!flag0 && flag1);
 
-    if(double_diameter_flag){
-      for(int i=0;i<groups*2;i++)
-	for(int j=0;j<2;j++)
-	  tmp_edge[i][j] = edge[line[i]][j];
+    for(int i=0;i<groups*2;i++)
+      for(int j=0;j<2;j++)
+	tmp_edge[i][j] = edge[line[i]][j];
 
+    if(double_diameter_flag){
       int pattern = getRandom(4);
       if(pattern == 0){
 	for(int i=0;i<groups/2;i++)
@@ -130,65 +130,46 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
 	for(int i=0;i<groups/2;i++)
 	  swap(&tmp_edge[i*2+1][1], &tmp_edge[groups+i*2+1][1]);
       }
-      else if(pattern == 3){
+      else{
 	for(int i=0;i<groups/2;i++)
           swap(&tmp_edge[i*2+1][1], &tmp_edge[groups+i*2+1][0]);
       }
     }
     else if(single_diameter_flag){
-      if(flag0){
-	swap(&line[0], &line[1]);
-	swap(&line[2], &line[3]);
-      }
+      if(flag0)
+	for(int i=0;i<groups;i++)
+	  for(int j=0;j<2;j++)
+	    swap(&tmp_edge[i*2][j], &tmp_edge[i*2+1][j]);
 
       int pattern = getRandom(8);
-      if(pattern == 0){
-	tmp_edge[0][0] = edge[line[1]][0];  tmp_edge[0][1] = edge[line[0]][1];
-	tmp_edge[1][0] = edge[line[0]][0];  tmp_edge[1][1] = edge[line[2]][0];
-	tmp_edge[2][0] = edge[line[1]][1];  tmp_edge[2][1] = edge[line[2]][1];
-	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[3]][1];
-      }
-      else if(pattern == 1){
-	tmp_edge[0][0] = edge[line[1]][1];  tmp_edge[0][1] = edge[line[0]][1];
-	tmp_edge[1][0] = edge[line[0]][0];  tmp_edge[1][1] = edge[line[2]][0];
-	tmp_edge[2][0] = edge[line[1]][0];  tmp_edge[2][1] = edge[line[2]][1];
-	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[3]][1];
-      }
-      else if(pattern == 2){
-	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[1]][0];
-	tmp_edge[1][0] = edge[line[0]][1];  tmp_edge[1][1] = edge[line[2]][1];
-	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[1]][1];
-	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[3]][1];
-      }
-      else if(pattern == 3){
-	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[1]][1];
-	tmp_edge[1][0] = edge[line[0]][1];  tmp_edge[1][1] = edge[line[2]][1];
-	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[1]][0];
-	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[3]][1];
-      }
-      else if(pattern == 4){
-	tmp_edge[0][0] = edge[line[3]][0];  tmp_edge[0][1] = edge[line[0]][1];
-	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[line[3]][1];  tmp_edge[2][1] = edge[line[2]][1];
-	tmp_edge[3][0] = edge[line[0]][0];  tmp_edge[3][1] = edge[line[2]][0];
-      }
-      else if(pattern == 5){
-	tmp_edge[0][0] = edge[line[3]][1];  tmp_edge[0][1] = edge[line[0]][1];
-	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[line[3]][0];  tmp_edge[2][1] = edge[line[2]][1];
-	tmp_edge[3][0] = edge[line[0]][0];  tmp_edge[3][1] = edge[line[2]][0];
-      }
-      else if(pattern == 6){
-	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[3]][0];
-	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[3]][1];
-	tmp_edge[3][0] = edge[line[0]][1];  tmp_edge[3][1] = edge[line[2]][1];
-      }
-      else if(pattern == 7){
-	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[3]][1];
-	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[3]][0];
-	tmp_edge[3][0] = edge[line[0]][1];  tmp_edge[3][1] = edge[line[2]][1];
+      // Exchange pivots
+      if(pattern >= 4)
+	for(int i=0;i<groups/2;i++)
+	  for(int j=0;j<2;j++)
+	    swap(&tmp_edge[i*2+1][j], &tmp_edge[groups+i*2+1][j]);
+
+      if(pattern%2 == 0)
+	for(int i=0;i<groups/2;i++)
+	  swap(&tmp_edge[i*2+1][0], &tmp_edge[i*2+1][1]);
+
+      if(pattern%2 == 0){
+	swap(&tmp_edge[0][0], &tmp_edge[groups-1][0]);
+
+	for(int i=0;i<groups/2-1;i++)
+	  swap(&tmp_edge[i*2+1][0], &tmp_edge[groups+(i+1)*2][0]);
+	
+	for(int i=0;i<groups/2;i++)
+	  swap(&tmp_edge[i*2+1][1], &tmp_edge[i*2+2][0]);
+
+      } 
+      else{
+	swap(&tmp_edge[0][1], &tmp_edge[groups-1][0]);
+
+	for(int i=0;i<groups/2-1;i++)
+	  swap(&tmp_edge[1+i*2][0], &tmp_edge[groups+(i+1)*2][0]);
+	
+	for(int i=0;i<groups/2;i++)
+	  swap(&tmp_edge[i*2+1][1], &tmp_edge[i*2+2][1]);
       }
     }
     else{
