@@ -174,16 +174,12 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
     }
     else{
       if(getRandom(2) == 0){
-	tmp_edge[0][0] = edge[line[0]][0];   tmp_edge[0][1] = edge[line[1]][1];
-	tmp_edge[1][0] = edge[line[1]][0];   tmp_edge[1][1] = edge[line[0]][1];
-	tmp_edge[2][0] = edge[line[2]][0];   tmp_edge[2][1] = edge[line[3]][1];
-	tmp_edge[3][0] = edge[line[3]][0];   tmp_edge[3][1] = edge[line[2]][1];
+	for(int i=0;i<groups;i++)
+	  swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][1]);
       }
       else{
-	tmp_edge[0][0] = edge[line[0]][0];   tmp_edge[0][1] = edge[line[1]][0];
-	tmp_edge[1][0] = edge[line[0]][1];   tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[line[2]][0];   tmp_edge[2][1] = edge[line[3]][0];
-	tmp_edge[3][0] = edge[line[2]][1];   tmp_edge[3][1] = edge[line[3]][1];
+	for(int i=0;i<groups;i++)
+	  swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][0]);
       }
     }
 
@@ -192,6 +188,10 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
     if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge))
       continue;
 
+    for(int i=0;i<groups*2;i++)
+      if(order(nodes, tmp_edge[i][0], tmp_edge[i][1]) == RIGHT)
+	swap(&tmp_edge[i][0], &tmp_edge[i][1]);  // RIGHT -> LEFT
+      
     for(int i=0;i<groups*2;i++){
       edge[line[i]][0] = tmp_edge[i][0];
       edge[line[i]][1] = tmp_edge[i][1];
@@ -199,10 +199,6 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
 
     break;
   }
-
-  for(int i=0;i<2;i++)
-    if(order(nodes, edge[line[i]][0], edge[line[i]][1]) != order(nodes, edge[line[2+i]][0], edge[line[2+i]][1]))
-      swap(&edge[line[i]][0], &edge[line[i]][1]);
 }
 
 static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes,

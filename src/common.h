@@ -16,6 +16,10 @@
 
 #define NOT_VISITED -1
 
+#define RIGHT  0
+#define LEFT   1
+#define MIDDLE 2
+
 #define NUM_TIMERS      2
 #define TIMER_SA        0
 #define TIMER_ESTIMATED 1

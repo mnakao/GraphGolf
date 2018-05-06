@@ -17,9 +17,6 @@ void swap(int *a, int *b)
   *b = tmp;
 }
 
-#define RIGHT  0
-#define LEFT   1
-#define MIDDLE 2
 int order(const int nodes, const int a, const int b)
 {
   if((a-b)%(nodes/2) == 0) return MIDDLE;
