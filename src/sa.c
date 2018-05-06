@@ -17,8 +17,8 @@ static void print_results(const int num, const double temp, const double current
   fflush(stdout);
 }  
 
-static void create_adjacency(const int nodes, const int lines, const int degree, 
-			     int edge[lines][2], int adjacency[nodes][degree])
+void create_adjacency(const int nodes, const int lines, const int degree, 
+		      int edge[lines][2], int adjacency[nodes][degree])
 {
   int count[nodes];
   for(int i=0;i<nodes;i++)
@@ -91,7 +91,8 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
       else if(edge[line[0]][1] == edge[line[1]][1])   continue;
       else if(abs(line[0] - line[1]) % based_lines == 0){
 	int start_line = line[0] % based_lines;
-	if(edge_exchange_among_groups(based_nodes, based_lines, edge, groups, start_line))
+	if(edge_exchange_among_groups(based_nodes, based_lines, edge,
+				      groups, start_line))
 	  return;
 	else
 	  continue;
@@ -106,39 +107,33 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
       line[1+2*i] = (tmp1 >= lines)? tmp1 - lines : tmp1;
     }
 
-    bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1]) == nodes/2 && groups%2 == 0);
-    bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1]) == nodes/2 && groups%2 == 0);
+    bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1]) == nodes/2);
+    bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1]) == nodes/2);
     bool double_diameter_flag = (flag0 && flag1);
     bool single_diameter_flag = (flag0 && !flag1) || (!flag0 && flag1);
 
     if(double_diameter_flag){
+      for(int i=0;i<groups*2;i++)
+	for(int j=0;j<2;j++)
+	  tmp_edge[i][j] = edge[line[i]][j];
+
       int pattern = getRandom(4);
       if(pattern == 0){
-	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[1]][1];
-	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[0]][1];
-	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[2]][1];
-	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[3]][1];
+	for(int i=0;i<groups/2;i++)
+	  swap(&tmp_edge[i*2][1], &tmp_edge[groups+i*2][1]);
       }
       else if(pattern == 1){
-	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[1]][0];
-	tmp_edge[1][0] = edge[line[0]][1];  tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[2]][1];
-	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[3]][1];
+	for(int i=0;i<groups/2;i++)
+	  swap(&tmp_edge[i*2][1], &tmp_edge[groups+i*2][0]);
       }
       else if(pattern == 2){
-	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[0]][1];
-	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[3]][1];
-	tmp_edge[3][0] = edge[line[3]][0];  tmp_edge[3][1] = edge[line[2]][1];
+	for(int i=0;i<groups/2;i++)
+	  swap(&tmp_edge[i*2+1][1], &tmp_edge[groups+i*2+1][1]);
       }
-      else{
-	tmp_edge[0][0] = edge[line[0]][0];  tmp_edge[0][1] = edge[line[0]][1];
-	tmp_edge[1][0] = edge[line[1]][0];  tmp_edge[1][1] = edge[line[1]][1];
-	tmp_edge[2][0] = edge[line[2]][0];  tmp_edge[2][1] = edge[line[3]][0];
-	tmp_edge[3][0] = edge[line[2]][1];  tmp_edge[3][1] = edge[line[3]][1];
+      else if(pattern == 3){
+	for(int i=0;i<groups/2;i++)
+          swap(&tmp_edge[i*2+1][1], &tmp_edge[groups+i*2+1][0]);
       }
-      swap(&tmp_edge[1][0], &tmp_edge[2][0]);
-      swap(&tmp_edge[1][1], &tmp_edge[2][1]);
     }
     else if(single_diameter_flag){
       if(flag0){

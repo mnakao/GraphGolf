@@ -75,8 +75,8 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
   return true;
 }
 
-bool edge_exchange_among_groups(const int based_nodes, const int based_lines, int (*edge)[2], const int groups,
-                                const int start_line)
+bool edge_exchange_among_groups(const int based_nodes, const int based_lines, int (*edge)[2], 
+				const int groups, const int start_line)
 {
   if(groups == 1)
     return true;

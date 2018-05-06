@@ -282,7 +282,8 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL,
 }
 
 static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines, 
-				  int (*based_edge)[2], const int groups)
+				  int (*based_edge)[2], const int groups, const int degree,
+				  const int rank, const int size)
 {
   for(int j=0;j<groups;j++){
     for(int i=0;i<based_lines;i++){
@@ -291,8 +292,23 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
     }
   }
 
-  int start_line = getRandom(based_lines);
-  edge_exchange_among_groups(based_nodes, based_lines, edge, groups, start_line);
+  int diam;    // Not use
+  double ASPL; // Not use
+  int nodes = based_nodes * groups;
+  int lines = based_lines * groups;
+  int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
+
+  while(1){
+    if(rank == 0){
+      int start_line = getRandom(based_lines);
+      edge_exchange_among_groups(based_nodes, based_lines, edge, groups, start_line);
+      create_adjacency(nodes, lines, degree, edge, adjacency);
+    }
+    
+    MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
+    if(evaluation(nodes, lines, degree, adjacency, &diam, &ASPL, rank, size)) break;
+  }
+  free(adjacency);
 }
 
 int main(int argc, char *argv[])
@@ -347,11 +363,11 @@ int main(int argc, char *argv[])
   read_file(based_edge, infname);
   int based_nodes = max_node_num(based_lines, (int *)based_edge) + 1;
   int nodes       = based_nodes * groups;
+  int degree = 2 * lines / nodes;
 
-  create_symmetric_edge(edge, based_nodes, based_lines, based_edge, groups);
+  create_symmetric_edge(edge, based_nodes, based_lines, based_edge, groups, degree, rank, size);
   free(based_edge);
 
-  int degree = 2 * lines / nodes;
   int verify_exitcode;
   if(rank == 0)
     verify_exitcode = verfy_regular_graph(nodes, degree, lines, edge);
