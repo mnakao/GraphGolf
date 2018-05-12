@@ -55,6 +55,7 @@ extern void timer_clear(const int n);
 extern void timer_start(const int n);
 extern void timer_stop(const int n);
 extern double timer_read(const int n);
+extern int verfy_regular_graph(const int n, const int d, const int lines, int edge[lines][2]);
 
 extern bool evaluation(const int nodes, const int lines, const int degree, int adjacency[nodes][degree], 
 		       int *diameter, double *ASPL, const int rank, const int size);

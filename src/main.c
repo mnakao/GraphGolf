@@ -207,8 +207,8 @@ static int max_node_num(const int lines, const int edge[lines*2])
   return max;
 }
 
-static int verfy_regular_graph(const int n, const int d, const int lines,
-			       int edge[lines][2])
+int verfy_regular_graph(const int n, const int d, const int lines,
+			int edge[lines][2])
 {
   printf("Verifing a regular graph... ");
 
