@@ -120,9 +120,8 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
       else if((line[0] - line[1]) % based_lines == 0){
 	int start_line = line[0] % based_lines;
 	if(edge_exchange_among_groups(based_nodes, based_lines, edge,
-				      groups, start_line)){
+				      groups, start_line))
 	  return;
-	}
 	else
 	  continue;
       }
@@ -159,9 +158,11 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
 	for(int i=0;i<groups;i++)
 	  for(int j=0;j<2;j++)
 	    swap(&tmp_edge[i*2][j], &tmp_edge[i*2+1][j]);
-      
+
       int pivot_lineno = getRandom(groups) * 2 + 1;
+      pivot_lineno = 1;
       int pivot[2] = {tmp_edge[pivot_lineno][0], tmp_edge[pivot_lineno][1]};
+      printf("pivot = %d %d\n", pivot[0], pivot[1]);
       int not_pivot[2] = {};
 
       int e0 = pivot[0] % based_nodes;
@@ -177,13 +178,16 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
 	  break;
 	}
       }
+      printf("not pivot = %d %d\n", not_pivot[0], not_pivot[1]);
 
-      int rand_offset = getRandom(groups/2);
+      int rand_offset = getRandom(groups/2); // 0, 1, 2
+      rand_offset = 0;
       int tmp0 = pivot[0] + based_nodes * rand_offset;
       int tmp1 = pivot[1] + based_nodes * rand_offset;
       pivot[0] = (tmp0 >= nodes)? tmp0 - nodes : tmp0;
       pivot[1] = (tmp1 >= nodes)? tmp1 - nodes : tmp1;
       int pattern = getRandom(4);
+      pattern = 0;
 
       if(pattern == 0){
 	swap(&tmp_edge[0][0],      &pivot[0]);
@@ -224,35 +228,6 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
 	int tmp1 = not_pivot[1] + based_nodes * i;
 	tmp_edge[n][0] = (tmp0 >= nodes)? tmp0 - nodes : tmp0;
 	tmp_edge[n][1] = (tmp1 >= nodes)? tmp1 - nodes : tmp1;
-      }
-
-      // Exchange pivots
-      if(pattern >= 4)
-	for(int i=0;i<groups/2;i++)
-	  for(int j=0;j<2;j++)
-	    swap(&tmp_edge[i*2+1][j], &tmp_edge[groups+i*2+1][j]);
-
-      if(pattern%2 == 0)
-	for(int i=0;i<groups/2;i++)
-	  swap(&tmp_edge[i*2+1][0], &tmp_edge[i*2+1][1]);
-
-      if(pattern%2 == 0){
-	swap(&tmp_edge[0][0], &tmp_edge[groups-1][0]);
-
-	for(int i=0;i<groups/2-1;i++)
-	  swap(&tmp_edge[i*2+1][0], &tmp_edge[groups+(i+1)*2][0]);
-	
-	for(int i=0;i<groups/2;i++)
-	  swap(&tmp_edge[i*2+1][1], &tmp_edge[i*2+2][0]);
-      } 
-      else{
-	swap(&tmp_edge[0][1], &tmp_edge[groups-1][0]);
-
-	for(int i=0;i<groups/2-1;i++)
-	  swap(&tmp_edge[i*2+1][0], &tmp_edge[groups+(i+1)*2][1]);
-	
-	for(int i=0;i<groups/2;i++)
-	  swap(&tmp_edge[i*2+1][1], &tmp_edge[i*2+2][1]);
       }
     }
     else{

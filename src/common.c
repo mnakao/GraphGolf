@@ -103,7 +103,6 @@ bool edge_exchange_among_groups(const int based_nodes, const int based_lines, in
 
   while(1){
     int pattern = getRandom(groups+1);
-
     if(pattern == groups){
       for(int i=0;i<groups/2;i++){
 	tmp_edge[i][0] = edge[line[i]][0];
