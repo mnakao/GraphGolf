@@ -1,10 +1,11 @@
 .PHONY: clean coma
 CC=mpicc
+#DEBUG=-DNDEBUG
 ifeq ($(CC), mpicc)
-CFLAGS=-std=gnu99 -O3 -Wall -mcmodel=medium -fopenmp
+CFLAGS=-std=gnu99 -O3 -Wall -mcmodel=medium -fopenmp $(DEBUG)
 LFLAGS=-lm
 else ifeq ($(CC), mpiicc)
-CFLAGS=-O3 -qopenmp -std=gnu99
+CFLAGS=-O3 -qopenmp -std=gnu99 $(DEBUG)
 LFLAGS=
 endif
 SRCS := main.c sa.c timer.c top_down_bfs.c common.c
@@ -21,9 +22,13 @@ GraphGolf: $(OBJS)
 run: GraphGolf
 	nohup bash run.sh &
 
+# make coma DATA="..\/data\/n16d5.random.edges" N=1000000 G=2
 coma: 
+	cp ../scripts/run.sh .
+	cp ../scripts/ana.sh .
 	@for i in `seq 0 9`; do \
-	sbatch ../scripts/coma/submit-$$i.sh; \
+	sed "s/@DATA@/$(DATA)/" ../scripts/coma/submit-$$i.sh | sed "s/@N@/$(N)/" | sed "s/@G@/$(G)/" > submit-$$i.sh; \
+	sbatch submit-$$i.sh; \
 	done
 
 check: GraphGolf

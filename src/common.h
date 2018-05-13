@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <omp.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #define NOT_VISITED -1
 

@@ -1,5 +1,5 @@
 #include "common.h"
-#include <assert.h>
+
 int getRandom(const int max)
 {
   return (int)(rand()*((double)max)/(1.0+RAND_MAX));
@@ -91,9 +91,9 @@ bool edge_exchange_among_groups(const int based_nodes, const int based_lines, in
     return true;
 
   int line[groups], tmp_edge[groups][2];
-  int pattern = getRandom(groups+1);
   int nodes = based_nodes * groups;
   int lines = based_lines * groups;
+
   for(int i=0;i<groups;i++){
     line[i] = start_line + i * based_lines;
     assert(0 <= line[i] && line[i] < lines);
@@ -102,35 +102,42 @@ bool edge_exchange_among_groups(const int based_nodes, const int based_lines, in
   int start_edge = edge[line[0]][0] % based_nodes;
   int end_edge   = get_end_edge(start_edge, groups, edge, line, based_nodes);
   if(end_edge == -1) return false;
-  
-  if(pattern == groups){
-    for(int i=0;i<groups/2;i++){
-      tmp_edge[i][0] = edge[line[i]][0];
-      int tmp = edge[line[i]][0] + (groups/2) * based_nodes;
-      tmp_edge[i][1] = (tmp >= nodes)? tmp - nodes : tmp;
+  int diff       = edge[line[0]][0] - edge[line[0]][1];
+
+  while(1){
+    int pattern = getRandom(groups+1);
+
+    if(pattern == groups){
+      for(int i=0;i<groups/2;i++){
+	tmp_edge[i][0] = edge[line[i]][0];
+	int tmp = edge[line[i]][0] + (groups/2) * based_nodes;
+	tmp_edge[i][1] = (tmp >= nodes)? tmp - nodes : tmp;
+      }
+      for(int i=groups/2;i<groups;i++){
+	tmp_edge[i][0] = edge[line[i]][1];
+	int tmp = edge[line[i]][1] - (groups/2) * based_nodes;
+	tmp_edge[i][1] = (tmp < 0)? tmp + nodes : tmp;
+      }
     }
-    for(int i=groups/2;i<groups;i++){
-      tmp_edge[i][0] = edge[line[i]][1];
-      int tmp = edge[line[i]][1] - (groups/2) * based_nodes;
-      tmp_edge[i][1] = (tmp < 0)? tmp + nodes : tmp;
+    else{
+      for(int i=0;i<groups;i++)
+	tmp_edge[i][0] = start_edge + based_nodes * i;
+      
+      tmp_edge[0][1] = end_edge + based_nodes * pattern;
+      for(int i=1;i<groups;i++){
+	int tmp = tmp_edge[0][1] + based_nodes * i;
+	tmp_edge[i][1] = (tmp >= nodes)? tmp - nodes : tmp;
+      }
     }
+
+    if(diff != tmp_edge[0][0] - tmp_edge[0][1]) break;
   }
-  else{
-    for(int i=0;i<groups;i++)
-      tmp_edge[i][0] = start_edge + based_nodes * i;
-    
-    tmp_edge[0][1] = end_edge + based_nodes * pattern;
-    for(int i=1;i<groups;i++){
-      int tmp = tmp_edge[0][1] + based_nodes * i;
-      tmp_edge[i][1] = (tmp >= nodes)? tmp - nodes : tmp;
-    }
-  }
-  
+
   if(!check_loop(groups, tmp_edge))             return false;
   if(!check_duplicate_edge(groups, tmp_edge))   return false;
   if(!check_duplicate_current_edge(lines, groups, line, edge, tmp_edge))
     return false;
-  
+
   for(int i=0;i<groups;i++)
     if(order(nodes, tmp_edge[i][0], tmp_edge[i][1]) == RIGHT)
       swap(&tmp_edge[i][0], &tmp_edge[i][1]);  // RIGHT -> LEFT

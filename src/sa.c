@@ -1,26 +1,5 @@
 #include "common.h"
 
-#ifdef _NOT_USE
-static void sort_line(int num, int line[num])
-{
-  for(int k=0;k<2;k++)
-    for(int i=k;i<num;i+=2)
-      for(int j=i+2;j<num;j+=2)
-	if(line[i] > line[j])
-	  swap(&line[i], &line[j]);
-}
-
-static void sort_tmp_edge(int num, int tmp_edge[num][2])
-{
-  for(int k=0;k<2;k++)
-    for(int i=k;i<num;i+=2)
-      for(int j=i+2;j<num;j+=2)
-	if(tmp_edge[i][0] > tmp_edge[j][0]){
-	  swap(&tmp_edge[i][0], &tmp_edge[j][0]);
-	  swap(&tmp_edge[i][1], &tmp_edge[j][1]);
-	}
-}
-#endif
 static void print_result_header()
 {
   printf("   Times\t    Temp\tCurrent ASPL (GAP)\tBest ASPL (GAP)\t\t");
@@ -59,7 +38,7 @@ static int distance(const int nodes, const int a, const int b)
   return (v < nodes/2)? v : nodes - v;
 }
 
-static void check(const int nodes, const int lines, const int degree, const int groups, int edge[lines][2], int ii)
+static bool check(const int nodes, const int lines, const int degree, const int groups, int edge[lines][2], int ii)
 {
   //  verfy_regular_graph(nodes, degree, lines, edge);
 
@@ -71,7 +50,7 @@ static void check(const int nodes, const int lines, const int degree, const int 
 	printf("check 1: %d\n", ii);
 	printf("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", i, edge[i][0], i, edge[i][1], distance(nodes, edge[i][0], edge[i][1]));
 	printf("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", k, edge[k][0], k, edge[k][1], distance(nodes, edge[k][0], edge[k][1]));
-	exit(0);
+	return false;
       }
     }
   }
@@ -83,7 +62,7 @@ static void check(const int nodes, const int lines, const int degree, const int 
 	printf("check 2 : %d\n", ii);
 	printf("edge[%d][0] = %d : edge[%d][1] = %d %d\n", i, edge[i][0], i, edge[i][1], order(nodes, edge[i][0], edge[i][1]));
 	printf("edge[%d][0] = %d : edge[%d][1] = %d %d\n", k, edge[k][0], k, edge[k][1], order(nodes, edge[k][0], edge[k][1]));
-	exit(0);
+	return false;
       }
     }
   }
@@ -94,7 +73,7 @@ static void check(const int nodes, const int lines, const int degree, const int 
          (edge[i][0] == edge[j][1] && edge[i][1] == edge[j][0])){
         printf("check 3: %d\n", ii);
         printf("The same node conbination in the edge. %d %d\n", i, j);
-        exit(0);
+	return false;
       }
     }
   }
@@ -115,9 +94,11 @@ static void check(const int nodes, const int lines, const int degree, const int 
 	    int m = based_lines * k + i;
 	    printf("edge[%2d][0], edge[%2d][1] = %2d, %2d\n", m, m, edge[m][0], edge[m][1]);
 	  }
-	  exit(0);
+	  return false;
 	}
       }
+
+  return true;
 }
 
 static void edge_exchange(const int nodes, const int lines, const int groups, 
@@ -167,9 +148,10 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
     if(double_diameter_flag){
       int start_line = line[getRandom(2)] % based_lines;
       if(edge_exchange_among_groups(based_nodes, based_lines, edge,
-				    groups, start_line) == false){
+				    groups, start_line))
+	return;
+      else
 	continue;
-      }
     }
     else if(single_diameter_flag){
       if(flag0)
@@ -362,7 +344,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       if(rank == 0)
 	edge_exchange(nodes, lines, groups, current_edge, (int)i);
 
-      check(nodes, lines, degree, groups, current_edge, (int)i);
+      assert(check(nodes, lines, degree, groups, current_edge, (int)i));
       create_adjacency(nodes, lines, degree, current_edge, adjacency);
 
       MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);

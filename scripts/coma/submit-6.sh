@@ -12,9 +12,9 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 cd $SLURM_SUBMIT_DIR
 
 threads=$(nproc --all)
-data="../data/n16d5.random.edges"
-N=1000000
-G=2
+data=@DATA@
+N=@N@
+G=@G@
 
 for t in 1.227181 1.171404 1.118162 1.067340 1.018828 0.972520 0.928318 0.886124 0.845849 0.807403 
 do
