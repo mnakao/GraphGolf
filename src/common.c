@@ -2,7 +2,7 @@
 
 int getRandom(const int max)
 {
-  return (int)(rand()*((double)max)/(1.0+RAND_MAX));
+  return (int)(random()*((double)max)/(1.0+RAND_MAX));
 }
 
 static int get_end_edge(const int start_edge, const int groups, int (*edge)[2], 

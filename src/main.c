@@ -351,7 +351,7 @@ int main(int argc, char *argv[])
     ABORT;
   }
 
-  srand(random_seed);
+  srandom(random_seed);
   omp_set_num_threads(thread_num);
 
   int based_lines = count_lines(infname);

@@ -160,35 +160,27 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
 	    swap(&tmp_edge[i*2][j], &tmp_edge[i*2+1][j]);
 
       int pivot_lineno = getRandom(groups) * 2 + 1;
-      pivot_lineno = 1;
       int pivot[2] = {tmp_edge[pivot_lineno][0], tmp_edge[pivot_lineno][1]};
-      printf("pivot = %d %d\n", pivot[0], pivot[1]);
       int not_pivot[2] = {};
 
       int e0 = pivot[0] % based_nodes;
-      int e1 = pivot[1] % based_nodes;
       for(int i=0;i<groups;i++){
 	int n  = i * 2 + 1;
 	if(pivot_lineno == n) continue;
-	int e2 = tmp_edge[n][0] % based_nodes;
-	int e3 = tmp_edge[n][1] % based_nodes;
-	if(!has_duplicated_edge(e0, e1, e2, e3)){
+	int e1 = tmp_edge[n][0] % based_nodes;
+	if(e0 != e1){
 	  not_pivot[0] = tmp_edge[n][0];
 	  not_pivot[1] = tmp_edge[n][1];
 	  break;
 	}
       }
-      printf("not pivot = %d %d\n", not_pivot[0], not_pivot[1]);
 
-      int rand_offset = getRandom(groups/2); // 0, 1, 2
-      rand_offset = 0;
+      int rand_offset = getRandom(groups/2);
       int tmp0 = pivot[0] + based_nodes * rand_offset;
       int tmp1 = pivot[1] + based_nodes * rand_offset;
       pivot[0] = (tmp0 >= nodes)? tmp0 - nodes : tmp0;
       pivot[1] = (tmp1 >= nodes)? tmp1 - nodes : tmp1;
       int pattern = getRandom(4);
-      pattern = 0;
-
       if(pattern == 0){
 	swap(&tmp_edge[0][0],      &pivot[0]);
 	swap(&tmp_edge[groups][0], &pivot[1]);
