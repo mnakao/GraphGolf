@@ -10,8 +10,8 @@ static void print_help(char *argv, const int rank)
   exit(0);
 }
 
-static void output_params(const int nodes, const int degree, const int random_seed, const int thread_num,
-			  const double max_temp, const double min_temp, 
+static void output_params(const int nodes, const int degree, const int groups,
+			  const int random_seed, const int thread_num, const double max_temp, const double min_temp, 
 			  const double accept_rate, const long long ncalcs, const double cooling_rate,
 			  const char *infname, const char *outfname, const bool outfnameflag,
 			  const double average_time, const bool hill_climbing_flag, const bool auto_temp_flag)
@@ -40,6 +40,7 @@ static void output_params(const int nodes, const int degree, const int random_se
   printf("Input filename: %s\n", infname);
   printf("   Num. of nodes: %d\n", nodes);
   printf("   Degree: %d\n", degree);
+  printf("   Groups: %d\n", groups);
   if(outfnameflag)
     printf("Output filename: %s\n", outfname);
   printf("---\n");
@@ -127,9 +128,9 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
       break;
     case 'g':
       *groups = atoi(optarg);
-      if(*groups <= 0){
+      if(*groups <= 0 || (*groups != 1 && *groups%2 == 1)){
 	if(rank == 0)
-	  printf("-g value >= 0.\n");
+	  printf("-g value >= 1 and even number.\n");
 	ABORT;
       }
       break;
@@ -282,13 +283,12 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL,
 }
 
 static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines, 
-				  int (*based_edge)[2], const int groups, const int degree,
-				  const int rank, const int size)
+				  const int groups, const int degree, const int rank, const int size)
 {
-  for(int j=0;j<groups;j++){
+  for(int j=1;j<groups;j++){
     for(int i=0;i<based_lines;i++){
-      edge[based_lines*j+i][0] = based_edge[i][0] + based_nodes*j;
-      edge[based_lines*j+i][1] = based_edge[i][1] + based_nodes*j;
+      edge[based_lines*j+i][0] = edge[i][0] + based_nodes * j;
+      edge[based_lines*j+i][1] = edge[i][1] + based_nodes * j;
     }
   }
 
@@ -319,7 +319,7 @@ int main(int argc, char *argv[])
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   
   int diam = 0, low_diam = 0;
-  double ASPL = 0, low_ASPL = 0;
+  double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
   FILE *fp = NULL;
 
   // Initial parameters
@@ -332,7 +332,6 @@ int main(int argc, char *argv[])
   char *outfname = malloc(MAX_FILENAME_LENGTH);
 
   // Set arguments
-  double cooling_rate;
   set_args(argc, argv, rank, infname, outfname, 
 	   &outfnameflag, &random_seed, &thread_num, &ncalcs,
 	   &max_temp, &max_temp_flag, &min_temp,
@@ -355,18 +354,16 @@ int main(int argc, char *argv[])
   srand(random_seed);
   omp_set_num_threads(thread_num);
 
-  int based_lines      = count_lines(infname);
-  int (*based_edge)[2] = malloc(sizeof(int)*based_lines*2); // int based_edge[based_lines][2];
-  int lines            = based_lines * groups;
-  int (*edge)[2]       = malloc(sizeof(int)*lines*2);       // int edge[lines][2];
+  int based_lines = count_lines(infname);
+  int lines       = based_lines * groups;
+  int (*edge)[2]  = malloc(sizeof(int)*lines*2);       // int edge[lines][2];
 
-  read_file(based_edge, infname);
-  int based_nodes = max_node_num(based_lines, (int *)based_edge) + 1;
+  read_file(edge, infname);
+  int based_nodes = max_node_num(based_lines, (int *)edge) + 1;
   int nodes       = based_nodes * groups;
-  int degree = 2 * lines / nodes;
+  int degree      = 2 * lines / nodes;
 
-  create_symmetric_edge(edge, based_nodes, based_lines, based_edge, groups, degree, rank, size);
-  free(based_edge);
+  create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, rank, size);
 
   int verify_exitcode;
   if(rank == 0)
@@ -412,7 +409,7 @@ int main(int argc, char *argv[])
   }
 
   if(rank == 0)
-    output_params(nodes, degree, random_seed, thread_num, max_temp, min_temp, 
+    output_params(nodes, degree, groups, random_seed, thread_num, max_temp, min_temp, 
 		  accept_rate, ncalcs, cooling_rate, infname, outfname, 
 		  outfnameflag, average_time, hill_climbing_flag, auto_temp_flag);
 

@@ -10,11 +10,10 @@ static int get_end_edge(const int start_edge, const int groups, int (*edge)[2],
 {
   for(int i=0;i<groups;i++)
     for(int j=0;j<2;j++)
-      if(edge[line[i]][j] % based_nodes != start_edge){
+      if(edge[line[i]][j] % based_nodes != start_edge)
 	return edge[line[i]][j] % based_nodes;
-      }
 
-  return -1;
+  return start_edge;
 }
 
 bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11)
@@ -94,14 +93,12 @@ bool edge_exchange_among_groups(const int based_nodes, const int based_lines, in
   int nodes = based_nodes * groups;
   int lines = based_lines * groups;
 
-  for(int i=0;i<groups;i++){
-    line[i] = start_line + i * based_lines;
-    assert(0 <= line[i] && line[i] < lines);
-  }
+  for(int i=0;i<groups;i++)
+    line[i] = start_line + i * based_lines;  // 0 <= staert_line < based_lines
 
   int start_edge = edge[line[0]][0] % based_nodes;
   int end_edge   = get_end_edge(start_edge, groups, edge, line, based_nodes);
-  if(end_edge == -1) return false;
+  if(end_edge == start_edge) return false;
   int diff       = edge[line[0]][0] - edge[line[0]][1];
 
   while(1){
