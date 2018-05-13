@@ -306,7 +306,7 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
     }
     
     MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
-    if(evaluation(nodes, lines, degree, adjacency, &diam, &ASPL, rank, size)) break;
+    if(evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, rank, size)) break;
   }
   free(adjacency);
 }
@@ -374,8 +374,8 @@ int main(int argc, char *argv[])
     ABORT;
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
-  check_current_edge(nodes, degree, lines, edge, low_ASPL, rank, size);
-  double average_time = estimated_elapse_time(ncalcs, nodes, lines, degree, edge, rank, size);
+  check_current_edge(nodes, degree, lines, groups, edge, low_ASPL, rank, size);
+  double average_time = estimated_elapse_time(ncalcs, nodes, lines, degree, groups, edge, rank, size);
 
   if(hill_climbing_flag){
     max_temp = min_temp = 0;

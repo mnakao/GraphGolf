@@ -48,17 +48,18 @@ static int get_num_frontier(const int nodes, const int frontier[nodes])
   return count;
 }
 
-bool evaluation(const int nodes, const int lines, const int degree, int adjacency[nodes][degree], 
-		int *diameter, double *ASPL, const int rank, const int size)
+bool evaluation(const int nodes, const int groups, const int lines, const int degree,
+		int adjacency[nodes][degree], int *diameter, double *ASPL, const int rank, const int size)
 {
   int distance[nodes], max = 0;
   int cancel_flag = false;
   double sum = 0.0;
-
-  int node_size  = (nodes % size == 0)? nodes/size : nodes/size+1;
+  int based_nodes = nodes/groups;
+  
+  int node_size  = (based_nodes % size == 0)? based_nodes/size : based_nodes/size+1;
   int start_node = node_size * rank;
   if(rank == size-1)
-    node_size = nodes - start_node;
+    node_size = based_nodes - start_node;
 
 #pragma omp parallel
   {
@@ -101,7 +102,8 @@ bool evaluation(const int nodes, const int lines, const int degree, int adjacenc
 	if(max < distance[i])
 	  max = distance[i];
 	
-	sum += distance[i];
+	sum += distance[i] * (groups - i/based_nodes);
+	////	sum += distance[i];
       }
     }
     free(frontier);

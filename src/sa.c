@@ -290,7 +290,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 
   MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
 
-  evaluation(nodes, lines, degree, adjacency, diam, ASPL, rank, size);
+  evaluation(nodes, groups, lines, degree, adjacency, diam, ASPL, rank, size);
   double current_ASPL = *ASPL;
   double best_ASPL    = *ASPL;
   int current_diam    = *diam;
@@ -313,7 +313,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       create_adjacency(nodes, lines, degree, current_edge, adjacency);
 
       MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
-      complete = evaluation(nodes, lines, degree, adjacency, diam, ASPL, rank, size);
+      complete = evaluation(nodes, groups, lines, degree, adjacency, diam, ASPL, rank, size);
     } while(!complete);
 
     if(accept(*ASPL, current_ASPL, temp, nodes, hill_climbing_flag, detect_temp_flag, max_diff_energy)){
@@ -352,7 +352,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 
 #define ESTIMATED_TIMES 5
 double estimated_elapse_time(const long long ncals, const int nodes, const int lines, const int degree,
-			     int edge[lines][2], const int rank, const int size)
+			     const int groups, int edge[lines][2], const int rank, const int size)
 {
   int diam;    // Not use
   double ASPL; // Not use
@@ -364,7 +364,7 @@ double estimated_elapse_time(const long long ncals, const int nodes, const int l
       create_adjacency(nodes, lines, degree, edge, adjacency);
 
     MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
-    evaluation(nodes, lines, degree, adjacency, &diam, &ASPL, rank, size);
+    evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, rank, size);
   }
   timer_stop(TIMER_ESTIMATED);
 
@@ -373,7 +373,7 @@ double estimated_elapse_time(const long long ncals, const int nodes, const int l
   return timer_read(TIMER_ESTIMATED)/ESTIMATED_TIMES;
 }
 
-void check_current_edge(const int nodes, const int degree, const int lines, 
+void check_current_edge(const int nodes, const int degree, const int lines, const int groups,
 			int edge[lines][2], const double low_ASPL, const int rank, const int size)
 {
   int diam;    // Not use
@@ -384,7 +384,7 @@ void check_current_edge(const int nodes, const int degree, const int lines,
 
   MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if(evaluation(nodes, lines, degree, adjacency, &diam, &ASPL, rank, size) == false){
+  if(evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, rank, size) == false){
     printf("The input file has a node which is never reached by another node.\n");
     ABORT;
   }
