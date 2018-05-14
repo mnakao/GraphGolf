@@ -1,11 +1,15 @@
 .PHONY: clean coma
 CC=mpicc
-#DEBUG=-DNDEBUG
-ifeq ($(CC), mpicc)
+DEBUG=-DNDEBUG
+
 CFLAGS=-std=gnu99 -O3 -Wall -mcmodel=medium -fopenmp $(DEBUG)
 LFLAGS=-lm
-else ifeq ($(CC), mpiicc)
+ifeq ($(ENV), coma)
 CFLAGS=-O3 -qopenmp -std=gnu99 $(DEBUG)
+LFLAGS=
+else ifeq ($(ENV), ofp)
+CC=mpiicc
+CFLAGS=-axMIC-AVX512 -O3 -std=gnu99 -qopenmp
 LFLAGS=
 endif
 SRCS := main.c sa.c timer.c top_down_bfs.c common.c
@@ -24,11 +28,19 @@ run: GraphGolf
 
 # make coma DATA="..\/data\/n16d5.random.edges" N=1000000 G=2
 coma: 
-	cp ../scripts/run.sh .
 	cp ../scripts/ana.sh .
+	make clean; make ENV=coma; \
 	@for i in `seq 0 9`; do \
 	sed "s/@DATA@/$(DATA)/" ../scripts/coma/submit-$$i.sh | sed "s/@N@/$(N)/" | sed "s/@G@/$(G)/" > submit-$$i.sh; \
 	sbatch submit-$$i.sh; \
+	done
+
+ofp:
+	cp ../scripts/ana.sh .
+	make clean; make ENV=ofp; \
+	@for i in `seq 0 16`; do \
+	sed "s/@DATA@/$(DATA)/" ../scripts/ofp/submit-$$i.sh | sed "s/@N@/$(N)/" | sed "s/@G@/$(G)/" > submit-$$i.sh; \
+	pjsub submit-$$i.sh; \
 	done
 
 check: GraphGolf
