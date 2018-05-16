@@ -1,5 +1,10 @@
 #include "common.h"
 
+static double uniform_rand()
+{
+  return ((double)random()+1.0)/((double)RAND_MAX+2.0);
+}
+
 static void print_result_header()
 {
   printf("   Times\t    Temp\tCurrent ASPL (GAP)\tBest ASPL (GAP)\t\t");
@@ -257,7 +262,7 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
   if(ASPL <= current_ASPL) return true;
   if(hill_climbing_flag)   return false;
 
-  double probability = (double)rand()/RAND_MAX;
+  double probability = uniform_rand();
   double diff = (current_ASPL - ASPL) * nodes * (nodes-1);
 
   if(detect_temp_flag){
@@ -265,6 +270,7 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
       *max_diff_energy = abs(diff);
     }
   }
+
   if(exp(diff / temp) > probability)
     return true;
   else

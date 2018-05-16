@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## nohup bash run2.sh &
+## nohup bash run.sh &
 
 threads=$(nproc --all)
 
