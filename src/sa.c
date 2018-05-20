@@ -327,10 +327,10 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       current_diam = *diam;
 
       memcpy(edge, current_edge, size_edge);
-      if(best_ASPL > current_ASPL && best_diam >= current_diam)
+      if(best_ASPL > current_ASPL){
 	memcpy(best_edge, current_edge, size_edge);
-
-      best_ASPL = MIN(best_ASPL, current_ASPL);
+	best_ASPL = current_ASPL;
+      }
       best_diam = MIN(best_diam, current_diam);
       if(best_ASPL == low_ASPL){
 	if(rank == 0 && !detect_temp_flag){
@@ -349,7 +349,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 
   *ASPL = best_ASPL;
   *diam = best_diam;
-  memcpy(edge, best_edge, size_edge);
+    memcpy(edge, best_edge, size_edge);
 
   free(adjacency);
 
