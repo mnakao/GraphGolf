@@ -124,7 +124,7 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
       else if(edge[line[0]][1] == edge[line[1]][1])   continue;
       else if((line[0] - line[1]) % based_lines == 0){
 	int start_line = line[0] % based_lines;
-	if(edge_exchange_among_groups(based_nodes, based_lines, edge,
+	if(edge_exchange_among_groups(edge, based_nodes, based_lines,
 				      groups, start_line))
 	  return;
 	else
@@ -151,7 +151,7 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
 
     if(double_diameter_flag){
       int start_line = line[getRandom(2)] % based_lines;
-      if(edge_exchange_among_groups(based_nodes, based_lines, edge,
+      if(edge_exchange_among_groups(edge, based_nodes, based_lines, 
 				    groups, start_line))
 	return;
       else
@@ -379,6 +379,7 @@ double estimated_elapse_time(const long long ncals, const int nodes, const int l
   return timer_read(TIMER_ESTIMATED)/ESTIMATED_TIMES;
 }
 
+// This function is mainly useful when groupe is 1.
 void check_current_edge(const int nodes, const int degree, const int lines, const int groups,
 			int edge[lines][2], const double low_ASPL, const int rank, const int size)
 {

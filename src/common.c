@@ -38,10 +38,9 @@ int order(const int nodes, const int a, const int b)
   }
   else{
     if(a < b) return RIGHT;
-    return (0 <= b && b < a - nodes/2)? RIGHT : LEFT;
+    return (a-nodes/2 > b)? RIGHT : LEFT;
   }
 }
-
 
 bool check_loop(const int lines, int (*edge)[2])
 {
@@ -83,7 +82,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
   return true;
 }
 
-bool edge_exchange_among_groups(const int based_nodes, const int based_lines, int (*edge)[2], 
+bool edge_exchange_among_groups(int (*edge)[2], const int based_nodes, const int based_lines, 
 				const int groups, const int start_line)
 {
   if(groups == 1)
@@ -94,25 +93,29 @@ bool edge_exchange_among_groups(const int based_nodes, const int based_lines, in
   int lines = based_lines * groups;
 
   for(int i=0;i<groups;i++)
-    line[i] = start_line + i * based_lines;  // 0 <= staert_line < based_lines
-
+    line[i] = start_line + i * based_lines;  // 0 <= start_line < based_lines
   int start_edge = edge[line[0]][0] % based_nodes;
   int end_edge   = get_end_edge(start_edge, groups, edge, line, based_nodes);
-  if(end_edge == start_edge) return false;
-  int diff       = edge[line[0]][0] - edge[line[0]][1];
+  if(end_edge == start_edge){
+    /* In n = 9, g = 4,
+       edge[line[:]][:] = {1, 28}, {10, 1}, {19, 10}, {28, 19};
+    */
+    return false;
+  }
 
+  int diff = edge[line[0]][0] - edge[line[0]][1];
   while(1){
     int pattern = getRandom(groups+1);
     if(pattern == groups){
       for(int i=0;i<groups/2;i++){
 	tmp_edge[i][0] = edge[line[i]][0];
-	int tmp = edge[line[i]][0] + (groups/2) * based_nodes;
-	tmp_edge[i][1] = (tmp >= nodes)? tmp - nodes : tmp;
+	int tmp = edge[line[i]][0] + nodes/2;
+	tmp_edge[i][1] = (tmp < nodes)? tmp : tmp - nodes;
       }
       for(int i=groups/2;i<groups;i++){
 	tmp_edge[i][0] = edge[line[i]][1];
-	int tmp = edge[line[i]][1] - (groups/2) * based_nodes;
-	tmp_edge[i][1] = (tmp < 0)? tmp + nodes : tmp;
+	int tmp = edge[line[i]][1] + nodes/2;
+	tmp_edge[i][1] = (tmp < nodes)? tmp : tmp - nodes;
       }
     }
     else{
@@ -122,7 +125,7 @@ bool edge_exchange_among_groups(const int based_nodes, const int based_lines, in
       tmp_edge[0][1] = end_edge + based_nodes * pattern;
       for(int i=1;i<groups;i++){
 	int tmp = tmp_edge[0][1] + based_nodes * i;
-	tmp_edge[i][1] = (tmp >= nodes)? tmp - nodes : tmp;
+	tmp_edge[i][1] = (tmp < nodes)? tmp : tmp - nodes;
       }
     }
 

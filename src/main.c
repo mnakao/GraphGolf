@@ -48,10 +48,7 @@ static void output_params(const int nodes, const int degree, const int groups,
 
 static double calc_cooling_rate(const double max_temp, const double min_temp, const long long ncalcs)
 {
-  if(max_temp == min_temp || ncalcs == 0) 
-    return 1.0;
-  else
-    return pow(min_temp/max_temp, 1.0/(double)ncalcs);
+  return (max_temp != min_temp)? pow(min_temp/max_temp, 1.0/(double)ncalcs) : 1.0;
 }
 
 static void set_args(const int argc, char **argv, const int rank, char *infname, char *outfname, 
@@ -60,9 +57,8 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
 		     bool *auto_temp_flag, double *accept_rate, bool *hill_climbing_flag,
 		     bool *detect_temp_flag, int *groups)
 {
-  if(argc < 3){
+  if(argc < 3)
     print_help(argv[0], rank);
-  }
 
   int result;
   while((result = getopt(argc,argv,"f:o:s:t:n:w:c:g:a:dyph"))!=-1){
@@ -88,7 +84,7 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
       *random_seed = atoi(optarg);
       if(*random_seed < 0){
 	if(rank == 0)
-	  printf("-s value >= 0.\n");
+	  printf("-s value >= 0\n");
 	ABORT;
       }
       break;
@@ -96,15 +92,15 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
       *thread_num  = atoi(optarg);
       if(*thread_num < 1){
 	if(rank == 0)
-	  printf("omp_num_threads is too small.\n");
+	  printf("-s value >= 1\n");
 	ABORT;
       }
       break;
     case 'n':
-      *ncalcs   = atoll(optarg);
-      if(*ncalcs < 0){
+      *ncalcs = atoll(optarg);
+      if(*ncalcs <= 0){
 	if(rank == 0)
-	  printf("-n value >= 0.\n");
+	  printf("-n value > 0\n");
 	ABORT;
       }
       break;
@@ -112,7 +108,7 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
       *max_temp = atof(optarg);
       if(*max_temp <= 0){
 	if(rank == 0)
-	  printf("MAX temperature is invalid.\n");
+	  printf("-w value > 0\n");
 	ABORT;
       }
       *max_temp_flag = true;
@@ -121,27 +117,27 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
       *min_temp = atof(optarg);
       if(*min_temp <= 0){
 	if(rank == 0)
-	  printf("MIN temperature is invalid.\n");
+	  printf("MIN value > 0\n");
 	ABORT;
       }
       *min_temp_flag = true;
       break;
     case 'g':
       *groups = atoi(optarg);
-      if(*groups <= 0 || (*groups != 1 && *groups%2 == 1)){
+      if(*groups < 1){
 	if(rank == 0)
-	  printf("-g value >= 1 and even number.\n");
+	  printf("-g value >= 1\n");
 	ABORT;
       }
       break;
     case 'a':
-      *auto_temp_flag = true;
       *accept_rate = atof(optarg);
       if(*accept_rate <= 0 || *accept_rate >= 1.0){
 	if(rank == 0)
-	  printf("Accept rate <= 0 || >= 1.0.\n");
+	  printf("0 <= -a value <= 1.0\n");
 	ABORT;
       }
+      *auto_temp_flag = true;
       break;
     case 'd':
       *detect_temp_flag = true;
@@ -202,8 +198,7 @@ static int max_node_num(const int lines, const int edge[lines*2])
 {
   int max = 0;
   for(int i=0;i<lines*2;i++)
-    if(max < edge[i])
-      max = edge[i];
+    max = MAX(max, edge[i]);
 
   return max;
 }
@@ -237,20 +232,14 @@ int verfy_regular_graph(const int n, const int d, const int lines,
       return false;
     }
 
-  for(int i=0;i<lines;i++)
-    if(edge[i][0] == edge[i][1]){
-      printf("NG\nThe same node in the edge. %d %d\n", i, i+1);
-      return false;
-    }
+  if(!check_loop(lines, edge)){
+    printf("NG\nThe same node in the edge.\n");
+    return false;
+  }
 
-  for(int i=0;i<lines;i++){
-    for(int j=i+1;j<lines;j++){
-      if((edge[i][0] == edge[j][0] && edge[i][1] == edge[j][1]) ||
-	 (edge[i][0] == edge[j][1] && edge[i][1] == edge[j][0])){
-	printf("NG\nThe same node conbination in the edge. %d %d\n", i, j);
-	return false;
-      }
-    }
+  if(!check_duplicate_edge(lines, edge)){
+    printf("NG\nThe same node conbination in the edge.\n");
+    return false;
   }
   
   printf("OK\n");
@@ -301,7 +290,7 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   while(1){
     if(rank == 0){
       int start_line = getRandom(based_lines);
-      edge_exchange_among_groups(based_nodes, based_lines, edge, groups, start_line);
+      edge_exchange_among_groups(edge, based_nodes, based_lines, groups, start_line);
       create_adjacency(nodes, lines, degree, edge, adjacency);
     }
     
@@ -356,7 +345,7 @@ int main(int argc, char *argv[])
 
   int based_lines = count_lines(infname);
   int lines       = based_lines * groups;
-  int (*edge)[2]  = malloc(sizeof(int)*lines*2);       // int edge[lines][2];
+  int (*edge)[2]  = malloc(sizeof(int)*lines*2); // int edge[lines][2];
 
   read_file(edge, infname);
   int based_nodes = max_node_num(based_lines, (int *)edge) + 1;
