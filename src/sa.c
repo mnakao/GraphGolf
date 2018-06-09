@@ -169,11 +169,6 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
 	}
       }
 
-      int rand_offset = getRandom(groups/2);
-      int tmp0 = pivot[0] + based_nodes * rand_offset;
-      int tmp1 = pivot[1] + based_nodes * rand_offset;
-      pivot[0] = (tmp0 >= nodes)? tmp0 - nodes : tmp0;
-      pivot[1] = (tmp1 >= nodes)? tmp1 - nodes : tmp1;
       int pattern = getRandom(4);
       if(pattern == 0){
 	swap(&tmp_edge[0][0],      &pivot[0]);
