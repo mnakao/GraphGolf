@@ -107,13 +107,13 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
     while(1){
       line[0] = getRandom(lines);
       line[1] = getRandom(lines);
-      if(line[1] == line[0])	                      continue;
+      if(line[0] == line[1])	                      continue;
       else if(edge[line[0]][0] == edge[line[1]][0])   continue;
       else if(edge[line[0]][0] == edge[line[1]][1])   continue;
       else if(edge[line[0]][1] == edge[line[1]][0])   continue;
       else if(edge[line[0]][1] == edge[line[1]][1])   continue;
       else if((line[0] - line[1]) % based_lines == 0){
-	int start_line = line[0] % based_lines;
+	int start_line = line[getRandom(2)] % based_lines;
 	if(edge_exchange_among_groups(edge, based_nodes, based_lines,
 				      groups, start_line))
 	  return;
@@ -147,8 +147,7 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
       else
 	continue;
     }
-
-    if(single_diameter_flag){
+    else if(single_diameter_flag){
       if(flag0)
 	for(int i=0;i<groups;i++)
 	  for(int j=0;j<2;j++)
