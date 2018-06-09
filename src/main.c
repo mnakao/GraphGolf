@@ -2,60 +2,17 @@
 
 static void print_help(char *argv, const int rank)
 {
-  if(rank == 0){
-    printf("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] [-g <gruops>]", argv);
-    printf(" [-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-d] [-a <accept_rate>] [-y] [-h]\n");
-  }
+  PRINT_R0("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] [-g <gruops>]", argv);
+  PRINT_R0(" [-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-d] [-a <accept_rate>] [-y] [-h]\n");
   MPI_Finalize();
   exit(0);
 }
 
-static void output_params(const int nodes, const int degree, const int groups,
-			  const int random_seed, const int thread_num, const double max_temp, const double min_temp, 
-			  const double accept_rate, const long long ncalcs, const double cooling_rate,
-			  const char *infname, const char *outfname, const bool outfnameflag,
-			  const double average_time, const bool hill_climbing_flag, const bool auto_temp_flag)
-{
-  printf("---\n");
-  printf("Seed: %d\n", random_seed);
-  printf("Num. of threads: %d\n", thread_num);
-  if(hill_climbing_flag == false){
-    printf("Algorithm: Simulated Annealing\n");
-    if(!auto_temp_flag){
-      printf("   MAX Temperature: %f\n", max_temp);
-      printf("   MIN Temperature: %f\n", min_temp);
-      printf("   Cooling Rate: %f\n", cooling_rate);
-    }
-    else{
-      printf("   Accept Rate: %f\n", accept_rate);
-    }
-  }
-  else{
-    printf("Algorithm: Hill climbing Method\n");
-  }
-
-  printf("Num. of Calulations: %lld\n", ncalcs);
-  printf("   Average BFS time: %f sec.\n", average_time);
-  printf("   Estimated elapse time: %f sec.\n", average_time * ncalcs);
-  printf("Input filename: %s\n", infname);
-  printf("   Num. of nodes: %d\n", nodes);
-  printf("   Degree: %d\n", degree);
-  printf("   Groups: %d\n", groups);
-  if(outfnameflag)
-    printf("Output filename: %s\n", outfname);
-  printf("---\n");
-}
-
-static double calc_cooling_rate(const double max_temp, const double min_temp, const long long ncalcs)
-{
-  return (max_temp != min_temp)? pow(min_temp/max_temp, 1.0/(double)ncalcs) : 1.0;
-}
-
-static void set_args(const int argc, char **argv, const int rank, char *infname, char *outfname, 
-		     bool *outfnameflag, int *random_seed, int *thread_num, long long *ncalcs, 
-		     double *max_temp, bool *max_temp_flag, double *min_temp, bool *min_temp_flag, 
-		     bool *auto_temp_flag, double *accept_rate, bool *hill_climbing_flag,
-		     bool *detect_temp_flag, int *groups)
+static void set_args(const int argc, char **argv, const int rank, char *infname, char *outfname,
+                     bool *outfnameflag, int *random_seed, int *thread_num, long long *ncalcs,
+                     double *max_temp, bool *max_temp_flag, double *min_temp, bool *min_temp_flag,
+                     bool *auto_temp_flag, double *accept_rate, bool *hill_climbing_flag,
+                     bool *detect_temp_flag, int *groups)
 {
   if(argc < 3)
     print_help(argv[0], rank);
@@ -64,79 +21,52 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
   while((result = getopt(argc,argv,"f:o:s:t:n:w:c:g:a:dyph"))!=-1){
     switch(result){
     case 'f':
-      if(strlen(optarg) > MAX_FILENAME_LENGTH){
-	if(rank == 0)
-	  printf("Input filename is long (%s). Please change MAX_FILENAME_LENGTH.\n", optarg);
-	ABORT;
-      }
+      if(strlen(optarg) > MAX_FILENAME_LENGTH)
+        ERROR("Input filename is long (%s). Please change MAX_FILENAME_LENGTH.\n", optarg);
       strcpy(infname, optarg);
       break;
     case 'o':
-      if(strlen(optarg) > MAX_FILENAME_LENGTH){
-	if(rank == 0)
-	  printf("Output filename is long (%s). Please change MAX_FILENAME_LENGTH.\n", optarg);
-	ABORT;
-      }
+      if(strlen(optarg) > MAX_FILENAME_LENGTH)
+        ERROR("Output filename is long (%s). Please change MAX_FILENAME_LENGTH.\n", optarg);
       strcpy(outfname, optarg);
       *outfnameflag = true;
       break;
     case 's':
       *random_seed = atoi(optarg);
-      if(*random_seed < 0){
-	if(rank == 0)
-	  printf("-s value >= 0\n");
-	ABORT;
-      }
+      if(*random_seed < 0)
+        ERROR("-s value >= 0\n");
       break;
     case 't':
-      *thread_num  = atoi(optarg);
-      if(*thread_num < 1){
-	if(rank == 0)
-	  printf("-s value >= 1\n");
-	ABORT;
-      }
+      *thread_num = atoi(optarg);
+      if(*thread_num < 1)
+        ERROR("-s value >= 1\n");
       break;
     case 'n':
       *ncalcs = atoll(optarg);
-      if(*ncalcs <= 0){
-	if(rank == 0)
-	  printf("-n value > 0\n");
-	ABORT;
-      }
+      if(*ncalcs <= 0)
+        ERROR("-n value > 0\n");
       break;
     case 'w':
       *max_temp = atof(optarg);
-      if(*max_temp <= 0){
-	if(rank == 0)
-	  printf("-w value > 0\n");
-	ABORT;
-      }
+      if(*max_temp <= 0)
+        ERROR("-w value > 0\n");
       *max_temp_flag = true;
       break;
     case 'c':
       *min_temp = atof(optarg);
-      if(*min_temp <= 0){
-	if(rank == 0)
-	  printf("MIN value > 0\n");
-	ABORT;
-      }
+      if(*min_temp <= 0)
+        ERROR("MIN value > 0\n");
       *min_temp_flag = true;
       break;
     case 'g':
       *groups = atoi(optarg);
-      if(*groups < 1){
-	if(rank == 0)
-	  printf("-g value >= 1\n");
-	ABORT;
-      }
+      if(*groups < 1)
+        ERROR("-g value >= 1\n");
       break;
     case 'a':
       *accept_rate = atof(optarg);
-      if(*accept_rate <= 0 || *accept_rate >= 1.0){
-	if(rank == 0)
-	  printf("0 <= -a value <= 1.0\n");
-	ABORT;
-      }
+      if(*accept_rate <= 0 || *accept_rate >= 1.0)
+        ERROR("0 < -a value < 1.0\n");
       *auto_temp_flag = true;
       break;
     case 'd':
@@ -157,7 +87,7 @@ static int count_lines(const char *fname)
   FILE *fp = NULL;
   if((fp = fopen(fname, "r")) == NULL){
     printf("File not found\n");
-    ABORT;
+    ABORT();
   }
   
   int lines = 0, c;
@@ -166,14 +96,7 @@ static int count_lines(const char *fname)
       lines++;
 
   fclose(fp);
-
   return lines;
-}
-
-static void output_file(FILE *fp, const int lines, int edge[lines][2])
-{
-  for(int i=0;i<lines;i++)
-    fprintf(fp, "%d %d\n", edge[i][0], edge[i][1]);
 }
 
 static void read_file(int (*edge)[2], const char *fname)
@@ -181,9 +104,9 @@ static void read_file(int (*edge)[2], const char *fname)
   FILE *fp;
   if((fp = fopen(fname, "r")) == NULL){
     printf("File not found\n");
-    ABORT;
+    ABORT();
   }
-  
+
   int n1, n2, i = 0;
   while(fscanf(fp, "%d %d", &n1, &n2) != EOF){
     edge[i][0] = n1;
@@ -203,8 +126,60 @@ static int max_node_num(const int lines, const int edge[lines*2])
   return max;
 }
 
-int verfy_regular_graph(const int n, const int d, const int lines,
-			int edge[lines][2])
+static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines,
+                                  const int groups, const int degree, const int rank, const int size)
+{
+  for(int j=1;j<groups;j++){
+    for(int i=0;i<based_lines;i++){
+      edge[based_lines*j+i][0] = edge[i][0] + based_nodes * j;
+      edge[based_lines*j+i][1] = edge[i][1] + based_nodes * j;
+    }
+  }
+
+  int diam;    // Not use
+  double ASPL; // Not use
+  int nodes = based_nodes * groups;
+  int lines = based_lines * groups;
+  int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
+
+  while(1){
+    if(rank == 0){
+      int start_line = getRandom(based_lines);
+      edge_exchange_among_groups(edge, based_nodes, based_lines, groups, start_line);
+      create_adjacency(nodes, lines, degree, edge, adjacency);
+    }
+
+    MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
+    if(evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, rank, size)) break;
+  }
+  free(adjacency);
+}
+
+// This function is inherited from "http://research.nii.ac.jp/graphgolf/py/create-random.py".
+static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int nodes, const int degree)
+{
+  int diam = -1, n = 1, r = 1;
+  double aspl = 0.0;
+
+  while(1){
+    int tmp = n + degree * pow(degree-1, r-1);
+    if(tmp >= nodes)
+      break;
+
+    n = tmp;
+    aspl += r * degree * pow(degree-1, r-1);
+    diam = r++;
+  }
+
+  diam++;
+  aspl += diam * (nodes - n);
+  aspl /= (nodes - 1);
+
+  *low_diam = diam;
+  *low_ASPL = aspl;
+}
+
+int verfy_regular_graph(const int n, const int d, const int lines, int edge[lines][2])
 {
   printf("Verifing a regular graph... ");
 
@@ -246,58 +221,46 @@ int verfy_regular_graph(const int n, const int d, const int lines,
   return true;
 }
 
-// This function is inherited from "http://research.nii.ac.jp/graphgolf/py/create-random.py".
-static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL,
-				     const int nodes, const int degree)
+static void output_params(const int nodes, const int degree, const int groups,
+                          const int random_seed, const int thread_num, const double max_temp, const double min_temp,
+                          const double accept_rate, const long long ncalcs, const double cooling_rate,
+                          const char *infname, const char *outfname, const bool outfnameflag,
+                          const double average_time, const bool hill_climbing_flag, const bool auto_temp_flag)
 {
-  int diam = -1, n = 1, r = 1;
-  double aspl = 0.0;
-  
-  while(1){
-    int tmp = n + degree * pow(degree-1, r-1);
-    if(tmp >= nodes)
-      break;
-
-    n = tmp;
-    aspl += r * degree * pow(degree-1, r-1);
-    diam = r++;
+  printf("---\n");
+  printf("Seed: %d\n", random_seed);
+  printf("Num. of threads: %d\n", thread_num);
+  if(hill_climbing_flag == false){
+    printf("Algorithm: Simulated Annealing\n");
+    if(!auto_temp_flag){
+      printf("   MAX Temperature: %f\n", max_temp);
+      printf("   MIN Temperature: %f\n", min_temp);
+      printf("   Cooling Rate: %f\n", cooling_rate);
+    }
+    else{
+      printf("   Accept Rate: %f\n", accept_rate);
+    }
   }
-  
-  diam++;
-  aspl += diam * (nodes - n);
-  aspl /= (nodes - 1);
+  else{
+    printf("Algorithm: Hill climbing Method\n");
+  }
 
-  *low_diam = diam;
-  *low_ASPL = aspl;
+  printf("Num. of Calulations: %lld\n", ncalcs);
+  printf("   Average BFS time: %f sec.\n", average_time);
+  printf("   Estimated elapse time: %f sec.\n", average_time * ncalcs);
+  printf("Input filename: %s\n", infname);
+  printf("   Num. of nodes: %d\n", nodes);
+  printf("   Degree: %d\n", degree);
+  printf("   Groups: %d\n", groups);
+  if(outfnameflag)
+    printf("Output filename: %s\n", outfname);
+  printf("---\n");
 }
 
-static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines, 
-				  const int groups, const int degree, const int rank, const int size)
+static void output_file(FILE *fp, const int lines, int edge[lines][2])
 {
-  for(int j=1;j<groups;j++){
-    for(int i=0;i<based_lines;i++){
-      edge[based_lines*j+i][0] = edge[i][0] + based_nodes * j;
-      edge[based_lines*j+i][1] = edge[i][1] + based_nodes * j;
-    }
-  }
-
-  int diam;    // Not use
-  double ASPL; // Not use
-  int nodes = based_nodes * groups;
-  int lines = based_lines * groups;
-  int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-
-  while(1){
-    if(rank == 0){
-      int start_line = getRandom(based_lines);
-      edge_exchange_among_groups(edge, based_nodes, based_lines, groups, start_line);
-      create_adjacency(nodes, lines, degree, edge, adjacency);
-    }
-    
-    MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
-    if(evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, rank, size)) break;
-  }
-  free(adjacency);
+  for(int i=0;i<lines;i++)
+    fprintf(fp, "%d %d\n", edge[i][0], edge[i][1]);
 }
 
 int main(int argc, char *argv[])
@@ -327,18 +290,12 @@ int main(int argc, char *argv[])
 	   &min_temp_flag, &auto_temp_flag, &accept_rate, &hill_climbing_flag,
 	   &detect_temp_flag, &groups);
 
-  if((max_temp_flag + auto_temp_flag + hill_climbing_flag >= 2) || 
-     (min_temp_flag + auto_temp_flag + hill_climbing_flag >= 2)){
-    if(rank == 0)
-      printf("Two of (-w or -c), -a, and -y cannot be used.\n");
-    ABORT;
-  }
-
-  if(hill_climbing_flag && detect_temp_flag){
-    if(rank == 0)
-      printf("Both -h and -d cannot be used.\n");
-    ABORT;
-  }
+  if((max_temp_flag && auto_temp_flag && hill_climbing_flag) || 
+     (min_temp_flag && auto_temp_flag && hill_climbing_flag))
+    ERROR("Two of (-w or -c), -a, and -y cannot be used.\n");
+  
+  if(hill_climbing_flag && detect_temp_flag)
+    ERROR("Both -h and -d cannot be used.\n");
 
   srandom(random_seed);
   omp_set_num_threads(thread_num);
@@ -360,14 +317,14 @@ int main(int argc, char *argv[])
 
   MPI_Bcast(&verify_exitcode, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if(verify_exitcode == false)
-    ABORT;
+    ABORT();
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
   check_current_edge(nodes, degree, lines, groups, edge, low_ASPL, rank, size);
   double average_time = estimated_elapse_time(ncalcs, nodes, lines, degree, groups, edge, rank, size);
 
   if(hill_climbing_flag){
-    max_temp = min_temp = 0;
+    max_temp = min_temp = 0.0;
     cooling_rate = 1.0;
   }
   else if(auto_temp_flag){
@@ -376,7 +333,7 @@ int main(int argc, char *argv[])
     cooling_rate = 1.0;
   }
   else{
-    cooling_rate = calc_cooling_rate(max_temp, min_temp, ncalcs);
+    cooling_rate = (max_temp != min_temp)? pow(min_temp/max_temp, 1.0/(double)ncalcs) : 1.0;
   }
 
   if(outfnameflag){
@@ -394,7 +351,7 @@ int main(int argc, char *argv[])
     }
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
     if(flag == false)
-      ABORT;
+      ABORT();
   }
 
   if(rank == 0)
@@ -429,7 +386,7 @@ int main(int argc, char *argv[])
   }
   MPI_Bcast(&verify_exitcode, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if(verify_exitcode == false)
-    ABORT;
+    ABORT();
 
   if(rank == 0 && outfnameflag){
     output_file(fp, lines, edge);

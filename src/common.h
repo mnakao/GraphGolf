@@ -28,7 +28,9 @@
 #define NUM_OF_PROGRESS 100
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define ABORT {MPI_Abort(MPI_COMM_WORLD, 1); exit(1);}
+#define ABORT() {MPI_Abort(MPI_COMM_WORLD, 1); exit(1);}
+#define PRINT_R0(...)  {if(rank==0) printf(__VA_ARGS__);}
+#define ERROR(...) {if(rank==0) printf(__VA_ARGS__); ABORT();}
 
 extern void swap(int *a, int *b);
 extern int order(const int nodes, const int a, const int b);

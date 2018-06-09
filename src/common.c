@@ -42,7 +42,7 @@ int order(const int nodes, const int a, const int b)
   }
 }
 
-bool check_loop(const int lines, int (*edge)[2])
+bool check_loop(const int lines, int edge[lines][2])
 {
   for(int i=0;i<lines;i++)
     if(edge[i][0] == edge[i][1])
@@ -51,7 +51,7 @@ bool check_loop(const int lines, int (*edge)[2])
   return true;
 }
 
-bool check_duplicate_edge(const int lines, int (*edge)[2])
+bool check_duplicate_edge(const int lines, int edge[lines][2])
 {
   for(int i=0;i<lines;i++)
     for(int j=i+1;j<lines;j++)

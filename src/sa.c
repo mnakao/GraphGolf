@@ -392,11 +392,11 @@ void check_current_edge(const int nodes, const int degree, const int lines, cons
   MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
 
   if(evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, rank, size) == false){
-    printf("The input file has a node which is never reached by another node.\n");
-    ABORT;
+    PRINT_R0("The input file has a node which is never reached by another node.\n");
+    ABORT();
   }
   if(ASPL == low_ASPL){
-    printf("The input file has already optimum solution.\n");
+    PRINT_R0("The input file has already optimum solution.\n");
     MPI_Finalize();
     exit(0);
   }
