@@ -45,9 +45,9 @@ static int distance(const int nodes, const int a, const int b)
 
 static bool check(const int nodes, const int lines, const int degree, const int groups, int edge[lines][2], int ii)
 {
-  //  verfy_regular_graph(nodes, degree, lines, edge);
-
   int based_lines = lines/groups;
+  int based_nodes = nodes/groups;
+
   for(int i=0;i<based_lines;i++){
     for(int j=1;j<groups;j++){
       int k = j * based_lines + i;
@@ -72,36 +72,26 @@ static bool check(const int nodes, const int lines, const int degree, const int 
     }
   }
 
-  for(int i=0;i<lines;i++){
-    for(int j=i+1;j<lines;j++){
-      if((edge[i][0] == edge[j][0] && edge[i][1] == edge[j][1]) ||
-         (edge[i][0] == edge[j][1] && edge[i][1] == edge[j][0])){
-        printf("check 3: %d\n", ii);
-        printf("The same node conbination in the edge. %d %d\n", i, j);
-	return false;
-      }
-    }
+  if(!check_duplicate_edge(lines, edge)){
+    printf("check 3\n");
+    return false;
   }
-
-  int based_nodes = nodes / groups;
-  for(int i=0;i<based_lines;i++)
+  
+  for(int i=0;i<based_lines;i++){
     if(order(nodes, edge[i][0], edge[i][1]) != MIDDLE)
-      for(int j=0;j<groups-1;j++){
-	int n = based_lines * j + i;
-	int tmp0 = edge[n+based_lines][0] - edge[n][0];
-	int tmp1 = edge[n+based_lines][1] - edge[n][1];
+      for(int j=1;j<groups;j++){
+	int k = j * based_lines + i;
+	int tmp0 = edge[k][0] - edge[k-based_lines][0];
+	int tmp1 = edge[k][1] - edge[k-based_lines][1];
 	tmp0 = (tmp0 < 0)? tmp0 + nodes : tmp0;
 	tmp1 = (tmp1 < 0)? tmp1 + nodes : tmp1;
 	if(tmp0 != based_nodes || tmp1 != based_nodes){
 	  printf("check 4: %d\n", ii);
 	  printf("The different group relationship\n");
-	  for(int k=0;k<groups;k++){
-	    int m = based_lines * k + i;
-	    printf("edge[%2d][0], edge[%2d][1] = %2d, %2d\n", m, m, edge[m][0], edge[m][1]);
-	  }
 	  return false;
 	}
       }
+  }
 
   return true;
 }
@@ -260,21 +250,13 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
 		   const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy)
 {
   if(ASPL <= current_ASPL) return true;
-  if(hill_climbing_flag)   return false;
+  if(hill_climbing_flag)   return false; // Only accept when ASPL <= current_ASPL.
 
-  double probability = uniform_rand();
   double diff = (current_ASPL - ASPL) * nodes * (nodes-1);
+  if(detect_temp_flag)
+    *max_diff_energy = MAX(*max_diff_energy, abs(diff));
 
-  if(detect_temp_flag){
-    if(abs(diff) > *max_diff_energy){
-      *max_diff_energy = abs(diff);
-    }
-  }
-
-  if(exp(diff / temp) > probability)
-    return true;
-  else
-    return false;
+  return (exp(diff/temp) > uniform_rand())? true : false;
 }
 
 long long sa(const int nodes, const int lines, const int degree, const int groups, double temp, 
@@ -283,7 +265,6 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	     const bool detect_temp_flag, double *max_diff_energy,
 	     int edge[lines][2], int *diam, double *ASPL, const int rank, const int size)
 {
-  bool complete;
   int current_edge[lines][2], best_edge[lines][2];
   size_t size_edge = sizeof(int) * lines * 2;
   long long i;
@@ -309,7 +290,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
     if(i % print_interval == 0 && rank == 0 && !detect_temp_flag)
       print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, 
 		    current_diam, best_diam, low_diam);
-    do{
+    while(1){
       memcpy(current_edge, edge, size_edge);
 
       if(rank == 0)
@@ -319,8 +300,8 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       create_adjacency(nodes, lines, degree, current_edge, adjacency);
 
       MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
-      complete = evaluation(nodes, groups, lines, degree, adjacency, diam, ASPL, rank, size);
-    } while(!complete);
+      if(evaluation(nodes, groups, lines, degree, adjacency, diam, ASPL, rank, size)) break;
+    }
 
     if(accept(*ASPL, current_ASPL, temp, nodes, hill_climbing_flag, detect_temp_flag, max_diff_energy)){
       current_ASPL = *ASPL;
@@ -341,16 +322,13 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	break;
       }
     }
-    else{
-    }
 
     temp *= cooling_rate;
   }
 
   *ASPL = best_ASPL;
   *diam = best_diam;
-    memcpy(edge, best_edge, size_edge);
-
+  memcpy(edge, best_edge, size_edge);
   free(adjacency);
 
   return i;

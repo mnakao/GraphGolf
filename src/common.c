@@ -85,6 +85,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
 bool edge_exchange_among_groups(int (*edge)[2], const int based_nodes, const int based_lines, 
 				const int groups, const int start_line)
 {
+  assert(0 <= start_line && start_line < based_lines);
   if(groups == 1)
     return true;
 
@@ -108,14 +109,12 @@ bool edge_exchange_among_groups(int (*edge)[2], const int based_nodes, const int
     int pattern = getRandom(groups+1);
     if(pattern == groups){
       for(int i=0;i<groups/2;i++){
-	tmp_edge[i][0] = edge[line[i]][0];
-	int tmp = edge[line[i]][0] + nodes/2;
-	tmp_edge[i][1] = (tmp < nodes)? tmp : tmp - nodes;
+	tmp_edge[i][0] = start_edge + based_nodes * i;
+	tmp_edge[i][1] = tmp_edge[i][0] + nodes/2;
       }
       for(int i=groups/2;i<groups;i++){
-	tmp_edge[i][0] = edge[line[i]][1];
-	int tmp = edge[line[i]][1] + nodes/2;
-	tmp_edge[i][1] = (tmp < nodes)? tmp : tmp - nodes;
+	tmp_edge[i][0] = end_edge + based_nodes * (i-groups/2);
+	tmp_edge[i][1] = tmp_edge[i][0] + nodes/2;
       }
     }
     else{
