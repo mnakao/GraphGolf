@@ -258,13 +258,14 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
   }
 }
 
-static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes,
+static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, const int groups,
 		   const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy)
 {
   if(ASPL <= current_ASPL) return true;
   if(hill_climbing_flag)   return false; // Only accept when ASPL <= current_ASPL.
 
-  double diff = (current_ASPL - ASPL) * nodes * (nodes-1);
+  double diff = (double)((current_ASPL-ASPL)*nodes*(nodes-1))/groups;
+
   if(detect_temp_flag)
     *max_diff_energy = MAX(*max_diff_energy, abs(diff));
 
@@ -315,7 +316,8 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       if(evaluation(nodes, groups, lines, degree, adjacency, diam, ASPL, rank, size)) break;
     }
 
-    if(accept(*ASPL, current_ASPL, temp, nodes, hill_climbing_flag, detect_temp_flag, max_diff_energy)){
+    if(accept(*ASPL, current_ASPL, temp, nodes, groups, 
+	      hill_climbing_flag, detect_temp_flag, max_diff_energy)){
       current_ASPL = *ASPL;
       current_diam = *diam;
 
