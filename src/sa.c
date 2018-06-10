@@ -134,10 +134,10 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
       for(int j=0;j<2;j++)
 	tmp_edge[i][j] = edge[line[i]][j];
 
-    bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1]) == nodes/2 && groups != 1);
-    bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1]) == nodes/2 && groups != 1);
-    bool double_diameter_flag = (flag0 && flag1);
-    bool single_diameter_flag = (flag0 && !flag1) || (!flag0 && flag1);
+    bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1]) == nodes/2);
+    bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1]) == nodes/2);
+    bool double_diameter_flag = (flag0 && flag1 && groups%2 == 0);
+    bool single_diameter_flag = (((flag0 && !flag1) || (!flag0 && flag1)) && groups%2 == 0);
 
     if(double_diameter_flag){
       int start_line = line[getRandom(2)] % based_lines;
