@@ -113,6 +113,8 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
       else if(edge[line[0]][1] == edge[line[1]][0])   continue;
       else if(edge[line[0]][1] == edge[line[1]][1])   continue;
       else if((line[0] - line[1]) % based_lines == 0){
+	// When groups == 1, this section does not execute
+	// Without this section, values of line[*] in #1 are duplicate
 	int start_line = line[getRandom(2)] % based_lines;
 	if(edge_exchange_among_groups(edge, based_nodes, based_lines,
 				      groups, start_line))
@@ -123,6 +125,7 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
       else break;
     }
 
+    // #1
     for(int i=1;i<groups;i++){
       int tmp0 = line[0] + based_lines * i;
       int tmp1 = line[1] + based_lines * i;
@@ -156,6 +159,15 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
       int pivot_lineno = getRandom(groups) * 2 + 1;
       int pivot[2] = {tmp_edge[pivot_lineno][0], tmp_edge[pivot_lineno][1]};
       int not_pivot[2] = {};
+
+#if 0
+      printf("pivot_lineno = %d\n", pivot_lineno);
+      for(int i=0;i<groups*2;i++)
+        printf(" %2d %2d : %2d\n", tmp_edge[i][0], tmp_edge[i][1], distance(nodes, tmp_edge[i][0], tmp_edge[i][1]));
+      printf("---\n");
+      printf("pivot     = %d %d\n", pivot[0], pivot[1]);
+      printf("not_pivot = %d %d\n", not_pivot[0], not_pivot[1]);
+#endif
 
       int e0 = pivot[0] % based_nodes;
       for(int i=0;i<groups;i++){
@@ -210,6 +222,12 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
 	tmp_edge[n][0] = (tmp0 >= nodes)? tmp0 - nodes : tmp0;
 	tmp_edge[n][1] = (tmp1 >= nodes)? tmp1 - nodes : tmp1;
       }
+#if 0
+      printf("---\n");
+      for(int i=0;i<groups*2;i++)
+        printf(" %2d %2d : %2d\n", tmp_edge[i][0], tmp_edge[i][1], abs(tmp_edge[i][0]-tmp_edge[i][1]));
+      exit(0);
+#endif
     }
     else{
       if(getRandom(2) == 0){
