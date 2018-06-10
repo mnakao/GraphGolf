@@ -115,7 +115,7 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
       else if((line[0] - line[1]) % based_lines == 0){
 	// When groups == 1, this section does not execute
 	// Without this section, values of line[*] in #1 are duplicate
-	int start_line = line[getRandom(2)] % based_lines;
+	int start_line = line[0] % based_lines;
 	if(edge_exchange_among_groups(edge, based_nodes, based_lines,
 				      groups, start_line))
 	  return;
@@ -143,7 +143,7 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
     bool single_diameter_flag = (((flag0 && !flag1) || (!flag0 && flag1)) && groups%2 == 0);
 
     if(double_diameter_flag){
-      int start_line = line[getRandom(2)] % based_lines;
+      int start_line = line[0] % based_lines;
       if(edge_exchange_among_groups(edge, based_nodes, based_lines, 
 				    groups, start_line))
 	return;
