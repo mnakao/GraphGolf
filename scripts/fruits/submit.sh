@@ -11,11 +11,8 @@ data=@DATA@
 N=@N@
 G=@G@
 T=@T@
-K=@K@
+S=@S@
 
-for i in $(seq 1 $K)
-do
-./GraphGolf -f $data -g $G -n $N -w $T -c $T -s $i > log.$T.$i.txt
-done
+./GraphGolf -f $data -g $G -n $N -w $T -c $T -s $S > log.$T.$S.txt
 
 echo $SECONDS
