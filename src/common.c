@@ -104,9 +104,9 @@ bool edge_exchange_among_groups(int (*edge)[2], const int based_nodes, const int
     return false;
   }
 
-  int diff = edge[line[0]][0] - edge[line[0]][1];
+  int diff = abs(edge[line[0]][0] - edge[line[0]][1]);
   while(1){
-    int pattern = getRandom(groups+1);
+    int pattern = (groups%2 == 0)? getRandom(groups+1) : getRandom(groups);
     if(pattern == groups){
       for(int i=0;i<groups/2;i++){
 	tmp_edge[i][0] = start_edge + based_nodes * i;
@@ -127,8 +127,7 @@ bool edge_exchange_among_groups(int (*edge)[2], const int based_nodes, const int
 	tmp_edge[i][1] = (tmp < nodes)? tmp : tmp - nodes;
       }
     }
-
-    if(diff != tmp_edge[0][0] - tmp_edge[0][1]) break;
+    if(diff != abs(tmp_edge[0][0] - tmp_edge[0][1])) break;
   }
 
   if(!check_loop(groups, tmp_edge))             return false;
