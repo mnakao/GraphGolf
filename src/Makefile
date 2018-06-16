@@ -5,6 +5,7 @@ CC=mpicc
 CFLAGS=-std=gnu99 -O3 -Wall -mcmodel=medium -fopenmp $(DEBUG)
 LFLAGS=-lm
 ifeq ($(ENV), coma)
+CC=mpiicc
 CFLAGS=-O3 -qopenmp -std=gnu99 $(DEBUG)
 LFLAGS=
 else ifeq ($(ENV), ofp)
