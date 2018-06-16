@@ -5,7 +5,7 @@
 #SBATCH --ntasks-per-node=1      # Num of MPI processes per node
 #SBATCH --ntasks-per-socket=1    # Num of MPI processes per socket
 #SBATCH --cpus-per-task=1        # Num of threads per MPI process
-#SBATCH -t 1:10:00
+#SBATCH -t 20:00:00
 module purge
 module load intel intelmpi mkl
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
@@ -16,7 +16,7 @@ data=@DATA@
 N=@N@
 G=@G@
 
-for t in 12.560583 11.989685 11.444735 10.924554 10.428017 9.954047 9.501620 9.069757 8.657523 8.264025 
+for t in 3.953022 3.77156 3.598428 3.433244 3.275643
 do
 for i in $(seq 1 10)
 do
