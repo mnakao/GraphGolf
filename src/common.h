@@ -30,6 +30,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define ABORT() {MPI_Abort(MPI_COMM_WORLD, 1); exit(1);}
 #define PRINT_R0(...)  {if(rank==0) printf(__VA_ARGS__);}
+#define END(...) {if(rank==0) printf(__VA_ARGS__); MPI_Finalize(); exit(0);}
 #define ERROR(...) {if(rank==0) printf(__VA_ARGS__); ABORT();}
 
 extern void swap(int *a, int *b);
@@ -58,8 +59,6 @@ extern void timer_clear(const int n);
 extern void timer_start(const int n);
 extern void timer_stop(const int n);
 extern double timer_read(const int n);
-extern int verfy_regular_graph(const int n, const int d, const int lines, int edge[lines][2]);
-
 extern bool evaluation(const int nodes, const int groups, const int lines, const int degree, 
 		       int adjacency[nodes][degree], int *diameter, double *ASPL, const int rank, const int size);
 #endif

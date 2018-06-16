@@ -43,7 +43,7 @@ static int distance(const int nodes, const int a, const int b)
   return (v < nodes/2)? v : nodes - v;
 }
 
-static bool check(const int nodes, const int lines, const int degree, const int groups, int edge[lines][2], int ii)
+static bool check(const int rank, const int nodes, const int lines, const int degree, const int groups, int edge[lines][2], int ii)
 {
   int based_lines = lines/groups;
   int based_nodes = nodes/groups;
@@ -52,9 +52,9 @@ static bool check(const int nodes, const int lines, const int degree, const int 
     for(int j=1;j<groups;j++){
       int k = j * based_lines + i;
       if(distance(nodes, edge[i][0], edge[i][1]) != distance(nodes, edge[k][0], edge[k][1])){
-	printf("check 1: %d\n", ii);
-	printf("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", i, edge[i][0], i, edge[i][1], distance(nodes, edge[i][0], edge[i][1]));
-	printf("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", k, edge[k][0], k, edge[k][1], distance(nodes, edge[k][0], edge[k][1]));
+	PRINT_R0("check 1: %d\n", ii);
+	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", i, edge[i][0], i, edge[i][1], distance(nodes, edge[i][0], edge[i][1]));
+	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", k, edge[k][0], k, edge[k][1], distance(nodes, edge[k][0], edge[k][1]));
 	return false;
       }
     }
@@ -64,16 +64,16 @@ static bool check(const int nodes, const int lines, const int degree, const int 
     for(int j=1;j<groups;j++){
       int k = j * based_lines + i;
       if(order(nodes, edge[i][0], edge[i][1]) != order(nodes, edge[k][0], edge[k][1])){
-	printf("check 2 : %d\n", ii);
-	printf("edge[%d][0] = %d : edge[%d][1] = %d %d\n", i, edge[i][0], i, edge[i][1], order(nodes, edge[i][0], edge[i][1]));
-	printf("edge[%d][0] = %d : edge[%d][1] = %d %d\n", k, edge[k][0], k, edge[k][1], order(nodes, edge[k][0], edge[k][1]));
+	PRINT_R0("check 2 : %d\n", ii);
+	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d %d\n", i, edge[i][0], i, edge[i][1], order(nodes, edge[i][0], edge[i][1]));
+	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d %d\n", k, edge[k][0], k, edge[k][1], order(nodes, edge[k][0], edge[k][1]));
 	return false;
       }
     }
   }
 
   if(!check_duplicate_edge(lines, edge)){
-    printf("check 3\n");
+    PRINT_R0("check 3\n");
     return false;
   }
   
@@ -86,8 +86,8 @@ static bool check(const int nodes, const int lines, const int degree, const int 
 	tmp0 = (tmp0 < 0)? tmp0 + nodes : tmp0;
 	tmp1 = (tmp1 < 0)? tmp1 + nodes : tmp1;
 	if(tmp0 != based_nodes || tmp1 != based_nodes){
-	  printf("check 4: %d\n", ii);
-	  printf("The different group relationship\n");
+	  PRINT_R0("check 4: %d\n", ii);
+	  PRINT_R0("The different group relationship\n");
 	  return false;
 	}
       }
@@ -273,9 +273,8 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
 }
 
 long long sa(const int nodes, const int lines, const int degree, const int groups, double temp, 
-	     const long long ncalcs, const double cooling_rate, 
-	     const int low_diam, const double low_ASPL, const bool hill_climbing_flag,
-	     const bool detect_temp_flag, double *max_diff_energy,
+	     const long long ncalcs, const double cooling_rate,  const int low_diam,  const double low_ASPL, 
+	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
 	     int edge[lines][2], int *diam, double *ASPL, const int rank, const int size)
 {
   int current_edge[lines][2], best_edge[lines][2];
@@ -285,10 +284,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 
   // Create adjacency matrix
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-  if(rank == 0)
-    create_adjacency(nodes, lines, degree, edge, adjacency);
-
-  MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
+  create_adjacency(nodes, lines, degree, edge, adjacency);
 
   evaluation(nodes, groups, lines, degree, adjacency, diam, ASPL, rank, size);
   double current_ASPL = *ASPL;
@@ -305,14 +301,9 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 		    current_diam, best_diam, low_diam);
     while(1){
       memcpy(current_edge, edge, size_edge);
-
-      if(rank == 0)
-	edge_exchange(nodes, lines, groups, current_edge, (int)i);
-
-      assert(check(nodes, lines, degree, groups, current_edge, (int)i));
+      edge_exchange(nodes, lines, groups, current_edge, (int)i);
+      assert(check(rank, nodes, lines, degree, groups, current_edge, (int)i));
       create_adjacency(nodes, lines, degree, current_edge, adjacency);
-
-      MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
       if(evaluation(nodes, groups, lines, degree, adjacency, diam, ASPL, rank, size)) break;
     }
 
@@ -358,14 +349,10 @@ double estimated_elapse_time(const long long ncals, const int nodes, const int l
 
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
-    if(rank == 0)
-      create_adjacency(nodes, lines, degree, edge, adjacency);
-
-    MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
+    create_adjacency(nodes, lines, degree, edge, adjacency);
     evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, rank, size);
   }
   timer_stop(TIMER_ESTIMATED);
-
   free(adjacency);
 
   return timer_read(TIMER_ESTIMATED)/ESTIMATED_TIMES;
@@ -378,20 +365,12 @@ void check_current_edge(const int nodes, const int degree, const int lines, cons
   int diam;    // Not use
   double ASPL;
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-  if(rank == 0)
-    create_adjacency(nodes, lines, degree, edge, adjacency);
+  create_adjacency(nodes, lines, degree, edge, adjacency);
+  if(! evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, rank, size))
+    ERROR("The input file has a node which is never reached by another node.\n");
 
-  MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if(evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, rank, size) == false){
-    PRINT_R0("The input file has a node which is never reached by another node.\n");
-    ABORT();
-  }
-  if(ASPL == low_ASPL){
-    PRINT_R0("The input file has already optimum solution.\n");
-    MPI_Finalize();
-    exit(0);
-  }
+  if(ASPL == low_ASPL)
+    END("The input file has already optimum solution.\n");
 
   free(adjacency);
 }

@@ -2,10 +2,8 @@
 
 static void print_help(char *argv, const int rank)
 {
-  PRINT_R0("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] [-g <gruops>]", argv);
-  PRINT_R0(" [-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-d] [-a <accept_rate>] [-y] [-h]\n");
-  MPI_Finalize();
-  exit(0);
+  END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] [-g <gruops>] \
+       [-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-d] [-a <accept_rate>] [-y] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, const int rank, char *infname, char *outfname,
@@ -82,13 +80,11 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
   }
 }
 
-static int count_lines(const char *fname)
+static int count_lines(const int rank, const char *fname)
 {
   FILE *fp = NULL;
-  if((fp = fopen(fname, "r")) == NULL){
-    printf("File not found\n");
-    ABORT();
-  }
+  if((fp = fopen(fname, "r")) == NULL)
+    ERROR("File not found\n");
   
   int lines = 0, c;
   while((c = fgetc(fp)) != EOF)
@@ -99,13 +95,11 @@ static int count_lines(const char *fname)
   return lines;
 }
 
-static void read_file(int (*edge)[2], const char *fname)
+static void read_file(int (*edge)[2], const int rank, const char *fname)
 {
   FILE *fp;
-  if((fp = fopen(fname, "r")) == NULL){
-    printf("File not found\n");
-    ABORT();
-  }
+  if((fp = fopen(fname, "r")) == NULL)
+    ERROR("File not found\n");
 
   int n1, n2, i = 0;
   while(fscanf(fp, "%d %d", &n1, &n2) != EOF){
@@ -119,8 +113,8 @@ static void read_file(int (*edge)[2], const char *fname)
 
 static int max_node_num(const int lines, const int edge[lines*2])
 {
-  int max = 0;
-  for(int i=0;i<lines*2;i++)
+  int max = edge[0];
+  for(int i=1;i<lines*2;i++)
     max = MAX(max, edge[i]);
 
   return max;
@@ -129,12 +123,11 @@ static int max_node_num(const int lines, const int edge[lines*2])
 static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines,
                                   const int groups, const int degree, const int rank, const int size)
 {
-  for(int j=1;j<groups;j++){
+  for(int j=1;j<groups;j++)
     for(int i=0;i<based_lines;i++){
       edge[based_lines*j+i][0] = edge[i][0] + based_nodes * j;
       edge[based_lines*j+i][1] = edge[i][1] + based_nodes * j;
     }
-  }
 
   int diam;    // Not use
   double ASPL; // Not use
@@ -143,13 +136,9 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
 
   while(1){
-    if(rank == 0){
-      int start_line = getRandom(based_lines);
-      edge_exchange_among_groups(edge, based_nodes, based_lines, groups, start_line);
-      create_adjacency(nodes, lines, degree, edge, adjacency);
-    }
-
-    MPI_Bcast(adjacency, nodes*degree, MPI_INT, 0, MPI_COMM_WORLD);
+    int start_line = getRandom(based_lines);
+    edge_exchange_among_groups(edge, based_nodes, based_lines, groups, start_line);
+    create_adjacency(nodes, lines, degree, edge, adjacency);
     if(evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, rank, size)) break;
   }
   free(adjacency);
@@ -179,18 +168,15 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
   *low_ASPL = aspl;
 }
 
-int verfy_regular_graph(const int n, const int d, const int lines, int edge[lines][2])
+static void verfy_regular_graph(const int rank, const int n, const int d, const int lines, int edge[lines][2])
 {
-  printf("Verifing a regular graph... ");
+  PRINT_R0("Verifing a regular graph... ");
 
-  if(n < d){
-    printf("NG. n is too small. n = %d d = %d\n", n, d);
-    return false;
-  }
-  if((2*lines)%d != 0){
-    printf("NG. lines or n or d is invalid. lines = %d n = %d d = %d\n", lines, n, d);
-    return false;
-  }
+  if(n < d)
+    ERROR("NG. n is too small. n = %d d = %d\n", n, d);
+
+  if((2*lines)%d != 0)
+    ERROR("NG. lines or n or d is invalid. lines = %d n = %d d = %d\n", lines, n, d);
 
   int nodes[n];
   for(int i=0;i<n;i++)
@@ -202,26 +188,19 @@ int verfy_regular_graph(const int n, const int d, const int lines, int edge[line
   }
 
   for(int i=0;i<n;i++)
-    if(d != nodes[i]){
-      printf("NG\nNot regular graph. d = %d nodes[%d] = %d\n", d, i, nodes[i]);
-      return false;
-    }
+    if(d != nodes[i])
+      ERROR("NG\nNot regular graph. d = %d nodes[%d] = %d\n", d, i, nodes[i]);
 
-  if(!check_loop(lines, edge)){
-    printf("NG\nThe same node in the edge.\n");
-    return false;
-  }
+  if(!check_loop(lines, edge))
+    ERROR("NG\nThe same node in the edge.\n");
 
-  if(!check_duplicate_edge(lines, edge)){
-    printf("NG\nThe same node conbination in the edge.\n");
-    return false;
-  }
+  if(!check_duplicate_edge(lines, edge))
+    ERROR("NG\nThe same node conbination in the edge.\n");
   
-  printf("OK\n");
-  return true;
+  PRINT_R0("OK\n");
 }
 
-static void output_params(const int nodes, const int degree, const int groups,
+static void output_params(const int size, const int nodes, const int degree, const int groups,
                           const int random_seed, const int thread_num, const double max_temp, const double min_temp,
                           const double accept_rate, const long long ncalcs, const double cooling_rate,
                           const char *infname, const char *outfname, const bool outfnameflag,
@@ -229,7 +208,8 @@ static void output_params(const int nodes, const int degree, const int groups,
 {
   printf("---\n");
   printf("Seed: %d\n", random_seed);
-  printf("Num. of threads: %d\n", thread_num);
+  printf("Num. of processes: %d\n", size);
+  printf("Num. of threads  : %d\n", thread_num);
   if(hill_climbing_flag == false){
     printf("Algorithm: Simulated Annealing\n");
     if(!auto_temp_flag){
@@ -284,11 +264,10 @@ int main(int argc, char *argv[])
   char *outfname = malloc(MAX_FILENAME_LENGTH);
 
   // Set arguments
-  set_args(argc, argv, rank, infname, outfname, 
-	   &outfnameflag, &random_seed, &thread_num, &ncalcs,
-	   &max_temp, &max_temp_flag, &min_temp,
-	   &min_temp_flag, &auto_temp_flag, &accept_rate, &hill_climbing_flag,
-	   &detect_temp_flag, &groups);
+  set_args(argc, argv, rank, infname, outfname, &outfnameflag, 
+	   &random_seed, &thread_num, &ncalcs, &max_temp, &max_temp_flag, 
+	   &min_temp, &min_temp_flag, &auto_temp_flag, &accept_rate, 
+	   &hill_climbing_flag, &detect_temp_flag, &groups);
 
   if((max_temp_flag && auto_temp_flag && hill_climbing_flag) || 
      (min_temp_flag && auto_temp_flag && hill_climbing_flag))
@@ -300,25 +279,19 @@ int main(int argc, char *argv[])
   srandom(random_seed);
   omp_set_num_threads(thread_num);
 
-  int based_lines = count_lines(infname);
+  int based_lines = count_lines(rank, infname);
   int lines       = based_lines * groups;
   int (*edge)[2]  = malloc(sizeof(int)*lines*2); // int edge[lines][2];
 
-  read_file(edge, infname);
+  read_file(edge, rank, infname);
   int based_nodes = max_node_num(based_lines, (int *)edge) + 1;
+  if(based_nodes < size)
+    ERROR("Number of processes is too big. (Vertexs (%d) < Processes (%d))\n", based_nodes, size);
   int nodes       = based_nodes * groups;
   int degree      = 2 * lines / nodes;
 
   create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, rank, size);
-
-  int verify_exitcode;
-  if(rank == 0)
-    verify_exitcode = verfy_regular_graph(nodes, degree, lines, edge);
-
-  MPI_Bcast(&verify_exitcode, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if(verify_exitcode == false)
-    ABORT();
-
+  verfy_regular_graph(rank, nodes, degree, lines, edge);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
   check_current_edge(nodes, degree, lines, groups, edge, low_ASPL, rank, size);
   double average_time = estimated_elapse_time(ncalcs, nodes, lines, degree, groups, edge, rank, size);
@@ -337,29 +310,20 @@ int main(int argc, char *argv[])
   }
 
   if(outfnameflag){
-    int flag = true;
-    if(rank == 0){
-      struct stat stat_buf;
-      if(stat(outfname, &stat_buf) == 0){  // When outfname exsits.
-	printf("Output file %s exsits. \n", outfname);
-	flag = false;
-      }
-      if((fp = fopen(outfname, "w")) == NULL){
-	printf("Cannot open %s\n", outfname);
-	flag = false;
-      }
-    }
-    MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    if(flag == false)
-      ABORT();
+    struct stat stat_buf;
+    if(stat(outfname, &stat_buf) == 0)
+      ERROR("Output file %s exsits. \n", outfname);
+    
+    if((fp = fopen(outfname, "w")) == NULL)
+      ERROR("Cannot open %s\n", outfname);
   }
 
   if(rank == 0)
-    output_params(nodes, degree, groups, random_seed, thread_num, max_temp, min_temp, 
+    output_params(size, nodes, degree, groups, random_seed, thread_num, max_temp, min_temp, 
 		  accept_rate, ncalcs, cooling_rate, infname, outfname, 
 		  outfnameflag, average_time, hill_climbing_flag, auto_temp_flag);
-
-
+  
+  
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
@@ -369,11 +333,9 @@ int main(int argc, char *argv[])
 
   if(detect_temp_flag){
     // Set max temperature to accept it 50% in maximum diff energy.
-    printf("Proposed max temperature is %f\n", -1.0 * max_diff_energy / log(0.5));
+    PRINT_R0("Proposed max temperature is %f\n", -1.0 * max_diff_energy / log(0.5));
     // Set min temperature to accept it 1% in minimum diff energy.
-    printf("Proposed min temperature is %f\n", -1.0 * 2.0 * groups / log(0.1));
-    MPI_Finalize();
-    exit(0);
+    END("Proposed min temperature is %f\n", -1.0 * 2.0 * groups / log(0.1));
   }
 
   // Output results
@@ -382,11 +344,8 @@ int main(int argc, char *argv[])
     printf("Diam. k = %d  ASPL l = %f  Diam. gap = %d  ASPL gap = %f\n",
 	   diam, ASPL, diam-low_diam, ASPL-low_ASPL);
     printf("Steps: %lld  Elapse time: %f sec.\n", step, timer_read(TIMER_SA));
-    verify_exitcode = verfy_regular_graph(nodes, degree, lines, edge);
   }
-  MPI_Bcast(&verify_exitcode, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if(verify_exitcode == false)
-    ABORT();
+  verfy_regular_graph(rank, nodes, degree, lines, edge);
 
   if(rank == 0 && outfnameflag){
     output_file(fp, lines, edge);
