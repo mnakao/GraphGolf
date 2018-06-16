@@ -58,8 +58,8 @@ bool evaluation(const int nodes, const int groups, const int lines, const int de
   
   int node_size  = (based_nodes % size == 0)? based_nodes/size : based_nodes/size+1;
   int start_node = node_size * rank;
-  if(rank == size-1)
-    node_size = based_nodes - start_node;
+  node_size = MIN(node_size, based_nodes-start_node);
+  if(node_size < 0) node_size = 0;
 
 #pragma omp parallel
   {
