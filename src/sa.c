@@ -96,6 +96,11 @@ static bool check(const int rank, const int nodes, const int lines, const int de
   return true;
 }
 
+bool has_duplicated_vertex(const int e00, const int e01, const int e10, const int e11)
+{
+  return (e00 == e10 || e01 == e11 || e00 == e11 || e01 == e10);
+}
+
 static void edge_exchange(const int nodes, const int lines, const int groups, 
 			  int edge[lines][2], const int ii)
 {
@@ -107,20 +112,22 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
     while(1){
       line[0] = getRandom(lines);
       line[1] = getRandom(lines);
-      if(line[0] == line[1])	                      continue;
-      else if(edge[line[0]][0] == edge[line[1]][0])   continue;
-      else if(edge[line[0]][0] == edge[line[1]][1])   continue;
-      else if(edge[line[0]][1] == edge[line[1]][0])   continue;
-      else if(edge[line[0]][1] == edge[line[1]][1])   continue;
-      else if((line[0] - line[1]) % based_lines == 0){
-	// When groups == 1, this section does not execute
-	// Without this section, values of line[*] in #1 are duplicate
-	int start_line = line[0] % based_lines;
-	if(edge_exchange_among_groups(edge, based_nodes, based_lines,
-				      groups, start_line))
-	  return;
-	else
-	  continue;
+      if((line[0] - line[1]) % based_lines == 0){
+	if(groups == 1) continue;
+	else{
+	  if(edge_exchange_among_groups(edge, based_nodes, based_lines,
+					groups, line[0])) return;
+	  else continue;
+	}
+      }
+      else if(has_duplicated_vertex(edge[line[0]][0], edge[line[0]][1], 
+				    edge[line[1]][0], edge[line[1]][1])){
+	if(groups == 1) continue;
+	else{
+	  if(edge_exchange_among_groups(edge, based_nodes, based_lines,
+					groups, line[0])) return;
+	  else continue;
+	}
       }
       else break;
     }
@@ -143,9 +150,8 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
     bool single_diameter_flag = (((flag0 && !flag1) || (!flag0 && flag1)) && groups%2 == 0);
 
     if(double_diameter_flag){
-      int start_line = line[0] % based_lines;
       if(edge_exchange_among_groups(edge, based_nodes, based_lines, 
-				    groups, start_line))
+				    groups, line[0]))
 	return;
       else
 	continue;

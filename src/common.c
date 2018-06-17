@@ -85,7 +85,6 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
 bool edge_exchange_among_groups(int (*edge)[2], const int based_nodes, const int based_lines, 
 				const int groups, const int start_line)
 {
-  assert(0 <= start_line && start_line < based_lines);
   if(groups == 1)
     return true;
 
@@ -94,7 +93,7 @@ bool edge_exchange_among_groups(int (*edge)[2], const int based_nodes, const int
   int lines = based_lines * groups;
 
   for(int i=0;i<groups;i++)
-    line[i] = start_line + i * based_lines;  // 0 <= start_line < based_lines
+    line[i] = start_line % based_lines + i * based_lines;
   int start_edge = edge[line[0]][0] % based_nodes;
   int end_edge   = get_end_edge(start_edge, groups, edge, line, based_nodes);
   if(end_edge == start_edge){
