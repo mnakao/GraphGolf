@@ -116,8 +116,7 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
 			       edge[line[1]][0], edge[line[1]][1])){
 	if(groups == 1) continue;
 	else{
-	  if(edge_exchange_among_groups(edge, based_nodes, based_lines,
-					groups, line[0])) return;
+	  if(edge_1g_opt(edge, based_nodes, based_lines, groups, line[0])) return;
 	  else continue;
 	}
       }
@@ -129,11 +128,10 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
     bool diameter_flag = ((flag0 || flag1) && groups != 1);
 
     if(diameter_flag){
-      if(edge_exchange_among_groups(edge, based_nodes, based_lines, 
-				    groups, line[0])) return;
+      if(edge_1g_opt(edge, based_nodes, based_lines, groups, line[0])) return;
       else continue;
     }
-    else{
+    else{ // 2g_opt
       for(int i=1;i<groups;i++){
 	int tmp0 = line[0] + based_lines * i;
 	int tmp1 = line[1] + based_lines * i;

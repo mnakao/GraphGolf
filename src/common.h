@@ -44,8 +44,7 @@ extern void check_current_edge(const int nodes, const int degree, const int line
 			       int edge[lines][2], const double low_ASPL, const int rank, const int size);
 extern double estimated_elapse_time(const long long ncals, const int nodes, const int lines, const int degree,
 				    const int groups, int edge[lines][2], const int rank, const int size);
-extern bool edge_exchange_among_groups(int (*edge)[2], const int based_nodes, const int based_lines,
-				       const int groups, const int start_line);
+extern bool edge_1g_opt(int (*edge)[2], const int based_nodes, const int based_lines, const int groups, const int start_line);
 extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);
 extern bool check_loop(const int lines, int (*edge)[2]);
 extern bool check_duplicate_edge(const int lines, int (*edge)[2]);

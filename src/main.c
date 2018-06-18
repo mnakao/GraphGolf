@@ -137,7 +137,7 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
 
   while(1){
     int start_line = getRandom(based_lines);
-    edge_exchange_among_groups(edge, based_nodes, based_lines, groups, start_line);
+    edge_1g_opt(edge, based_nodes, based_lines, groups, start_line);
     create_adjacency(nodes, lines, degree, edge, adjacency);
     if(evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, rank, size)) break;
   }
