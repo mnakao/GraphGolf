@@ -19,7 +19,6 @@ static void print_results(const int num, const double temp, const double current
   printf("%f ( %f )\t%f ( %f )\t%d ( %d )\t\t\t%d ( %d )\n",
 	 current_ASPL, current_ASPL-low_ASPL, best_ASPL, best_ASPL-low_ASPL,
 	 current_diam, current_diam-low_diam, best_diam, best_diam-low_diam);
-  fflush(stdout);
 }  
 
 void create_adjacency(const int nodes, const int lines, const int degree, 
@@ -112,16 +111,9 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
     while(1){
       line[0] = getRandom(lines);
       line[1] = getRandom(lines);
-      if((line[0] - line[1]) % based_lines == 0){
-	if(groups == 1) continue;
-	else{
-	  if(edge_exchange_among_groups(edge, based_nodes, based_lines,
-					groups, line[0])) return;
-	  else continue;
-	}
-      }
-      else if(has_duplicated_vertex(edge[line[0]][0], edge[line[0]][1], 
-				    edge[line[1]][0], edge[line[1]][1])){
+      if((line[0] - line[1]) % based_lines == 0 || 
+	 has_duplicated_vertex(edge[line[0]][0], edge[line[0]][1],
+			       edge[line[1]][0], edge[line[1]][1])){
 	if(groups == 1) continue;
 	else{
 	  if(edge_exchange_among_groups(edge, based_nodes, based_lines,
@@ -131,111 +123,28 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
       }
       else break;
     }
-
-    // #1
-    for(int i=1;i<groups;i++){
-      int tmp0 = line[0] + based_lines * i;
-      int tmp1 = line[1] + based_lines * i;
-      line[0+2*i] = (tmp0 >= lines)? tmp0 - lines : tmp0;
-      line[1+2*i] = (tmp1 >= lines)? tmp1 - lines : tmp1;
-    }
-
-    for(int i=0;i<groups*2;i++)
-      for(int j=0;j<2;j++)
-	tmp_edge[i][j] = edge[line[i]][j];
-
+    
     bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1]) == nodes/2);
     bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1]) == nodes/2);
-    bool double_diameter_flag = (flag0 && flag1 && groups%2 == 0);
-    bool single_diameter_flag = (((flag0 && !flag1) || (!flag0 && flag1)) && groups%2 == 0);
+    bool diameter_flag = ((flag0 || flag1) && groups != 1);
 
-    if(double_diameter_flag){
+    if(diameter_flag){
       if(edge_exchange_among_groups(edge, based_nodes, based_lines, 
-				    groups, line[0]))
-	return;
-      else
-	continue;
-    }
-    else if(single_diameter_flag){
-      if(flag0)
-	for(int i=0;i<groups;i++)
-	  for(int j=0;j<2;j++)
-	    swap(&tmp_edge[i*2][j], &tmp_edge[i*2+1][j]);
-
-      int pivot_lineno = getRandom(groups) * 2 + 1;
-      int pivot[2] = {tmp_edge[pivot_lineno][0], tmp_edge[pivot_lineno][1]};
-      int not_pivot[2] = {};
-
-#if 0
-      printf("pivot_lineno = %d\n", pivot_lineno);
-      for(int i=0;i<groups*2;i++)
-        printf(" %2d %2d : %2d\n", tmp_edge[i][0], tmp_edge[i][1], distance(nodes, tmp_edge[i][0], tmp_edge[i][1]));
-      printf("---\n");
-      printf("pivot     = %d %d\n", pivot[0], pivot[1]);
-      printf("not_pivot = %d %d\n", not_pivot[0], not_pivot[1]);
-#endif
-
-      int e0 = pivot[0] % based_nodes;
-      for(int i=0;i<groups;i++){
-	int n  = i * 2 + 1;
-	if(pivot_lineno == n) continue;
-	int e1 = tmp_edge[n][0] % based_nodes;
-	if(e0 != e1){
-	  not_pivot[0] = tmp_edge[n][0];
-	  not_pivot[1] = tmp_edge[n][1];
-	  break;
-	}
-      }
-
-      int pattern = getRandom(4);
-      if(pattern == 0){
-	swap(&tmp_edge[0][0],      &pivot[0]);
-	swap(&tmp_edge[groups][0], &pivot[1]);
-      }
-      else if(pattern == 1){
-	swap(&tmp_edge[0][0],      &pivot[1]);
-	swap(&tmp_edge[groups][0], &pivot[0]);
-      }
-      else if(pattern == 2){
-	swap(&tmp_edge[0][1],      &pivot[0]);
-	swap(&tmp_edge[groups][1], &pivot[1]);
-      }
-      else if(pattern == 3){
-	swap(&tmp_edge[0][1],      &pivot[1]);
-	swap(&tmp_edge[groups][1], &pivot[0]);
-      }
-
-      for(int i=1;i<groups;i++){
-	int n = i * 2;
-	int tmp0 = tmp_edge[0][0] + based_nodes * i;
-	int tmp1 = tmp_edge[0][1] + based_nodes * i;
-	tmp_edge[n][0] = (tmp0 >= nodes)? tmp0 - nodes : tmp0;
-	tmp_edge[n][1] = (tmp1 >= nodes)? tmp1 - nodes : tmp1;
-      }
-
-      for(int i=0;i<groups/2;i++){
-	int n = i * 2 + 1;
-	int tmp0 = pivot[0] + based_nodes * i;
-	int tmp1 = pivot[1] + based_nodes * i;
-	tmp_edge[n][0] = (tmp0 >= nodes)? tmp0 - nodes : tmp0;
-        tmp_edge[n][1] = (tmp1 >= nodes)? tmp1 - nodes : tmp1;
-      }
-
-      for(int i=0;i<groups/2;i++){
-	int n = i * 2 + 1 + groups;
-	int tmp0 = not_pivot[0] + based_nodes * i;
-	int tmp1 = not_pivot[1] + based_nodes * i;
-	tmp_edge[n][0] = (tmp0 >= nodes)? tmp0 - nodes : tmp0;
-	tmp_edge[n][1] = (tmp1 >= nodes)? tmp1 - nodes : tmp1;
-      }
-#if 0
-      printf("---\n");
-      for(int i=0;i<groups*2;i++)
-        printf(" %2d %2d : %2d\n", tmp_edge[i][0], tmp_edge[i][1], abs(tmp_edge[i][0]-tmp_edge[i][1]));
-      exit(0);
-#endif
+				    groups, line[0])) return;
+      else continue;
     }
     else{
+      for(int i=1;i<groups;i++){
+	int tmp0 = line[0] + based_lines * i;
+	int tmp1 = line[1] + based_lines * i;
+	line[0+2*i] = (tmp0 >= lines)? tmp0 - lines : tmp0;
+	line[1+2*i] = (tmp1 >= lines)? tmp1 - lines : tmp1;
+      }
+
+      for(int i=0;i<groups*2;i++)
+	for(int j=0;j<2;j++)
+	  tmp_edge[i][j] = edge[line[i]][j];
+
       if(getRandom(2) == 0){
 	for(int i=0;i<groups;i++)
 	  swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][1]);
@@ -244,23 +153,23 @@ static void edge_exchange(const int nodes, const int lines, const int groups,
 	for(int i=0;i<groups;i++)
 	  swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][0]);
       }
+
+      if(!check_loop(groups*2, tmp_edge))           continue;
+      if(!check_duplicate_edge(groups*2, tmp_edge)) continue;
+      if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge))
+	continue;
+
+      for(int i=0;i<groups*2;i++)
+	if(order(nodes, tmp_edge[i][0], tmp_edge[i][1]) == RIGHT)
+	  swap(&tmp_edge[i][0], &tmp_edge[i][1]); // RIGHT -> LEFT
+
+      for(int i=0;i<groups*2;i++){
+	edge[line[i]][0] = tmp_edge[i][0];
+	edge[line[i]][1] = tmp_edge[i][1];
+      }
+
+      break;
     }
-
-    if(!check_loop(groups*2, tmp_edge))           continue;
-    if(!check_duplicate_edge(groups*2, tmp_edge)) continue;
-    if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge))
-      continue;
-
-    for(int i=0;i<groups*2;i++)
-      if(order(nodes, tmp_edge[i][0], tmp_edge[i][1]) == RIGHT)
-	swap(&tmp_edge[i][0], &tmp_edge[i][1]); // RIGHT -> LEFT
-
-    for(int i=0;i<groups*2;i++){
-      edge[line[i]][0] = tmp_edge[i][0];
-      edge[line[i]][1] = tmp_edge[i][1];
-    }
-
-    break;
   }
 }
 
