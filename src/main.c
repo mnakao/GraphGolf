@@ -3,20 +3,21 @@
 static void print_help(char *argv, const int rank)
 {
   END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] [-g <gruops>] \
-       [-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-d] [-a <accept_rate>] [-y] [-h]\n", argv);
+       [-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-d] [-a <accept_rate>] \
+       [-O <optimization>] [-y] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, const int rank, char *infname, char *outfname,
                      bool *outfnameflag, int *random_seed, int *thread_num, long long *ncalcs,
                      double *max_temp, bool *max_temp_flag, double *min_temp, bool *min_temp_flag,
                      bool *auto_temp_flag, double *accept_rate, bool *hill_climbing_flag,
-                     bool *detect_temp_flag, int *groups)
+                     bool *detect_temp_flag, int *groups, int *opt)
 {
   if(argc < 3)
     print_help(argv[0], rank);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:g:a:dyph"))!=-1){
+  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:g:a:O:dyph"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -66,6 +67,11 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
       if(*accept_rate <= 0 || *accept_rate >= 1.0)
         ERROR("0 < -a value < 1.0\n");
       *auto_temp_flag = true;
+      break;
+    case 'O':
+      *opt = atoi(optarg);
+      if(*opt != 0 && *opt != 1)
+	ERROR("-O=0 or -O=1\n");
       break;
     case 'd':
       *detect_temp_flag = true;
@@ -134,12 +140,13 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   int nodes = based_nodes * groups;
   int lines = based_lines * groups;
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
+  int total_distance[based_nodes];
 
   while(1){
     int start_line = getRandom(based_lines);
     edge_1g_opt(edge, based_nodes, based_lines, groups, start_line);
     create_adjacency(nodes, lines, degree, edge, adjacency);
-    if(evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, rank, size)) break;
+    if(evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, total_distance, rank, size)) break;
   }
   free(adjacency);
 }
@@ -200,7 +207,7 @@ static void verfy_regular_graph(const int rank, const int n, const int d, const 
   PRINT_R0("OK\n");
 }
 
-static void output_params(const int size, const int nodes, const int degree, const int groups,
+static void output_params(const int size, const int nodes, const int degree, const int groups, const int opt,
                           const int random_seed, const int thread_num, const double max_temp, const double min_temp,
                           const double accept_rate, const long long ncalcs, const double cooling_rate,
                           const char *infname, const char *outfname, const bool outfnameflag,
@@ -208,6 +215,7 @@ static void output_params(const int size, const int nodes, const int degree, con
 {
   printf("---\n");
   printf("Seed: %d\n", random_seed);
+  printf("Optimization: %d\n", opt);
   printf("Num. of processes: %d\n", size);
   printf("Num. of threads  : %d\n", thread_num);
   if(hill_climbing_flag == false){
@@ -245,10 +253,16 @@ static void output_file(FILE *fp, const int lines, int edge[lines][2])
 
 int main(int argc, char *argv[])
 {
-  int rank, size;
+  int rank, size, namelen;
+  char processor_name[MPI_MAX_PROCESSOR_NAME];
+  time_t t = time(NULL);
+
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Get_processor_name(processor_name, &namelen);
+  PRINT_R0("Run on %s\n", processor_name);
+  PRINT_R0("%s---\n", ctime(&t));
   
   int diam = 0, low_diam = 0;
   double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
@@ -256,7 +270,7 @@ int main(int argc, char *argv[])
 
   // Initial parameters
   long long ncalcs = 10000;
-  int random_seed = 0, thread_num = 1, groups = 1;
+  int random_seed = 0, thread_num = 1, groups = 1, opt = 0;
   double max_temp = 80.0, min_temp = 0.2, accept_rate = 1.0, max_diff_energy = 0;
   bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false;
   bool hill_climbing_flag = false, auto_temp_flag = false, detect_temp_flag = false;
@@ -267,7 +281,7 @@ int main(int argc, char *argv[])
   set_args(argc, argv, rank, infname, outfname, &outfnameflag, 
 	   &random_seed, &thread_num, &ncalcs, &max_temp, &max_temp_flag, 
 	   &min_temp, &min_temp_flag, &auto_temp_flag, &accept_rate, 
-	   &hill_climbing_flag, &detect_temp_flag, &groups);
+	   &hill_climbing_flag, &detect_temp_flag, &groups, &opt);
 
   if((max_temp_flag && auto_temp_flag && hill_climbing_flag) || 
      (min_temp_flag && auto_temp_flag && hill_climbing_flag))
@@ -319,16 +333,15 @@ int main(int argc, char *argv[])
   }
 
   if(rank == 0)
-    output_params(size, nodes, degree, groups, random_seed, thread_num, max_temp, min_temp, 
-		  accept_rate, ncalcs, cooling_rate, infname, outfname, 
+    output_params(size, nodes, degree, groups, opt, random_seed, thread_num, max_temp, 
+		  min_temp, accept_rate, ncalcs, cooling_rate, infname, outfname, 
 		  outfnameflag, average_time, hill_climbing_flag, auto_temp_flag);
-  
   
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, degree, groups, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
-		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, rank, size);
+		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, rank, size, opt);
   timer_stop(TIMER_SA);
 
   if(detect_temp_flag){
