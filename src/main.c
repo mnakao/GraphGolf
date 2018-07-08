@@ -3,21 +3,21 @@
 static void print_help(char *argv, const int rank)
 {
   END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] [-g <gruops>] \
-[-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-d] [-a <accept_rate>] \
+[-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-d] [-a <accept_rate>] \
 [-O <optimization>] [-y] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, const int rank, char *infname, char *outfname,
                      bool *outfnameflag, int *random_seed, int *thread_num, long long *ncalcs,
                      double *max_temp, bool *max_temp_flag, double *min_temp, bool *min_temp_flag,
-                     bool *auto_temp_flag, double *accept_rate, bool *hill_climbing_flag,
-                     bool *detect_temp_flag, int *groups, int *opt)
+                     bool *auto_temp_flag, double *accept_rate, int *cooling_cycle, 
+		     bool *hill_climbing_flag, bool *detect_temp_flag, int *groups, int *opt)
 {
   if(argc < 3)
     print_help(argv[0], rank);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:g:a:O:dyph"))!=-1){
+  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:C:g:a:O:dyph"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -56,6 +56,11 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
       if(*min_temp <= 0)
         ERROR("MIN value > 0\n");
       *min_temp_flag = true;
+      break;
+    case 'C':
+      *cooling_cycle = atoi(optarg);
+      if(*cooling_cycle <= 0)
+	ERROR("Cooling Cycle > 0\n");
       break;
     case 'g':
       *groups = atoi(optarg);
@@ -209,8 +214,8 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
 
 static void output_params(const int size, const int nodes, const int degree, const int groups, const int opt,
                           const int random_seed, const int thread_num, const double max_temp, const double min_temp,
-                          const double accept_rate, const long long ncalcs, const double cooling_rate,
-                          const char *infname, const char *outfname, const bool outfnameflag,
+                          const double accept_rate, const long long ncalcs, const int cooling_cycle,
+			  const double cooling_rate, const char *infname, const char *outfname, const bool outfnameflag,
                           const double average_time, const bool hill_climbing_flag, const bool auto_temp_flag)
 {
   printf("---\n");
@@ -223,7 +228,8 @@ static void output_params(const int size, const int nodes, const int degree, con
     if(!auto_temp_flag){
       printf("   MAX Temperature: %f\n", max_temp);
       printf("   MIN Temperature: %f\n", min_temp);
-      printf("   Cooling Rate: %f\n", cooling_rate);
+      printf("   Cooling Cycle: %d\n", cooling_cycle);
+      printf("   Cooling Rate : %f\n", cooling_rate);
     }
     else{
       printf("   Accept Rate: %f\n", accept_rate);
@@ -270,7 +276,7 @@ int main(int argc, char *argv[])
 
   // Initial parameters
   long long ncalcs = 10000;
-  int random_seed = 0, thread_num = 1, groups = 1, opt = 0;
+  int random_seed = 0, thread_num = 1, groups = 1, opt = 0, cooling_cycle = 1;
   double max_temp = 80.0, min_temp = 0.2, accept_rate = 1.0, max_diff_energy = 0;
   bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false;
   bool hill_climbing_flag = false, auto_temp_flag = false, detect_temp_flag = false;
@@ -281,7 +287,7 @@ int main(int argc, char *argv[])
   set_args(argc, argv, rank, infname, outfname, &outfnameflag, 
 	   &random_seed, &thread_num, &ncalcs, &max_temp, &max_temp_flag, 
 	   &min_temp, &min_temp_flag, &auto_temp_flag, &accept_rate, 
-	   &hill_climbing_flag, &detect_temp_flag, &groups, &opt);
+	   &cooling_cycle, &hill_climbing_flag, &detect_temp_flag, &groups, &opt);
 
   if((max_temp_flag && auto_temp_flag && hill_climbing_flag) || 
      (min_temp_flag && auto_temp_flag && hill_climbing_flag))
@@ -320,7 +326,7 @@ int main(int argc, char *argv[])
     cooling_rate = 1.0;
   }
   else{
-    cooling_rate = (max_temp != min_temp)? pow(min_temp/max_temp, 1.0/(double)ncalcs) : 1.0;
+    cooling_rate = (max_temp != min_temp)? pow(min_temp/max_temp, 1.0/((double)ncalcs/cooling_cycle)) : 1.0;
   }
 
   if(outfnameflag){
@@ -334,21 +340,22 @@ int main(int argc, char *argv[])
 
   if(rank == 0)
     output_params(size, nodes, degree, groups, opt, random_seed, thread_num, max_temp, 
-		  min_temp, accept_rate, ncalcs, cooling_rate, infname, outfname, 
+		  min_temp, accept_rate, ncalcs, cooling_cycle, cooling_rate, infname, outfname, 
 		  outfnameflag, average_time, hill_climbing_flag, auto_temp_flag);
   
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, degree, groups, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
-		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, rank, size, opt);
+		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, rank, 
+		      size, opt, cooling_cycle);
   timer_stop(TIMER_SA);
 
   if(detect_temp_flag){
     // Set max temperature to accept it 50% in maximum diff energy.
     PRINT_R0("Proposed max temperature is %f\n", -1.0 * max_diff_energy / log(0.5));
     // Set min temperature to accept it 1% in minimum diff energy.
-    END("Proposed min temperature is %f\n", -1.0 * 2.0 * groups / log(0.1));
+    END("Proposed min temperature is %f\n", -1.0 * 2.0 * groups / log(0.01));
   }
 
   // Output results

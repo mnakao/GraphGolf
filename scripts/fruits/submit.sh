@@ -13,6 +13,12 @@ G=@G@
 T=@T@
 S=@S@
 
-./a.out -f $data -g $G -n $N -w $T -c $T -s $S > log.$T.$S.txt
+if [ ${T} = "SA1" ]; then
+  ./a.out -f $data -g $G -n $N -w 100 -c 0.2 -s $S > log.SA1.$S.txt
+elif [ ${T} = "SA2" ]; then
+  ./a.out -f $data -g $G -n $N -w 100 -c 0.2 -s $S -C 10000 > log.SA2.$S.txt
+else
+  ./a.out -f $data -g $G -n $N -w $T -c $T -s $S > log.$T.$S.txt
+fi
 
 echo $SECONDS

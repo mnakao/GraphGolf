@@ -259,10 +259,9 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
 long long sa(const int nodes, const int lines, const int degree, const int groups, double temp, 
 	     const long long ncalcs, const double cooling_rate,  const int low_diam,  const double low_ASPL, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
-	     int edge[lines][2], int *diam, double *ASPL, const int rank, const int size, const int opt)
+	     int edge[lines][2], int *diam, double *ASPL, const int rank, const int size, const int opt, const int cooling_cycle)
 {
-  int current_edge[lines][2], best_edge[lines][2];
-  int total_distance[nodes/groups];
+  int current_edge[lines][2], best_edge[lines][2], total_distance[nodes/groups];
   long long i;
   edge_copy((int *)best_edge, (int *)edge, lines*2);
 
@@ -310,7 +309,9 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	break;
       }
     }
-    temp *= cooling_rate;
+
+    if((i+1)%cooling_cycle == 0)
+      temp *= cooling_rate;
   }
 
   *ASPL = best_ASPL;
