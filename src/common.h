@@ -27,7 +27,7 @@
 #define TIMER_ESTIMATED     1
 #define MAX_FILENAME_LENGTH 255
 #define NUM_OF_PROGRESS     100
-#define THRESHOLD           100000
+#define THRESHOLD           300000
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define ABORT() {MPI_Abort(MPI_COMM_WORLD, 1); exit(1);}

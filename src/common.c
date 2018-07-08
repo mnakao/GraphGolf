@@ -3,8 +3,7 @@
 void edge_copy(int *restrict buf1, const int *restrict buf2, const int n)
 {
   if(n < THRESHOLD){
-    for(int i=0;i<n;i++)
-      buf1[i] = buf2[i];
+    memcpy(buf1, buf2, sizeof(int)*n);
   }
   else{ // When using if-clause, performance becomes slow
 #pragma omp parallel for
@@ -79,23 +78,44 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
 {
   int based_line = lines/original_groups;
 
-  if(groups == original_groups){
-    int tmp = line[0]%based_line;
-    for(int i=0;i<lines;i++)
-      if(i%based_line != tmp)
-	for(int j=0;j<groups;j++)
-	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
-	    return false;
+  if(original_groups%2 == 1){
+    if(groups == original_groups){
+      int tmp = line[0]%based_line;
+      for(int i=0;i<based_line;i++)
+	if(i != tmp)
+	  for(int j=0;j<groups;j++)
+	    if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+	      return false;
+    }
+    else{
+      int tmp0 = line[0]%based_line;
+      int tmp1 = line[1]%based_line;
+      for(int i=0;i<based_line;i++){
+	if(i != tmp0 && i != tmp1)
+	  for(int j=0;j<groups;j++)
+	    if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+	      return false;
+      }
+    }
   }
   else{
-    assert(groups*2 != original_groups);
-    int tmp0 = line[0]%based_line;
-    int tmp1 = line[1]%based_line;
-    for(int i=0;i<lines;i++){
-      if(i%based_line != tmp0 && i%based_line != tmp1)
-	for(int j=0;j<groups;j++)
-          if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
-            return false;
+    if(groups == original_groups){
+      int tmp = line[0]%based_line;
+      for(int i=0;i<lines;i++)
+	if(i%based_line != tmp)
+	  for(int j=0;j<groups;j++)
+            if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+              return false;
+    }
+    else{
+      int tmp0 = line[0]%based_line;
+      int tmp1 = line[1]%based_line;
+      for(int i=0;i<lines;i++){
+        if(i%based_line != tmp0 && i%based_line != tmp1)
+          for(int j=0;j<groups;j++)
+            if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+              return false;
+      }
     }
   }
 
