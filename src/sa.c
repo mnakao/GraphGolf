@@ -225,7 +225,7 @@ static void edge_exchange(const int nodes, const int lines, const int groups, in
 
       assert(check_loop(groups*2, tmp_edge));
       if(!check_duplicate_edge(groups*2, tmp_edge)) continue;
-      if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge))
+      if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge, groups))
 	continue;
 
       for(int i=0;i<groups*2;i++)
@@ -263,9 +263,8 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 {
   int current_edge[lines][2], best_edge[lines][2];
   int total_distance[nodes/groups];
-  size_t size_edge = sizeof(int) * lines * 2;
   long long i;
-  memcpy(best_edge, edge, size_edge);
+  edge_copy((int *)best_edge, (int *)edge, lines*2);
 
   // Create adjacency matrix
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
@@ -285,7 +284,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, 
 		    current_diam, best_diam, low_diam);
     while(1){
-      memcpy(current_edge, edge, size_edge);
+      edge_copy((int *)current_edge, (int *)edge, lines*2);
       edge_exchange(nodes, lines, groups, current_edge, total_distance, opt, (int)i);
       assert(check(rank, nodes, lines, degree, groups, current_edge, (int)i));
       create_adjacency(nodes, lines, degree, current_edge, adjacency);
@@ -296,9 +295,9 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	      hill_climbing_flag, detect_temp_flag, max_diff_energy)){
       current_ASPL = *ASPL;
       current_diam = *diam;
-      memcpy(edge, current_edge, size_edge);
+      edge_copy((int *)edge, (int *)current_edge, lines*2);
       if(best_ASPL > current_ASPL){
-	memcpy(best_edge, current_edge, size_edge);
+	edge_copy((int *)best_edge, (int *)current_edge, lines*2);
 	best_ASPL = current_ASPL;
       }
       best_diam = MIN(best_diam, current_diam);
@@ -316,7 +315,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 
   *ASPL = best_ASPL;
   *diam = best_diam;
-  memcpy(edge, best_edge, size_edge);
+  edge_copy((int *)edge, (int *)best_edge, lines*2);
   free(adjacency);
 
   return i;
@@ -324,16 +323,19 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 
 #define ESTIMATED_TIMES 5
 double estimated_elapse_time(const long long ncals, const int nodes, const int lines, const int degree,
-			     const int groups, int edge[lines][2], const int rank, const int size)
+			     const int groups, int edge[lines][2], const int rank, const int size, const int opt)
 {
   int diam;    // Not use
   double ASPL; // Not use
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-  int total_distance[nodes/groups];
+  int total_distance[nodes/groups], tmp_edge[lines][2];
 
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
-    create_adjacency(nodes, lines, degree, edge, adjacency);
+    edge_copy((int *)tmp_edge, (int *)edge, lines*2);
+    edge_exchange(nodes, lines, groups, tmp_edge, total_distance, opt, (int)i);
+    assert(check(rank, nodes, lines, degree, groups, tmp_edge, (int)i));
+    create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
     evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, total_distance, rank, size);
   }
   timer_stop(TIMER_ESTIMATED);

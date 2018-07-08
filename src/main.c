@@ -3,8 +3,8 @@
 static void print_help(char *argv, const int rank)
 {
   END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] [-g <gruops>] \
-       [-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-d] [-a <accept_rate>] \
-       [-O <optimization>] [-y] [-h]\n", argv);
+[-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-d] [-a <accept_rate>] \
+[-O <optimization>] [-y] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, const int rank, char *infname, char *outfname,
@@ -143,36 +143,12 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   int total_distance[based_nodes];
 
   while(1){
-    int start_line = getRandom(based_lines);
+    int start_line = getRandom(based_lines*groups);
     edge_1g_opt(edge, based_nodes, based_lines, groups, start_line);
     create_adjacency(nodes, lines, degree, edge, adjacency);
     if(evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, total_distance, rank, size)) break;
   }
   free(adjacency);
-}
-
-// This function is inherited from "http://research.nii.ac.jp/graphgolf/py/create-random.py".
-static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int nodes, const int degree)
-{
-  int diam = -1, n = 1, r = 1;
-  double aspl = 0.0;
-
-  while(1){
-    int tmp = n + degree * pow(degree-1, r-1);
-    if(tmp >= nodes)
-      break;
-
-    n = tmp;
-    aspl += r * degree * pow(degree-1, r-1);
-    diam = r++;
-  }
-
-  diam++;
-  aspl += diam * (nodes - n);
-  aspl /= (nodes - 1);
-
-  *low_diam = diam;
-  *low_ASPL = aspl;
 }
 
 static void verfy_regular_graph(const int rank, const int n, const int d, const int lines, int edge[lines][2])
@@ -203,8 +179,32 @@ static void verfy_regular_graph(const int rank, const int n, const int d, const 
 
   if(!check_duplicate_edge(lines, edge))
     ERROR("NG\nThe same node conbination in the edge.\n");
-  
+
   PRINT_R0("OK\n");
+}
+
+// This function is inherited from "http://research.nii.ac.jp/graphgolf/py/create-random.py".
+static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int nodes, const int degree)
+{
+  int diam = -1, n = 1, r = 1;
+  double aspl = 0.0;
+
+  while(1){
+    int tmp = n + degree * pow(degree-1, r-1);
+    if(tmp >= nodes)
+      break;
+
+    n = tmp;
+    aspl += r * degree * pow(degree-1, r-1);
+    diam = r++;
+  }
+
+  diam++;
+  aspl += diam * (nodes - n);
+  aspl /= (nodes - 1);
+
+  *low_diam = diam;
+  *low_ASPL = aspl;
 }
 
 static void output_params(const int size, const int nodes, const int degree, const int groups, const int opt,
@@ -255,13 +255,13 @@ int main(int argc, char *argv[])
 {
   int rank, size, namelen;
   char processor_name[MPI_MAX_PROCESSOR_NAME];
-  time_t t = time(NULL);
 
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Get_processor_name(processor_name, &namelen);
   PRINT_R0("Run on %s\n", processor_name);
+  time_t t = time(NULL);
   PRINT_R0("%s---\n", ctime(&t));
   
   int diam = 0, low_diam = 0;
@@ -308,7 +308,7 @@ int main(int argc, char *argv[])
   verfy_regular_graph(rank, nodes, degree, lines, edge);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
   check_current_edge(nodes, degree, lines, groups, edge, low_ASPL, rank, size);
-  double average_time = estimated_elapse_time(ncalcs, nodes, lines, degree, groups, edge, rank, size);
+  double average_time = estimated_elapse_time(ncalcs, nodes, lines, degree, groups, edge, rank, size, opt);
 
   if(hill_climbing_flag){
     max_temp = min_temp = 0.0;

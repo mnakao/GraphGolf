@@ -1,5 +1,18 @@
 #include "common.h"
 
+void edge_copy(int *restrict buf1, const int *restrict buf2, const int n)
+{
+  if(n < THRESHOLD){
+    for(int i=0;i<n;i++)
+      buf1[i] = buf2[i];
+  }
+  else{ // When using if-clause, performance becomes slow
+#pragma omp parallel for
+    for(int i=0;i<n;i++)
+      buf1[i] = buf2[i];
+  }
+}
+
 int getRandom(const int max)
 {
   return (int)(random()*((double)max)/(1.0+RAND_MAX));
@@ -61,23 +74,30 @@ bool check_duplicate_edge(const int lines, int edge[lines][2])
   return true;
 }
 
-static bool target_line(const int i, const int groups, const int line[groups])
-{
-  for(int j=0;j<groups;j++)
-    if(i == line[j])
-      return false;
-
-  return true;
-}
-
 bool check_duplicate_current_edge(const int lines, const int groups, const int line[groups],
-                                  int (*edge)[2], int tmp_edge[groups][2])
+                                  int (*edge)[2], int tmp_edge[groups][2], const int original_groups)
 {
-  for(int i=0;i<lines;i++)
-    if(target_line(i, groups, line))
-      for(int j=0;j<groups;j++)
-        if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
-          return false;
+  int based_line = lines/original_groups;
+
+  if(groups == original_groups){
+    int tmp = line[0]%based_line;
+    for(int i=0;i<lines;i++)
+      if(i%based_line != tmp)
+	for(int j=0;j<groups;j++)
+	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+	    return false;
+  }
+  else{
+    assert(groups*2 != original_groups);
+    int tmp0 = line[0]%based_line;
+    int tmp1 = line[1]%based_line;
+    for(int i=0;i<lines;i++){
+      if(i%based_line != tmp0 && i%based_line != tmp1)
+	for(int j=0;j<groups;j++)
+          if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+            return false;
+    }
+  }
 
   return true;
 }
@@ -129,9 +149,9 @@ bool edge_1g_opt(int (*edge)[2], const int based_nodes, const int based_lines,
     if(diff != (tmp_edge[0][0] - tmp_edge[0][1])) break;
   }
 
-  if(!check_loop(groups, tmp_edge))             return false;
-  if(!check_duplicate_edge(groups, tmp_edge))   return false;
-  if(!check_duplicate_current_edge(lines, groups, line, edge, tmp_edge))
+  assert(check_loop(groups, tmp_edge));
+  assert(check_duplicate_edge(groups, tmp_edge));
+  if(!check_duplicate_current_edge(lines, groups, line, edge, tmp_edge, groups))
     return false;
 
   for(int i=0;i<groups;i++)
