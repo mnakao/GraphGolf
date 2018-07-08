@@ -19,7 +19,7 @@ for t in 0.531218 0.507073 0.484026 0.462026 0.441026 0.420981
 do
 for i in $(seq 1 10)
 do
-    ./GraphGolf -f $data -g $G -n $N -s $i -w $t -c $t > log.$t.$i.txt &
+    ./a.out -f $data -g $G -n $N -s $i -w $t -c $t > log.$t.$i.txt &
 
     while [ $(jobs|wc -l) -ge $threads ]; do
 	sleep 1

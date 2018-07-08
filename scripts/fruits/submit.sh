@@ -13,6 +13,6 @@ G=@G@
 T=@T@
 S=@S@
 
-./GraphGolf -f $data -g $G -n $N -w $T -c $T -s $S > log.$T.$S.txt
+./a.out -f $data -g $G -n $N -w $T -c $T -s $S > log.$T.$S.txt
 
 echo $SECONDS

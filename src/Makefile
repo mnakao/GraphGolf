@@ -16,15 +16,15 @@ endif
 SRCS := main.c sa.c timer.c top_down_bfs.c common.c
 OBJS := $(SRCS:%.c=%.o)
 
-all: GraphGolf
+all: a.out
 
-GraphGolf: $(OBJS)
+a.out: $(OBJS)
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $^
 
 %.o: %.c common.h
 	$(CC) $(CFLAGS) -c $<
 
-run: GraphGolf
+run: a.out
 	nohup bash run.sh &
 
 # make fruits DATA="..\/data\/n16d5.random.edges" N=1000000 G=2
@@ -59,11 +59,11 @@ ofp:
 	pjsub submit-$$i.sh; \
 	done
 
-check: GraphGolf
-	OMP_CANCELLATION=true ./GraphGolf -f data/n32d5k4l228.20170305-fimfgn.edges
-	OMP_CANCELLATION=true ./GraphGolf -f data/n256d18k3l218.20170305-fimf4z.edges
-	OMP_CANCELLATION=true ./GraphGolf -f data/n576d30k3l214.20170305-fimfev.edges
-	OMP_CANCELLATION=true ./GraphGolf -f data/n1344d30k3l248.20170305-fimfao.edges
+check: a.out
+	OMP_CANCELLATION=true ./a.out -f data/n32d5k4l228.20170305-fimfgn.edges
+	OMP_CANCELLATION=true ./a.out -f data/n256d18k3l218.20170305-fimf4z.edges
+	OMP_CANCELLATION=true ./a.out -f data/n576d30k3l214.20170305-fimfev.edges
+	OMP_CANCELLATION=true ./a.out -f data/n1344d30k3l248.20170305-fimfao.edges
 
 clean:
 	rm -rf *.o *~

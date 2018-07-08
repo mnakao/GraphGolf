@@ -20,11 +20,11 @@ do
 for i in $(seq 1 10)
 do
     if [ $t = "A" ]; then
-      ./GraphGolf -f $data -g $G -n $N -s $i -w 100 -c 0.5 > log.a.$i.txt &
+      ./a.out -f $data -g $G -n $N -s $i -w 100 -c 0.5 > log.a.$i.txt &
     elif [ $t = "Y" ]; then
-      ./GraphGolf -f $data -g $G -n $N -s $i -y > log.y.$i.txt &
+      ./a.out -f $data -g $G -n $N -s $i -y > log.y.$i.txt &
     else
-      ./GraphGolf -f $data -g $G -n $N -s $i -w $t -c $t > log.$t.$i.txt &
+      ./a.out -f $data -g $G -n $N -s $i -w $t -c $t > log.$t.$i.txt &
     fi
 
     while [ $(jobs|wc -l) -ge $threads ]; do
