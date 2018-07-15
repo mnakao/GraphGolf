@@ -51,7 +51,7 @@ extern bool has_duplicated_edge(const int e00, const int e01, const int e10, con
 extern bool check_loop(const int lines, int (*edge)[2]);
 extern bool check_duplicate_edge(const int lines, int (*edge)[2]);
 extern bool check_duplicate_current_edge(const int lines, const int groups, const int line[groups],
-					 int (*edge)[2], int tmp_edge[groups][2], const int original_groups);
+					 int (*edge)[2], int tmp_edge[groups][2], const int original_groups, int nodes);
 extern void create_adjacency(const int nodes, const int lines, const int degree,
                              int edge[lines][2], int adjacency[nodes][degree]);
 extern int getRandom(const int max);
@@ -64,4 +64,5 @@ extern bool evaluation(const int nodes, const int groups, const int lines, const
 		       int adjacency[nodes][degree], int *diameter, double *ASPL, 
 		       int total_distance[nodes/groups], const int rank, const int size);
 extern void edge_copy(int *restrict buf1, const int *restrict buf2, const int n);
+extern int distance(const int nodes, const int a, const int b);
 #endif

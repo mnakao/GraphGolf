@@ -74,48 +74,45 @@ bool check_duplicate_edge(const int lines, int edge[lines][2])
 }
 
 bool check_duplicate_current_edge(const int lines, const int groups, const int line[groups],
-                                  int (*edge)[2], int tmp_edge[groups][2], const int original_groups)
+                                  int (*edge)[2], int tmp_edge[groups][2], const int original_groups,
+				  const int nodes)
 {
-  int based_line = lines/original_groups;
+  int based_lines = lines/original_groups;
+  int opt = (groups == original_groups)? 1 : 2;  // 1g-opt : 2g-opt
 
-  if(original_groups%2 == 1){
-    if(groups == original_groups){
-      int tmp = line[0]%based_line;
-      for(int i=0;i<based_line;i++)
+  if(original_groups%2 == 1 && opt == 1){
+    int tmp = line[0]%based_lines;
+    for(int i=0;i<based_lines;i++)
+      if(i != tmp)
+	for(int j=0;j<groups;j++)
+	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+	    return false;
+  }
+  else if(opt == 2){
+    int tmp0 = line[0]%based_lines;
+    int tmp1 = line[1]%based_lines;
+    for(int i=0;i<based_lines;i++)
+      if(i != tmp0 && i != tmp1)
+	for(int j=0;j<groups;j++)
+	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+	    return false;
+  }
+  else{ 
+    assert(original_groups%2 == 0 && opt == 1);
+    int tmp = line[0]%based_lines;
+    if(distance(nodes, tmp_edge[0][0], tmp_edge[0][1]) != nodes/2){
+      for(int i=0;i<based_lines;i++)
 	if(i != tmp)
 	  for(int j=0;j<groups;j++)
 	    if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
 	      return false;
     }
     else{
-      int tmp0 = line[0]%based_line;
-      int tmp1 = line[1]%based_line;
-      for(int i=0;i<based_line;i++){
-	if(i != tmp0 && i != tmp1)
-	  for(int j=0;j<groups;j++)
-	    if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
-	      return false;
-      }
-    }
-  }
-  else{
-    if(groups == original_groups){
-      int tmp = line[0]%based_line;
       for(int i=0;i<lines;i++)
-	if(i%based_line != tmp)
-	  for(int j=0;j<groups;j++)
-            if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
-              return false;
-    }
-    else{
-      int tmp0 = line[0]%based_line;
-      int tmp1 = line[1]%based_line;
-      for(int i=0;i<lines;i++){
-        if(i%based_line != tmp0 && i%based_line != tmp1)
+        if(i%based_lines != tmp)
           for(int j=0;j<groups;j++)
             if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
-              return false;
-      }
+	      return false;
     }
   }
 
@@ -171,7 +168,7 @@ bool edge_1g_opt(int (*edge)[2], const int based_nodes, const int based_lines,
 
   assert(check_loop(groups, tmp_edge));
   assert(check_duplicate_edge(groups, tmp_edge));
-  if(!check_duplicate_current_edge(lines, groups, line, edge, tmp_edge, groups))
+  if(!check_duplicate_current_edge(lines, groups, line, edge, tmp_edge, groups, nodes))
     return false;
 
   for(int i=0;i<groups;i++)

@@ -36,7 +36,7 @@ void create_adjacency(const int nodes, const int lines, const int degree,
   }
 }
 
-static int distance(const int nodes, const int a, const int b)
+int distance(const int nodes, const int a, const int b)
 {
   int v = MAX(a, b) - MIN(a, b);
   return (v < nodes/2)? v : nodes - v;
@@ -225,7 +225,7 @@ static void edge_exchange(const int nodes, const int lines, const int groups, in
 
       assert(check_loop(groups*2, tmp_edge));
       if(!check_duplicate_edge(groups*2, tmp_edge)) continue;
-      if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge, groups))
+      if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge, groups, nodes))
 	continue;
 
       for(int i=0;i<groups*2;i++)
