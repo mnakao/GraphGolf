@@ -4,20 +4,21 @@ static void print_help(char *argv, const int rank)
 {
   END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] [-g <gruops>] \
 [-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-d] [-a <accept_rate>] \
-[-O <optimization>] [-y] [-h]\n", argv);
+[-O <optimization>] [-p <add lines for center>] [-y] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, const int rank, char *infname, char *outfname,
                      bool *outfnameflag, int *random_seed, int *thread_num, long long *ncalcs,
                      double *max_temp, bool *max_temp_flag, double *min_temp, bool *min_temp_flag,
                      bool *auto_temp_flag, double *accept_rate, int *cooling_cycle, 
-		     bool *hill_climbing_flag, bool *detect_temp_flag, int *groups, int *opt)
+		     bool *hill_climbing_flag, bool *detect_temp_flag, int *groups, int *opt,
+		     bool *center_flag, int *add_degree_to_center)
 {
   if(argc < 3)
     print_help(argv[0], rank);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:C:g:a:O:dyph"))!=-1){
+  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:C:g:a:O:p:dyh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -84,6 +85,12 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
     case 'y':
       *hill_climbing_flag = true;
       break;
+    case 'p':
+      *center_flag = true;
+      *add_degree_to_center = atoi(optarg);
+      if(*add_degree_to_center <= 0)
+	ERROR("-p > 0\n");
+      break;
     case 'h':
     default:
       print_help(argv[0], rank);
@@ -131,8 +138,48 @@ static int max_node_num(const int lines, const int edge[lines*2])
   return max;
 }
 
+static void create_symmetric_edge_with_center(int (*edge)[2], const int based_nodes, const int based_lines,
+					      const int groups, const int degree, const int rank, const int size,
+					      const int original_based_lines, const int add_degree_to_center, int const nodes)
+{
+  if(add_degree_to_center > based_nodes)
+    ERROR("Number of degree or nodes is invalid\n");
+  
+  if(((based_nodes-add_degree_to_center)*groups)%2 == 1)
+    ERROR("Number of degree or nodes is invalid under handshaking lemma\n");
+  
+  int center_vertex  = based_nodes * groups;
+  int connect_vertex = 0; // getRandom(based_nodes);
+  if(groups%2 == 1){
+    for(int i=0;i<based_lines-original_based_lines;i++){
+      int line = original_based_lines + i;
+      edge[line][0] = i;
+      edge[line][1] = (connect_vertex != i)? (nodes-i-1) : center_vertex;
+    }
+    //      printf("degree         = %d\n", degree);
+    //      printf("nodes          = %d\n", nodes);
+    //      printf("lines          = %d\n", lines);
+    //      printf("based_lines    = %d\n", based_lines);
+    //      printf("center_vertex  = %d\n", center_vertex);
+    //      printf("connect_vertex = %d\n", connect_vertex);
+    
+    for(int j=1;j<groups;j++){
+      for(int i=0;i<based_lines;i++){
+	edge[based_lines*j+i][0] = edge[i][0] + based_nodes * j;
+	if(edge[i][1] == center_vertex)
+	  edge[based_lines*j+i][1] = center_vertex;
+	else{
+	  int next = edge[i][1] + based_nodes * j;
+	  edge[based_lines*j+i][1] = (next < nodes)? next : next-nodes+1;
+	}
+      }
+    }
+  }
+}
+
 static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines,
-                                  const int groups, const int degree, const int rank, const int size)
+                                  const int groups, const int degree, const int rank, const int size,
+				  const int opt, const int center_flag)
 {
   for(int j=1;j<groups;j++)
     for(int i=0;i<based_lines;i++){
@@ -149,9 +196,9 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
 
   while(1){
     int start_line = getRandom(based_lines*groups);
-    edge_1g_opt(edge, based_nodes, based_lines, groups, start_line);
+    edge_1g_opt(edge, nodes, based_nodes, based_lines, groups, start_line, center_flag);
     create_adjacency(nodes, lines, degree, edge, adjacency);
-    if(evaluation(nodes, groups, lines, degree, adjacency, &diam, &ASPL, total_distance, rank, size)) break;
+    if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, total_distance, rank, size, opt, center_flag)) break;
   }
   free(adjacency);
 }
@@ -216,7 +263,7 @@ static void output_params(const int size, const int nodes, const int degree, con
                           const int random_seed, const int thread_num, const double max_temp, const double min_temp,
                           const double accept_rate, const long long ncalcs, const int cooling_cycle,
 			  const double cooling_rate, const char *infname, const char *outfname, const bool outfnameflag,
-                          const double average_time, const bool hill_climbing_flag, const bool auto_temp_flag)
+                          const double average_time, const bool hill_climbing_flag, const bool auto_temp_flag, const bool center_flag)
 {
   printf("---\n");
   printf("Seed: %d\n", random_seed);
@@ -246,6 +293,8 @@ static void output_params(const int size, const int nodes, const int degree, con
   printf("   Num. of nodes: %d\n", nodes);
   printf("   Degree: %d\n", degree);
   printf("   Groups: %d\n", groups);
+  if(center_flag) printf("   Center Point: Exist\n");
+  else            printf("   Center Point: None\n");
   if(outfnameflag)
     printf("Output filename: %s\n", outfname);
   printf("---\n");
@@ -277,8 +326,9 @@ int main(int argc, char *argv[])
   // Initial parameters
   long long ncalcs = 10000;
   int random_seed = 0, thread_num = 1, groups = 1, opt = 0, cooling_cycle = 1;
+  int add_degree_to_center = -1;
   double max_temp = 80.0, min_temp = 0.2, accept_rate = 1.0, max_diff_energy = 0;
-  bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false;
+  bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false, center_flag = false;
   bool hill_climbing_flag = false, auto_temp_flag = false, detect_temp_flag = false;
   char *infname  = malloc(MAX_FILENAME_LENGTH);
   char *outfname = malloc(MAX_FILENAME_LENGTH);
@@ -286,8 +336,9 @@ int main(int argc, char *argv[])
   // Set arguments
   set_args(argc, argv, rank, infname, outfname, &outfnameflag, 
 	   &random_seed, &thread_num, &ncalcs, &max_temp, &max_temp_flag, 
-	   &min_temp, &min_temp_flag, &auto_temp_flag, &accept_rate, 
-	   &cooling_cycle, &hill_climbing_flag, &detect_temp_flag, &groups, &opt);
+	   &min_temp, &min_temp_flag, &auto_temp_flag, &accept_rate, &cooling_cycle, 
+	   &hill_climbing_flag, &detect_temp_flag, &groups, &opt,
+	   &center_flag, &add_degree_to_center);
 
   if((max_temp_flag && auto_temp_flag && hill_climbing_flag) || 
      (min_temp_flag && auto_temp_flag && hill_climbing_flag))
@@ -310,11 +361,35 @@ int main(int argc, char *argv[])
   int nodes       = based_nodes * groups;
   int degree      = 2 * lines / nodes;
 
-  create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, rank, size);
+  if(center_flag){
+    if(add_degree_to_center != 1)
+      ERROR("Not implemented yet\n");
+    if(groups%2 == 0)
+      ERROR("Not implemented yet\n");
+
+    degree += 1;
+    nodes  += 1;
+    lines  += ((based_nodes-add_degree_to_center)/2+add_degree_to_center)*groups;
+    int original_based_lines = based_lines;
+    based_lines = lines / groups;
+    int (*tmp_edge)[2] = malloc(sizeof(int)*lines*2);
+    memcpy(tmp_edge, edge, sizeof(int)*original_based_lines*2);
+    free(edge);
+    edge = tmp_edge;
+    create_symmetric_edge_with_center(edge, based_nodes, based_lines, groups, degree, rank, size,
+				      original_based_lines,add_degree_to_center, nodes);
+    //    for(int i=0;i<lines;i++)
+    //      printf("%d %d\n", edge[i][0], edge[i][1]);
+  }
+  else{
+    create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, rank, size, opt, center_flag);
+  }
+  
   verfy_regular_graph(rank, nodes, degree, lines, edge);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
-  check_current_edge(nodes, degree, lines, groups, edge, low_ASPL, rank, size);
-  double average_time = estimated_elapse_time(ncalcs, nodes, lines, degree, groups, edge, rank, size, opt);
+  check_current_edge(nodes, degree, lines, groups, based_nodes, edge, low_ASPL, rank, size, center_flag);
+  double average_time = estimated_elapse_time(ncalcs, nodes, based_nodes, lines, degree, groups,
+					      edge, rank, size, opt, center_flag, add_degree_to_center);
 
   if(hill_climbing_flag){
     max_temp = min_temp = 0.0;
@@ -341,14 +416,14 @@ int main(int argc, char *argv[])
   if(rank == 0)
     output_params(size, nodes, degree, groups, opt, random_seed, thread_num, max_temp, 
 		  min_temp, accept_rate, ncalcs, cooling_cycle, cooling_rate, infname, outfname, 
-		  outfnameflag, average_time, hill_climbing_flag, auto_temp_flag);
+		  outfnameflag, average_time, hill_climbing_flag, auto_temp_flag, center_flag);
   
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, degree, groups, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
 		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, rank, 
-		      size, opt, cooling_cycle);
+		      size, opt, cooling_cycle, center_flag, add_degree_to_center, based_nodes);
   timer_stop(TIMER_SA);
 
   if(detect_temp_flag){
