@@ -30,10 +30,10 @@
 #define THRESHOLD           300000
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define ABORT() {MPI_Abort(MPI_COMM_WORLD, 1); exit(1);}
-#define PRINT_R0(...)  {if(rank==0) printf(__VA_ARGS__);}
-#define END(...) {if(rank==0) printf(__VA_ARGS__); MPI_Finalize(); exit(0);}
-#define ERROR(...) {if(rank==0) printf(__VA_ARGS__); ABORT();}
+#define ABORT()         do{MPI_Abort(MPI_COMM_WORLD, 1); exit(1);}while(0)
+#define PRINT_R0(...)   do{if(rank==0) printf(__VA_ARGS__);}while(0)
+#define END(...)        do{if(rank==0) printf(__VA_ARGS__); MPI_Finalize(); exit(0);}while(0)
+#define ERROR(...)      do{if(rank==0) printf(__VA_ARGS__); ABORT();}while(0)
 
 extern void swap(int *a, int *b);
 extern int order(const int nodes, const int a, const int b, const int center_flag);
