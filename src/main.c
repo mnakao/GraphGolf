@@ -429,8 +429,11 @@ int main(int argc, char *argv[])
   if(detect_temp_flag){
     // Set max temperature to accept it 50% in maximum diff energy.
     PRINT_R0("Proposed max temperature is %f\n", -1.0 * max_diff_energy / log(0.5));
-    // Set min temperature to accept it 1% in minimum diff energy.
-    END("Proposed min temperature is %f\n", -1.0 * 2.0 * groups / log(0.01));
+    // Set min temperature to accept it 10% in minimum diff energy.
+    if(groups%2 == 0)
+      END("Proposed min temperature is %f\n", (-1.0 * (groups-1) / groups) / log(0.1));
+    else
+      END("Proposed min temperature is %f\n", (-1.0 * (groups*2-1) / groups) / log(0.1));
   }
 
   // Output results

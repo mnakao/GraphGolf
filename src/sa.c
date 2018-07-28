@@ -272,7 +272,7 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
     }
   }
 }
-
+//int min = -100;
 static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, const int groups,
 		   const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy)
 {
@@ -281,6 +281,12 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
 
   double diff = (double)((current_ASPL-ASPL)*nodes*(nodes-1))/groups;
 
+  //  int tmp = (int)((current_ASPL-ASPL)*nodes*(nodes-1));
+  //  if(min < tmp){
+  //    min = tmp;
+  //    printf("%d\n", tmp);
+  //  }
+  
   if(detect_temp_flag)
     *max_diff_energy = MAX(*max_diff_energy, abs(diff));
 
