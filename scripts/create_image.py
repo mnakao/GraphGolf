@@ -14,6 +14,7 @@ import argparse
 import networkx as nx
 import sys
 import os
+import subprocess
 
 def main(infile, is_num, is_center):
 #        g = nx.read_edgelist(infile)
@@ -23,6 +24,8 @@ def main(infile, is_num, is_center):
 	image_name = name + ".png"
  	save_image(g, image_name, is_num, is_center)
 	print "Create " + image_name
+	cmd = "open " + image_name
+	subprocess.call(cmd, shell=True)
 	return
 
 def my_circular_layout(G):
@@ -34,8 +37,7 @@ def my_circular_layout(G):
     twopi = 2.0*np.pi
     theta = np.arange(0, twopi, twopi/(len(G)-1))
     pos   = np.column_stack([np.cos(theta), np.sin(theta)])
-    pos   = np.insert(pos, 0, [0, 0], axis=0)
-
+    pos   = np.insert(pos, len(G)-1, [0, 0], axis=0)
     return dict(zip(G, pos))
 
 def save_image(g, filepath, is_num, is_center):
