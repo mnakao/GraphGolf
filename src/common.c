@@ -43,10 +43,10 @@ void swap(int *a, int *b)
 int order(const int nodes, const int a, const int b, const int center_flag)
 {
   int center_vertex = nodes - 1;
-  if((a-b)%(nodes/2) == 0 && !center_flag) return MIDDLE;
-  if(center_flag && (a == center_vertex || b == center_vertex)) return MIDDLE;
+  if(!center_flag && nodes%2 == 0 && (a-b)%(nodes/2) == 0)       return MIDDLE;
+  if(center_flag  && (a == center_vertex || b == center_vertex)) return MIDDLE;
 
-  if(center_vertex){
+  if(center_flag){
     if(a < (nodes-1.0)/2.0){ // a = 0, 1, 2, 3, 4
       if(a > b) return LEFT;
       return (a+(nodes-1.0)/2.0 > b)? RIGHT : LEFT;
@@ -57,13 +57,13 @@ int order(const int nodes, const int a, const int b, const int center_flag)
     }
   }
   else{
-    if(a < nodes/2){
+    if(a < nodes/2.0){
       if(a > b) return LEFT;
-      return (a+nodes/2 > b)? RIGHT : LEFT;
+      return (a+nodes/2.0 > b)? RIGHT : LEFT;
     }
     else{
       if(a < b) return RIGHT;
-      return (a-nodes/2 > b)? RIGHT : LEFT;
+      return (a-nodes/2.0 > b)? RIGHT : LEFT;
     }
   }
 }

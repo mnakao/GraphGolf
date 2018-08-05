@@ -47,13 +47,19 @@ int distance(const int nodes, const int a, const int b, const int center_flag, c
     //    return (v < m)? v : nodes-1-v
     return (v < nodes/2)? v : nodes-1-v;
   }
-  else
-    return (v < nodes/2)? v : nodes-v;
+  else{
+    //    return (v < nodes/2)? v : nodes-v;
+    int max  = MAX(a, b);
+    int min  = MIN(a, b);
+    int tmp1 = max - min;
+    int tmp2 = min + nodes - max;
+    return MIN(tmp1, tmp2);
+  }
 }
 
-static bool check(const int rank, const int nodes, const int based_nodes, const int lines,
-		  const int degree, const int groups, int edge[lines][2], 
-		  const int center_flag, const int add_degree_to_center, const int ii)
+bool check(const int rank, const int nodes, const int based_nodes, const int lines,
+	   const int degree, const int groups, int edge[lines][2], 
+	   const int center_flag, const int add_degree_to_center, const int ii)
 {
   int based_lines = lines/groups;
   int center_vertex = nodes - 1;

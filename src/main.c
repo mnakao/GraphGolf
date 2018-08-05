@@ -4,7 +4,7 @@ static void print_help(char *argv, const int rank)
 {
   END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] [-g <gruops>] \
 [-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-d] [-a <accept_rate>] \
-[-O <optimization>] [-p <add lines for center>] [-y] [-h]\n", argv);
+[-O <optimization>] [-p <add lines for center>] [-H] [-y] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, const int rank, char *infname, char *outfname,
@@ -12,13 +12,13 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
                      double *max_temp, bool *max_temp_flag, double *min_temp, bool *min_temp_flag,
                      bool *auto_temp_flag, double *accept_rate, int *cooling_cycle, 
 		     bool *hill_climbing_flag, bool *detect_temp_flag, int *groups, int *opt,
-		     bool *center_flag, int *add_degree_to_center)
+		     bool *center_flag, int *add_degree_to_center, bool *halfway_flag)
 {
   if(argc < 3)
     print_help(argv[0], rank);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:C:g:a:O:p:dyh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:C:g:a:O:p:dHyh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -90,6 +90,9 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
       *add_degree_to_center = atoi(optarg);
       if(*add_degree_to_center <= 0)
 	ERROR("-p > 0\n");
+      break;
+    case 'H':
+      *halfway_flag = true;
       break;
     case 'h':
     default:
@@ -203,28 +206,31 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   free(adjacency);
 }
 
-static void verfy_regular_graph(const int rank, const int n, const int d, const int lines, int edge[lines][2])
+static void verfy_graph(const int rank, const int nodes, const int based_nodes, const int degree,
+			const int groups, const int lines, int edge[lines][2], bool center_flag,
+			const int add_degree_to_center)
+
 {
   PRINT_R0("Verifing a regular graph... ");
 
-  if(n < d)
-    ERROR("NG. n is too small. n = %d d = %d\n", n, d);
+  if(nodes < degree)
+    ERROR("NG. n is too small. nodes = %d degree = %d\n", nodes, degree);
 
-  if((2*lines)%d != 0)
-    ERROR("NG. lines or n or d is invalid. lines = %d n = %d d = %d\n", lines, n, d);
+  if((2*lines)%degree != 0)
+    ERROR("NG. lines or n or d is invalid. lines = %d nodes = %d degree = %d\n", lines, nodes, degree);
 
-  int nodes[n];
-  for(int i=0;i<n;i++)
-    nodes[i] = 0;
+  int n[nodes];
+  for(int i=0;i<nodes;i++)
+    n[i] = 0;
 
   for(int i=0;i<lines;i++){
-    nodes[edge[i][0]]++;
-    nodes[edge[i][1]]++;
+    n[edge[i][0]]++;
+    n[edge[i][1]]++;
   }
 
-  for(int i=0;i<n;i++)
-    if(d != nodes[i])
-      ERROR("NG\nNot regular graph. d = %d nodes[%d] = %d\n", d, i, nodes[i]);
+  for(int i=0;i<nodes;i++)
+    if(degree != n[i])
+      ERROR("NG\nNot regular graph. degree = %d n[%d] = %d\n", degree, i, n[i]);
 
   if(!check_loop(lines, edge))
     ERROR("NG\nThe same node in the edge.\n");
@@ -232,6 +238,9 @@ static void verfy_regular_graph(const int rank, const int n, const int d, const 
   if(!check_duplicate_edge(lines, edge))
     ERROR("NG\nThe same node conbination in the edge.\n");
 
+  if(!check(rank, nodes, based_nodes, lines, degree, groups, edge, center_flag, add_degree_to_center, 0))
+    ERROR("NG\nNot symmetric graph.\n");
+  
   PRINT_R0("OK\n");
 }
 
@@ -330,6 +339,7 @@ int main(int argc, char *argv[])
   double max_temp = 80.0, min_temp = 0.2, accept_rate = 1.0, max_diff_energy = 0;
   bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false, center_flag = false;
   bool hill_climbing_flag = false, auto_temp_flag = false, detect_temp_flag = false;
+  bool halfway_flag = false;
   char *infname  = malloc(MAX_FILENAME_LENGTH);
   char *outfname = malloc(MAX_FILENAME_LENGTH);
 
@@ -338,7 +348,7 @@ int main(int argc, char *argv[])
 	   &random_seed, &thread_num, &ncalcs, &max_temp, &max_temp_flag, 
 	   &min_temp, &min_temp_flag, &auto_temp_flag, &accept_rate, &cooling_cycle, 
 	   &hill_climbing_flag, &detect_temp_flag, &groups, &opt,
-	   &center_flag, &add_degree_to_center);
+	   &center_flag, &add_degree_to_center, &halfway_flag);
 
   if((max_temp_flag && auto_temp_flag && hill_climbing_flag) || 
      (min_temp_flag && auto_temp_flag && hill_climbing_flag))
@@ -351,21 +361,25 @@ int main(int argc, char *argv[])
   omp_set_num_threads(thread_num);
 
   int based_lines = count_lines(rank, infname);
-  int lines       = based_lines * groups;
+  int lines       = (halfway_flag)? based_lines : based_lines * groups;
   int (*edge)[2]  = malloc(sizeof(int)*lines*2); // int edge[lines][2];
 
   read_file(edge, rank, infname);
   int based_nodes = max_node_num(based_lines, (int *)edge) + 1;
+  if(halfway_flag){
+    if(based_nodes%groups != 0) ERROR("based_nodes must be divisible by groups\n");
+    based_nodes /= groups;
+  }
+
   if(based_nodes < size)
     ERROR("Number of processes is too big. (Vertexs (%d) < Processes (%d))\n", based_nodes, size);
-  int nodes       = based_nodes * groups;
-  int degree      = 2 * lines / nodes;
+  
+  int nodes  = based_nodes * groups;
+  int degree = 2 * lines / nodes;
 
   if(center_flag){
-    if(add_degree_to_center != 1)
-      ERROR("Not implemented yet\n");
-    if(groups%2 == 0)
-      ERROR("Not implemented yet\n");
+    if(add_degree_to_center != 1 || groups%2 == 0 || halfway_flag)
+      ERROR("Not implemented yet1\n");
 
     degree += 1;
     nodes  += 1;
@@ -382,10 +396,11 @@ int main(int argc, char *argv[])
     //      printf("%d %d\n", edge[i][0], edge[i][1]);
   }
   else{
-    create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, rank, size, opt, center_flag);
+    if(!halfway_flag)
+      create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, rank, size, opt, center_flag);
   }
   
-  verfy_regular_graph(rank, nodes, degree, lines, edge);
+  verfy_graph(rank, nodes, based_nodes, degree, groups, lines, edge, center_flag, add_degree_to_center);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
   check_current_edge(nodes, degree, lines, groups, based_nodes, edge, low_ASPL, rank, size, center_flag);
   double average_time = estimated_elapse_time(ncalcs, nodes, based_nodes, lines, degree, groups,
@@ -437,19 +452,18 @@ int main(int argc, char *argv[])
   }
 
   // Output results
-  if(rank == 0){
-    printf("---\n");
-    printf("Diam. k = %d  ASPL l = %f  Diam. gap = %d  ASPL gap = %f\n",
+  PRINT_R0("---\n");
+  PRINT_R0("Diam. k = %d  ASPL l = %f  Diam. gap = %d  ASPL gap = %f\n",
 	   diam, ASPL, diam-low_diam, ASPL-low_ASPL);
-    printf("Steps: %lld  Elapse time: %f sec.\n", step, timer_read(TIMER_SA));
-  }
-  verfy_regular_graph(rank, nodes, degree, lines, edge);
+  PRINT_R0("Steps: %lld  Elapse time: %f sec.\n", step, timer_read(TIMER_SA));
 
   if(rank == 0 && outfnameflag){
     output_file(fp, lines, edge);
     fclose(fp);
   }
 
+  verfy_graph(rank, nodes, based_nodes, degree, groups, lines, edge, center_flag, add_degree_to_center);
+    
   MPI_Finalize();
   return 0;
 }

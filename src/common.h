@@ -69,4 +69,7 @@ extern bool evaluation(const int nodes, const int based_nodes, const int groups,
 		       int total_distance[based_nodes], const int rank, const int size, const int opt, const int center_flag);
 extern void edge_copy(int *restrict buf1, const int *restrict buf2, const int n);
 extern int distance(const int nodes, const int a, const int b, const int center_flag, const int center_vertex);
+extern bool check(const int rank, const int nodes, const int based_nodes, const int lines,
+                  const int degree, const int groups, int edge[lines][2],
+                  const int center_flag, const int add_degree_to_center, const int ii);
 #endif
