@@ -230,10 +230,10 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
       }
       else break;
     }
-    
+
     bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1], center_flag, center_vertex) == nodes/2);
     bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1], center_flag, center_vertex) == nodes/2);
-    bool diameter_flag = ((flag0 || flag1) && groups != 1);
+    bool diameter_flag = ((flag0 || flag1) && groups%2 == 0);
 
     if(diameter_flag){
       if(edge_1g_opt(edge, nodes, based_nodes, based_lines, groups, line[0], center_flag)) return;
@@ -278,23 +278,27 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
     }
   }
 }
-//int min = -100;
+
 static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, const int groups,
 		   const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy)
 {
+#if 1
+  static double max = 100000;
+  double tmp = fabs(((current_ASPL-ASPL)*nodes*(nodes-1))/2);
+  if(max > tmp && tmp != 0){
+    max = tmp;
+    printf("%f\n", tmp);
+    if(tmp == 1) exit(0);
+  }
+#endif
+
   if(ASPL <= current_ASPL) return true;
   if(hill_climbing_flag)   return false; // Only accept when ASPL <= current_ASPL.
 
   double diff = (double)((current_ASPL-ASPL)*nodes*(nodes-1))/groups;
 
-  //  int tmp = (int)((current_ASPL-ASPL)*nodes*(nodes-1));
-  //  if(min < tmp){
-  //    min = tmp;
-  //    printf("%d\n", tmp);
-  //  }
-  
   if(detect_temp_flag)
-    *max_diff_energy = MAX(*max_diff_energy, abs(diff));
+    *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);
 
   return (exp(diff/temp) > uniform_rand())? true : false;
 }
