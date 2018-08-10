@@ -282,7 +282,7 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
 static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, const int groups,
 		   const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy)
 {
-#if 1
+#if 0
   static double max = 100000;
   double tmp = fabs(((current_ASPL-ASPL)*nodes*(nodes-1))/2);
   if(max > tmp && tmp != 0){
