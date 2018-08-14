@@ -280,11 +280,13 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
 }
 
 static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, const int groups,
-		   const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy, long long *num_accepts)
+		   const bool hill_climbing_flag, const bool detect_temp_flag, const int i, double *max_diff_energy,
+		   long long *num_accepts)
 {
 #if 0
   static double max = 100000;
-  double tmp = fabs(((current_ASPL-ASPL)*nodes*(nodes-1))/2);
+  //  double tmp = fabs(((current_ASPL-ASPL)*nodes*(nodes-1))/2);
+  double tmp = fabs(((current_ASPL-ASPL)*nodes*(nodes-1))/groups);
   if(max > tmp && tmp != 0){
     max = tmp;
     printf("%f\n", tmp);
@@ -292,7 +294,11 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
   }
 #endif
 
-  if(ASPL <= current_ASPL){ *num_accepts +=1; return true;}
+  if(ASPL <= current_ASPL){
+    if(i > SKIP_ACCEPTS)
+      *num_accepts +=1;
+    return true;
+  }
   if(hill_climbing_flag)   return false; // Only accept when ASPL <= current_ASPL.
 
   double diff = (double)((current_ASPL-ASPL)*nodes*(nodes-1))/groups;
@@ -301,7 +307,8 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
     *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);
 
   if(exp(diff/temp) > uniform_rand()){
-    *num_accepts +=1;
+    if(i > SKIP_ACCEPTS)
+      *num_accepts +=1;
     return true;
   }
   else
@@ -343,8 +350,8 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, total_distance, rank, size, opt, center_flag)) break;
     }
 
-    if(accept(*ASPL, current_ASPL, temp, nodes, groups, 
-	      hill_climbing_flag, detect_temp_flag, max_diff_energy, num_accepts)){
+    if(accept(*ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
+	      detect_temp_flag, i, max_diff_energy, num_accepts)){
       current_ASPL = *ASPL;
       current_diam = *diam;
       edge_copy((int *)edge, (int *)current_edge, lines*2);

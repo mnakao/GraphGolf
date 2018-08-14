@@ -445,7 +445,7 @@ int main(int argc, char *argv[])
     // Set max temperature to accept it 50% in maximum diff energy.
     PRINT_R0("Proposed max temperature is %f\n", (-1.0 * max_diff_energy) / log(0.5));
     // Set min temperature to accept it  5% in minimum diff energy.
-    END("Proposed min temperature is %f\n", (-1.0 * groups) / log(0.05));
+    END("Proposed min temperature is %f\n", (-1.0) / log(0.05));
   }
 
   // Output results
@@ -458,7 +458,9 @@ int main(int argc, char *argv[])
   double time_check = timer_read(TIMER_CHECK);
   PRINT_R0("Steps: %lld  Elapse time: %f sec. (BFS: %f sec. Check: %f sec. Other: %f sec.)\n",
 	   step, time_sa, time_bfs, time_check, time_sa-(time_bfs+time_check));
-  PRINT_R0("Accept rate: %f (= %lld/%lld)\n", (double)num_accepts/ncalcs, num_accepts, ncalcs);
+  if(ncalcs > SKIP_ACCEPTS)
+    PRINT_R0("Accept rate: %f (= %lld/%lld)\n",
+	     (double)num_accepts/(ncalcs-SKIP_ACCEPTS), num_accepts, ncalcs-SKIP_ACCEPTS);
   if(rank == 0 && outfnameflag){
     output_file(fp, lines, edge);
     fclose(fp);
