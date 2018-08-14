@@ -22,9 +22,12 @@
 #define LEFT   1
 #define MIDDLE 2
 
-#define NUM_TIMERS          2
+#define NUM_TIMERS          4
 #define TIMER_SA            0
 #define TIMER_ESTIMATED     1
+#define TIMER_BFS           2
+#define TIMER_CHECK         3
+
 #define MAX_FILENAME_LENGTH 255
 #define NUM_OF_PROGRESS     100
 #define THRESHOLD           300000
