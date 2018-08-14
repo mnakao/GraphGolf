@@ -445,7 +445,7 @@ int main(int argc, char *argv[])
     // Set max temperature to accept it 50% in maximum diff energy.
     PRINT_R0("Proposed max temperature is %f\n", (-1.0 * max_diff_energy) / log(0.5));
     // Set min temperature to accept it  5% in minimum diff energy.
-    END("Proposed min temperature is %f\n", (-1.0) / log(0.05));
+    END("Proposed min temperature is %f\n", (-2.0) / log(0.05));
   }
 
   // Output results
