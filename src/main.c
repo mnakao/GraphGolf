@@ -333,7 +333,7 @@ int main(int argc, char *argv[])
   FILE *fp = NULL;
 
   // Initial parameters
-  long long ncalcs = 10000;
+  long long ncalcs = 10000, num_accepts = 0;
   int random_seed = 0, thread_num = 1, groups = 1, opt = 0, cooling_cycle = 1;
   int add_degree_to_center = -1;
   double max_temp = 80.0, min_temp = 0.2, accept_rate = 1.0, max_diff_energy = 0;
@@ -438,7 +438,7 @@ int main(int argc, char *argv[])
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, degree, groups, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
 		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, rank, 
-		      size, opt, cooling_cycle, center_flag, add_degree_to_center, based_nodes);
+		      size, opt, cooling_cycle, center_flag, add_degree_to_center, based_nodes, &num_accepts);
   timer_stop(TIMER_SA);
   
   if(detect_temp_flag){
@@ -458,6 +458,7 @@ int main(int argc, char *argv[])
   double time_check = timer_read(TIMER_CHECK);
   PRINT_R0("Steps: %lld  Elapse time: %f sec. (BFS: %f sec. Check: %f sec. Other: %f sec.)\n",
 	   step, time_sa, time_bfs, time_check, time_sa-(time_bfs+time_check));
+  PRINT_R0("Accept rate: %f (= %lld/%lld)\n", (double)num_accepts/ncalcs, num_accepts, ncalcs);
   if(rank == 0 && outfnameflag){
     output_file(fp, lines, edge);
     fclose(fp);

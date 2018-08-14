@@ -45,7 +45,7 @@ extern long long sa(const int nodes, const int lines, const int degree, const in
 		    const double low_ASPL, const bool hill_climbing_flag, const bool detect_temp_flag,
 		    double *max_diff_energy, int edge[lines][2], int *diameter, double *ASPL, const int rank, 
 		    const int size, const int opt, const int cooling_cyclie, const int center_flag,
-		    const int add_degree_to_center, const int based_nodes);
+		    const int add_degree_to_center, const int based_nodes, long long *num_accepts);
 extern void check_current_edge(const int nodes, const int degree, const int lines, const int groups,
 			       const int based_nodes, int edge[lines][2], const double low_ASPL,
 			       const int rank, const int size, const int center_flag);
@@ -75,4 +75,5 @@ extern int distance(const int nodes, const int a, const int b, const int center_
 extern bool check(const int rank, const int nodes, const int based_nodes, const int lines,
                   const int degree, const int groups, int edge[lines][2],
                   const int center_flag, const int add_degree_to_center, const int ii);
+
 #endif

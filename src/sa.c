@@ -280,7 +280,7 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
 }
 
 static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, const int groups,
-		   const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy)
+		   const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy, long long *num_accepts)
 {
 #if 0
   static double max = 100000;
@@ -292,7 +292,7 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
   }
 #endif
 
-  if(ASPL <= current_ASPL) return true;
+  if(ASPL <= current_ASPL){ *num_accepts +=1; return true;}
   if(hill_climbing_flag)   return false; // Only accept when ASPL <= current_ASPL.
 
   double diff = (double)((current_ASPL-ASPL)*nodes*(nodes-1))/groups;
@@ -300,14 +300,19 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
   if(detect_temp_flag)
     *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);
 
-  return (exp(diff/temp) > uniform_rand())? true : false;
+  if(exp(diff/temp) > uniform_rand()){
+    *num_accepts +=1;
+    return true;
+  }
+  else
+    return false;
 }
 
 long long sa(const int nodes, const int lines, const int degree, const int groups, double temp, 
 	     const long long ncalcs, const double cooling_rate,  const int low_diam,  const double low_ASPL, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
 	     int edge[lines][2], int *diam, double *ASPL, const int rank, const int size, const int opt, const int cooling_cycle,
-	     const int center_flag, const int add_degree_to_center, const int based_nodes)
+	     const int center_flag, const int add_degree_to_center, const int based_nodes, long long *num_accepts)
 {
   int current_edge[lines][2], best_edge[lines][2], total_distance[based_nodes];
   long long i;
@@ -339,7 +344,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
     }
 
     if(accept(*ASPL, current_ASPL, temp, nodes, groups, 
-	      hill_climbing_flag, detect_temp_flag, max_diff_energy)){
+	      hill_climbing_flag, detect_temp_flag, max_diff_energy, num_accepts)){
       current_ASPL = *ASPL;
       current_diam = *diam;
       edge_copy((int *)edge, (int *)current_edge, lines*2);
