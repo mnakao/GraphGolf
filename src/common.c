@@ -70,20 +70,28 @@ int order(const int nodes, const int a, const int b, const int center_flag)
 
 bool check_loop(const int lines, int edge[lines][2])
 {
+  timer_start(TIMER_CHECK);
   for(int i=0;i<lines;i++)
-    if(edge[i][0] == edge[i][1])
+    if(edge[i][0] == edge[i][1]){
+      timer_stop(TIMER_CHECK);
       return false;
+    }
 
+  timer_stop(TIMER_CHECK);
   return true;
 }
 
 bool check_duplicate_edge(const int lines, int edge[lines][2])
 {
+  timer_start(TIMER_CHECK);
   for(int i=0;i<lines;i++)
     for(int j=i+1;j<lines;j++)
-      if(has_duplicated_edge(edge[i][0], edge[i][1], edge[j][0], edge[j][1]))
+      if(has_duplicated_edge(edge[i][0], edge[i][1], edge[j][0], edge[j][1])){
+	timer_stop(TIMER_CHECK);
         return false;
+      }
 
+  timer_stop(TIMER_CHECK);
   return true;
 }
 
@@ -91,6 +99,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
                                   int (*edge)[2], int tmp_edge[groups][2], const int original_groups,
 				  const int nodes, const int center_flag)
 {
+  timer_start(TIMER_CHECK);
   int based_lines = lines/original_groups;
   int opt = (groups == original_groups)? 1 : 2;  // 1g-opt : 2g-opt
   int center_vertex = nodes - 1;
@@ -100,8 +109,10 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
     for(int i=0;i<based_lines;i++)
       if(i != tmp)
 	for(int j=0;j<groups;j++)
-	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
+	    timer_stop(TIMER_CHECK);
 	    return false;
+	  }
   }
   else if(opt == 2){
     int tmp0 = line[0]%based_lines;
@@ -109,8 +120,10 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
     for(int i=0;i<based_lines;i++)
       if(i != tmp0 && i != tmp1)
 	for(int j=0;j<groups;j++)
-	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
+	    timer_stop(TIMER_CHECK);
 	    return false;
+	  }
   }
   else{ 
     assert(original_groups%2 == 0 && opt == 1);
@@ -119,18 +132,23 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
       for(int i=0;i<based_lines;i++)
 	if(i != tmp)
 	  for(int j=0;j<groups;j++)
-	    if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+	    if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
+	      timer_stop(TIMER_CHECK);
 	      return false;
+	    }
     }
     else{
       for(int i=0;i<lines;i++)
         if(i%based_lines != tmp)
           for(int j=0;j<groups;j++)
-            if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+            if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
+	      timer_stop(TIMER_CHECK);
 	      return false;
+	    }
     }
   }
-
+  
+  timer_stop(TIMER_CHECK);
   return true;
 }
 

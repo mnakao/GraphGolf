@@ -1,6 +1,6 @@
 .PHONY: clean coma
 CC=mpicc
-#DEBUG=-DNDEBUG
+DEBUG=-DNDEBUG
 
 CFLAGS=-std=gnu99 -O3 -Wall -mcmodel=medium -fopenmp $(DEBUG)
 LFLAGS=-lm
@@ -42,9 +42,16 @@ fruits:
 	done; \
 	done
 
-# make coma DATA="..\/data\/n16d5.random.edges" N=1000000 G=2
+#make coma DATA="..\/data\/n72d4.random.edges" N=1000000 G=1
+#make coma DATA="..\/data\/n36d4.random.edges" N=1000000 G=2
+#make coma DATA="..\/data\/n24d4.random.edges" N=1000000 G=3
+#make coma DATA="..\/data\/n18d4.random.edges" N=1000000 G=4
+#make coma DATA="..\/data\/n12d4.random.edges" N=1000000 G=6
+#make coma DATA="..\/data\/n9d4.random.edges" N=1000000 G=8
+#make coma DATA="..\/data\/n8d4.random.edges" N=1000000 G=9
+#make coma DATA="..\/data\/n6d4.random.edges" N=1000000 G=12
 coma: 
-	cp ../scripts/ana-5-0.5.sh ana.sh
+	cp ../scripts/coma/ana-5-0.5.sh ana.sh
 	make clean; make ENV=coma
 	@for i in `seq 0 9`; do \
 	sed "s/@DATA@/$(DATA)/" ../scripts/coma/submit-$$i.sh | sed "s/@N@/$(N)/" | sed "s/@G@/$(G)/" > submit-$$i.sh; \

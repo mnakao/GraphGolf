@@ -52,6 +52,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
 		int adjacency[nodes][degree], int *diameter, double *ASPL, int total_distance[based_nodes],
 		const int rank, const int size, const int opt, const int center_flag)
 {
+  timer_start(TIMER_BFS);
   int distance[nodes], max = 0;
   int cancel_flag = false;
   double sum = 0.0;
@@ -128,15 +129,18 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
   } // end omp parallel
 
   MPI_Allreduce(MPI_IN_PLACE, &cancel_flag, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-  if(cancel_flag)
+  if(cancel_flag){
+    timer_stop(TIMER_BFS);
     return false;
+  }
 
   MPI_Allreduce(MPI_IN_PLACE, &max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   *diameter = max;
   *ASPL     = (sum) / (((nodes-1)*nodes)/2);
-  
+
+  timer_stop(TIMER_BFS);
   return true;
 }
 

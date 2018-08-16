@@ -333,7 +333,7 @@ int main(int argc, char *argv[])
   FILE *fp = NULL;
 
   // Initial parameters
-  long long ncalcs = 10000;
+  long long ncalcs = 10000, num_accepts = 0;
   int random_seed = 0, thread_num = 1, groups = 1, opt = 0, cooling_cycle = 1;
   int add_degree_to_center = -1;
   double max_temp = 80.0, min_temp = 0.2, accept_rate = 1.0, max_diff_energy = 0;
@@ -438,29 +438,36 @@ int main(int argc, char *argv[])
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, degree, groups, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
 		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, rank, 
-		      size, opt, cooling_cycle, center_flag, add_degree_to_center, based_nodes);
+		      size, opt, cooling_cycle, center_flag, add_degree_to_center, based_nodes, &num_accepts);
   timer_stop(TIMER_SA);
-
+  
   if(detect_temp_flag){
     // Set max temperature to accept it 50% in maximum diff energy.
     PRINT_R0("Proposed max temperature is %f\n", (-1.0 * max_diff_energy) / log(0.5));
     // Set min temperature to accept it  5% in minimum diff energy.
-    END("Proposed min temperature is %f\n", (-1.0 * groups) / log(0.05));
+    END("Proposed min temperature is %f\n", (-2.0) / log(0.05));
   }
 
   // Output results
   PRINT_R0("---\n");
   PRINT_R0("Diam. k = %d  ASPL l = %f  Diam. gap = %d  ASPL gap = %f\n",
 	   diam, ASPL, diam-low_diam, ASPL-low_ASPL);
-  PRINT_R0("Steps: %lld  Elapse time: %f sec.\n", step, timer_read(TIMER_SA));
 
+  double time_sa    = timer_read(TIMER_SA);
+  double time_bfs   = timer_read(TIMER_BFS);
+  double time_check = timer_read(TIMER_CHECK);
+  PRINT_R0("Steps: %lld  Elapse time: %f sec. (BFS: %f sec. Check: %f sec. Other: %f sec.)\n",
+	   step, time_sa, time_bfs, time_check, time_sa-(time_bfs+time_check));
+  if(ncalcs > SKIP_ACCEPTS)
+    PRINT_R0("Accept rate: %f (= %lld/%lld)\n",
+	     (double)num_accepts/(ncalcs-SKIP_ACCEPTS), num_accepts, ncalcs-SKIP_ACCEPTS);
   if(rank == 0 && outfnameflag){
     output_file(fp, lines, edge);
     fclose(fp);
   }
 
   verfy_graph(rank, nodes, based_nodes, degree, groups, lines, edge, center_flag, add_degree_to_center);
-    
+
   MPI_Finalize();
   return 0;
 }

@@ -22,12 +22,16 @@
 #define LEFT   1
 #define MIDDLE 2
 
-#define NUM_TIMERS          2
+#define NUM_TIMERS          4
 #define TIMER_SA            0
 #define TIMER_ESTIMATED     1
+#define TIMER_BFS           2
+#define TIMER_CHECK         3
+
 #define MAX_FILENAME_LENGTH 255
 #define NUM_OF_PROGRESS     100
 #define THRESHOLD           300000
+#define SKIP_ACCEPTS        10000
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define ABORT()         do{MPI_Abort(MPI_COMM_WORLD, 1); exit(1);}while(0)
@@ -42,7 +46,7 @@ extern long long sa(const int nodes, const int lines, const int degree, const in
 		    const double low_ASPL, const bool hill_climbing_flag, const bool detect_temp_flag,
 		    double *max_diff_energy, int edge[lines][2], int *diameter, double *ASPL, const int rank, 
 		    const int size, const int opt, const int cooling_cyclie, const int center_flag,
-		    const int add_degree_to_center, const int based_nodes);
+		    const int add_degree_to_center, const int based_nodes, long long *num_accepts);
 extern void check_current_edge(const int nodes, const int degree, const int lines, const int groups,
 			       const int based_nodes, int edge[lines][2], const double low_ASPL,
 			       const int rank, const int size, const int center_flag);
@@ -72,4 +76,5 @@ extern int distance(const int nodes, const int a, const int b, const int center_
 extern bool check(const int rank, const int nodes, const int based_nodes, const int lines,
                   const int degree, const int groups, int edge[lines][2],
                   const int center_flag, const int add_degree_to_center, const int ii);
+
 #endif
