@@ -7,18 +7,18 @@ static double uniform_rand()
 
 static void print_result_header()
 {
-  printf("   Times\t    Temp\tCurrent ASPL (GAP)\tBest ASPL (GAP)\t\t");
-  printf("Current Dia. (GAP)\tBest Dia. (GAP)\n");
+  PRINT_R0("   Times\t    Temp\tCurrent ASPL (GAP)\tBest ASPL (GAP)\t\t");
+  PRINT_R0("Current Dia. (GAP)\tBest Dia. (GAP)\n");
 }
 
 static void print_results(const int num, const double temp, const double current_ASPL, 
 			  const double best_ASPL, const double low_ASPL,
 			  const int current_diam, const int best_diam, const int low_diam)
 {
-  printf("%8d\t%f\t", num, temp);
-  printf("%f ( %f )\t%f ( %f )\t%d ( %d )\t\t\t%d ( %d )\n",
-	 current_ASPL, current_ASPL-low_ASPL, best_ASPL, best_ASPL-low_ASPL,
-	 current_diam, current_diam-low_diam, best_diam, best_diam-low_diam);
+  PRINT_R0("%8d\t%f\t", num, temp);
+  PRINT_R0("%f ( %f )\t%f ( %f )\t%d ( %d )\t\t\t%d ( %d )\n",
+	   current_ASPL, current_ASPL-low_ASPL, best_ASPL, best_ASPL-low_ASPL,
+	   current_diam, current_diam-low_diam, best_diam, best_diam-low_diam);
 }  
 
 void create_adjacency(const int nodes, const int lines, const int degree, 
@@ -57,7 +57,7 @@ int distance(const int nodes, const int a, const int b, const int center_flag, c
   }
 }
 
-bool check(const int rank, const int nodes, const int based_nodes, const int lines,
+bool check(const int nodes, const int based_nodes, const int lines,
 	   const int degree, const int groups, int edge[lines][2], 
 	   const int center_flag, const int add_degree_to_center, const int ii)
 {
@@ -136,81 +136,8 @@ bool has_duplicated_vertex(const int e00, const int e01, const int e10, const in
   return (e00 == e10 || e01 == e11 || e00 == e11 || e01 == e10);
 }
 
-static void set_lines(const int opt, int line[2], const int lines, const int groups, const int based_nodes, 
-		      int edge[lines][2], const int total_distance[based_nodes])
-{
-  if(opt == 0 || getRandom(2) == 0){
-    while(1){
-      line[0] = getRandom(lines);
-      line[1] = getRandom(lines);
-      if(line[0] != line[1]) return;
-    }
-  }
-
-  int based_lines = lines/groups, tmp_edge[based_lines], num = 0;
-  double priority[based_lines], max = -1.0;
-
-#if 0
-  for(int i=0;i<based_nodes;i++)
-    printf("%d : %d\n", i, total_distance[i]);
-  printf("--\n");
-  for(int i=0;i<based_lines;i++){
-    int v0 = edge[i][0] % based_nodes;
-    int v1 = edge[i][1] % based_nodes;
-    printf("%2d : %2d %2d : %d %d : %d\n", i, v0, v1,
-           total_distance[v0], total_distance[v1], 
-	   total_distance[v0] + total_distance[v1]);
-  }
-#endif
-
-  for(int i=0;i<based_lines;i++){
-    int v0 = edge[i][0] % based_nodes;
-    int v1 = edge[i][1] % based_nodes;
-    priority[i] = total_distance[v0] + total_distance[v1];
-  }
-
-  for(int i=0;i<based_lines;i++){
-    if(priority[i] > max){
-      max = priority[i];
-      tmp_edge[0] = i;
-      num = 1;
-    }
-    else if(priority[i] == max)
-      tmp_edge[num++] = i;
-  }
-
-  if(num >= 2){
-    while(1){
-      line[0] = tmp_edge[getRandom(num)] + based_lines * getRandom(groups);
-      line[1] = tmp_edge[getRandom(num)] + based_lines * getRandom(groups);
-      if(line[0] != line[1]) return;
-    }
-  }
-
-  // num == 1
-  max = -1.0;
-  for(int i=0;i<based_lines;i++){
-    if(i != tmp_edge[0]){
-      if(priority[i] > max){
-	max = priority[i];
-	tmp_edge[1] = i;
-	num = 2;
-      }
-      else if(priority[i] == max)
-	tmp_edge[num++] = i;
-    }
-  }
-
-  while(1){
-    line[0] = tmp_edge[0] + based_lines * getRandom(groups);
-    line[1] = tmp_edge[getRandom(num-1)+1] + based_lines * getRandom(groups);
-    if(line[0] != line[1]) return;
-  }
-}
-
 static void edge_exchange(const int nodes, const int lines, const int groups, const int based_nodes,
-			  int edge[lines][2], const int total_distance[based_nodes], const int opt,
-			  const int center_flag, const int ii)
+			  int edge[lines][2], const int center_flag, const int ii)
 {
   int line[groups*2], tmp_edge[groups*2][2];
   int based_lines = lines / groups;
@@ -218,7 +145,11 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
   
   while(1){
     while(1){
-      set_lines(opt, line, lines, groups, based_nodes, edge, total_distance);
+      while(1){
+	line[0] = getRandom(lines);
+	line[1] = getRandom(lines);
+	if(line[0] != line[1]) break;
+      }
       if((line[0] - line[1]) % based_lines == 0 || 
 	 has_duplicated_vertex(edge[line[0]][0], edge[line[0]][1],
 			       edge[line[1]][0], edge[line[1]][1])){
@@ -318,10 +249,10 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
 long long sa(const int nodes, const int lines, const int degree, const int groups, double temp, 
 	     const long long ncalcs, const double cooling_rate,  const int low_diam,  const double low_ASPL, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
-	     int edge[lines][2], int *diam, double *ASPL, const int rank, const int size, const int opt, const int cooling_cycle,
-	     const int center_flag, const int add_degree_to_center, const int based_nodes, long long *num_accepts)
+	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle, const int center_flag,
+	     const int add_degree_to_center, const int based_nodes, long long *num_accepts)
 {
-  int current_edge[lines][2], best_edge[lines][2], total_distance[based_nodes];
+  int current_edge[lines][2], best_edge[lines][2];
   long long i;
   edge_copy((int *)best_edge, (int *)edge, lines*2);
 
@@ -329,7 +260,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, edge, adjacency);
 
-  evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, total_distance, rank, size, opt, center_flag);
+  evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, center_flag);
   double current_ASPL = *ASPL;
   double best_ASPL    = *ASPL;
   int current_diam    = *diam;
@@ -339,15 +270,15 @@ long long sa(const int nodes, const int lines, const int degree, const int group
     print_result_header();
 
   for(i=0;i<ncalcs;i++){
-    if(i % print_interval == 0 && rank == 0 && !detect_temp_flag)
+    if(i % print_interval == 0 && !detect_temp_flag)
       print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, 
 		    current_diam, best_diam, low_diam);
     while(1){
       edge_copy((int *)current_edge, (int *)edge, lines*2);
-      edge_exchange(nodes, lines, groups, based_nodes, current_edge, total_distance, opt, center_flag, (int)i);
-      assert(check(rank, nodes, based_nodes, lines, degree, groups, current_edge, center_flag, add_degree_to_center, (int)i));
+      edge_exchange(nodes, lines, groups, based_nodes, current_edge, center_flag, (int)i);
+      assert(check(nodes, based_nodes, lines, degree, groups, current_edge, center_flag, add_degree_to_center, (int)i));
       create_adjacency(nodes, lines, degree, current_edge, adjacency);
-      if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, total_distance, rank, size, opt, center_flag)) break;
+      if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, center_flag)) break;
     }
 
     if(accept(*ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
@@ -361,10 +292,10 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       }
       best_diam = MIN(best_diam, current_diam);
       if(best_ASPL == low_ASPL){
-	if(rank == 0 && !detect_temp_flag){
+	if(!detect_temp_flag){
 	  print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, 
 			current_diam, best_diam, low_diam);
-	  printf("---\nFound optimum solution.\n");
+	  PRINT_R0("---\nFound optimum solution.\n");
 	}
 	break;
       }
@@ -384,21 +315,20 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 
 #define ESTIMATED_TIMES 5
 double estimated_elapse_time(const long long ncals, const int nodes, const int based_nodes, const int lines, const int degree,
-			     const int groups, int edge[lines][2], const int rank, const int size, const int opt,
-			     const int center_flag, const int add_degree_to_center)
+			     const int groups, int edge[lines][2], const int center_flag, const int add_degree_to_center)
 {
   int diam;    // Not use
   double ASPL; // Not use
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-  int total_distance[based_nodes], tmp_edge[lines][2];
+  int tmp_edge[lines][2];
 
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
     edge_copy((int *)tmp_edge, (int *)edge, lines*2);
-    edge_exchange(nodes, lines, groups, based_nodes, tmp_edge, total_distance, opt, center_flag, (int)i);
-    assert(check(rank, nodes, based_nodes, lines, degree, groups, tmp_edge, center_flag, add_degree_to_center, (int)i));
+    edge_exchange(nodes, lines, groups, based_nodes, tmp_edge, center_flag, (int)i);
+    assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, center_flag, add_degree_to_center, (int)i));
     create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
-    evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, total_distance, rank, size, opt, center_flag);
+    evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, center_flag);
   }
   timer_stop(TIMER_ESTIMATED);
   free(adjacency);
@@ -408,16 +338,14 @@ double estimated_elapse_time(const long long ncals, const int nodes, const int b
 
 // This function is mainly useful when groupe is 1.
 void check_current_edge(const int nodes, const int degree, const int lines, const int groups,
-			const int based_nodes, int edge[lines][2], const double low_ASPL,
-			const int rank, const int size, const int center_flag)
+			const int based_nodes, int edge[lines][2], const double low_ASPL, const int center_flag)
 {
   int diam;    // Not use
   double ASPL;
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-  int total_distance[based_nodes];
 
   create_adjacency(nodes, lines, degree, edge, adjacency);
-  if(! evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, total_distance, rank, size, 0, center_flag))
+  if(! evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, center_flag))
     ERROR("The input file has a node which is never reached by another node.\n");
 
   if(ASPL == low_ASPL)

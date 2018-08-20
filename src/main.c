@@ -1,24 +1,24 @@
 #include "common.h"
 
-static void print_help(char *argv, const int rank)
+static void print_help(char *argv)
 {
   END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] [-g <gruops>] \
-[-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-d] [-a <accept_rate>] \
-[-O <optimization>] [-p <add lines for center>] [-H] [-y] [-h]\n", argv);
+[-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-d] \
+[-a <accept_rate>] [-p <add lines for center>] [-H] [-y] [-h]\n", argv);
 }
 
-static void set_args(const int argc, char **argv, const int rank, char *infname, char *outfname,
+static void set_args(const int argc, char **argv, char *infname, char *outfname,
                      bool *outfnameflag, int *random_seed, int *thread_num, long long *ncalcs,
                      double *max_temp, bool *max_temp_flag, double *min_temp, bool *min_temp_flag,
-                     bool *auto_temp_flag, double *accept_rate, int *cooling_cycle, 
-		     bool *hill_climbing_flag, bool *detect_temp_flag, int *groups, int *opt,
+                     double *accept_rate, int *cooling_cycle, 
+		     bool *hill_climbing_flag, bool *detect_temp_flag, int *groups, 
 		     bool *center_flag, int *add_degree_to_center, bool *halfway_flag)
 {
   if(argc < 3)
-    print_help(argv[0], rank);
+    print_help(argv[0]);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:C:g:a:O:p:dHyh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:C:g:p:dHyh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -68,17 +68,6 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
       if(*groups < 1)
         ERROR("-g value >= 1\n");
       break;
-    case 'a':
-      *accept_rate = atof(optarg);
-      if(*accept_rate <= 0 || *accept_rate >= 1.0)
-        ERROR("0 < -a value < 1.0\n");
-      *auto_temp_flag = true;
-      break;
-    case 'O':
-      *opt = atoi(optarg);
-      if(*opt != 0 && *opt != 1)
-	ERROR("-O=0 or -O=1\n");
-      break;
     case 'd':
       *detect_temp_flag = true;
       break;
@@ -96,12 +85,12 @@ static void set_args(const int argc, char **argv, const int rank, char *infname,
       break;
     case 'h':
     default:
-      print_help(argv[0], rank);
+      print_help(argv[0]);
     }
   }
 }
 
-static int count_lines(const int rank, const char *fname)
+static int count_lines(const char *fname)
 {
   FILE *fp = NULL;
   if((fp = fopen(fname, "r")) == NULL)
@@ -116,7 +105,7 @@ static int count_lines(const int rank, const char *fname)
   return lines;
 }
 
-static void read_file(int (*edge)[2], const int rank, const char *fname)
+static void read_file(int (*edge)[2], const char *fname)
 {
   FILE *fp;
   if((fp = fopen(fname, "r")) == NULL)
@@ -142,8 +131,8 @@ static int max_node_num(const int lines, const int edge[lines*2])
 }
 
 static void create_symmetric_edge_with_center(int (*edge)[2], const int based_nodes, const int based_lines,
-					      const int groups, const int degree, const int rank, const int size,
-					      const int original_based_lines, const int add_degree_to_center, int const nodes)
+					      const int groups, const int degree, const int original_based_lines,
+					      const int add_degree_to_center, int const nodes)
 {
   if(add_degree_to_center > based_nodes)
     ERROR("Number of degree or nodes is invalid\n");
@@ -181,8 +170,7 @@ static void create_symmetric_edge_with_center(int (*edge)[2], const int based_no
 }
 
 static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines,
-                                  const int groups, const int degree, const int rank, const int size,
-				  const int opt, const int center_flag)
+                                  const int groups, const int degree, const int center_flag)
 {
   for(int j=1;j<groups;j++)
     for(int i=0;i<based_lines;i++){
@@ -195,20 +183,18 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   int nodes = based_nodes * groups;
   int lines = based_lines * groups;
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-  int total_distance[based_nodes];
 
   while(1){
     int start_line = getRandom(based_lines*groups);
     edge_1g_opt(edge, nodes, based_nodes, based_lines, groups, start_line, center_flag);
     create_adjacency(nodes, lines, degree, edge, adjacency);
-    if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, total_distance, rank, size, opt, center_flag)) break;
+    if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, center_flag)) break;
   }
   free(adjacency);
 }
 
-static void verfy_graph(const int rank, const int nodes, const int based_nodes, const int degree,
-			const int groups, const int lines, int edge[lines][2], bool center_flag,
-			const int add_degree_to_center)
+static void verfy_graph(const int nodes, const int based_nodes, const int degree, const int groups,
+			const int lines, int edge[lines][2], bool center_flag, const int add_degree_to_center)
 
 {
   PRINT_R0("Verifing a regular graph... ");
@@ -238,7 +224,7 @@ static void verfy_graph(const int rank, const int nodes, const int based_nodes, 
   if(!check_duplicate_edge(lines, edge))
     ERROR("NG\nThe same node conbination in the edge.\n");
 
-  if(!check(rank, nodes, based_nodes, lines, degree, groups, edge, center_flag, add_degree_to_center, 0))
+  if(!check(nodes, based_nodes, lines, degree, groups, edge, center_flag, add_degree_to_center, 0))
     ERROR("NG\nNot symmetric graph.\n");
   
   PRINT_R0("OK\n");
@@ -268,45 +254,39 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
   *low_ASPL = aspl;
 }
 
-static void output_params(const int size, const int nodes, const int degree, const int groups, const int opt,
-                          const int random_seed, const int thread_num, const double max_temp, const double min_temp,
+static void output_params(const int nodes, const int degree, const int groups, const int random_seed,
+			  const int thread_num, const double max_temp, const double min_temp,
                           const double accept_rate, const long long ncalcs, const int cooling_cycle,
 			  const double cooling_rate, const char *infname, const char *outfname, const bool outfnameflag,
-                          const double average_time, const bool hill_climbing_flag, const bool auto_temp_flag, const bool center_flag)
+                          const double average_time, const bool hill_climbing_flag, const bool center_flag)
 {
-  printf("---\n");
-  printf("Seed: %d\n", random_seed);
-  printf("Optimization: %d\n", opt);
-  printf("Num. of processes: %d\n", size);
-  printf("Num. of threads  : %d\n", thread_num);
+  PRINT_R0("---\n");
+  PRINT_R0("Seed: %d\n", random_seed);
+  PRINT_R0("Num. of processes: %d\n", size);
+  PRINT_R0("Num. of threads  : %d\n", thread_num);
   if(hill_climbing_flag == false){
-    printf("Algorithm: Simulated Annealing\n");
-    if(!auto_temp_flag){
-      printf("   MAX Temperature: %f\n", max_temp);
-      printf("   MIN Temperature: %f\n", min_temp);
-      printf("   Cooling Cycle: %d\n", cooling_cycle);
-      printf("   Cooling Rate : %f\n", cooling_rate);
-    }
-    else{
-      printf("   Accept Rate: %f\n", accept_rate);
-    }
+    PRINT_R0("Algorithm: Simulated Annealing\n");
+    PRINT_R0("   MAX Temperature: %f\n", max_temp);
+    PRINT_R0("   MIN Temperature: %f\n", min_temp);
+    PRINT_R0("   Cooling Cycle: %d\n", cooling_cycle);
+    PRINT_R0("   Cooling Rate : %f\n", cooling_rate);
   }
   else{
-    printf("Algorithm: Hill climbing Method\n");
+    PRINT_R0("Algorithm: Hill climbing Method\n");
   }
 
-  printf("Num. of Calulations: %lld\n", ncalcs);
-  printf("   Average BFS time: %f sec.\n", average_time);
-  printf("   Estimated elapse time: %f sec.\n", average_time * ncalcs);
-  printf("Input filename: %s\n", infname);
-  printf("   Num. of nodes: %d\n", nodes);
-  printf("   Degree: %d\n", degree);
-  printf("   Groups: %d\n", groups);
-  if(center_flag) printf("   Center Point: Exist\n");
-  else            printf("   Center Point: None\n");
+  PRINT_R0("Num. of Calulations: %lld\n", ncalcs);
+  PRINT_R0("   Average BFS time: %f sec.\n", average_time);
+  PRINT_R0("   Estimated elapse time: %f sec.\n", average_time * ncalcs);
+  PRINT_R0("Input filename: %s\n", infname);
+  PRINT_R0("   Num. of nodes: %d\n", nodes);
+  PRINT_R0("   Degree: %d\n", degree);
+  PRINT_R0("   Groups: %d\n", groups);
+  if(center_flag) PRINT_R0("   Center Point: Exist\n");
+  else            PRINT_R0("   Center Point: None\n");
   if(outfnameflag)
-    printf("Output filename: %s\n", outfname);
-  printf("---\n");
+    PRINT_R0("Output filename: %s\n", outfname);
+  PRINT_R0("---\n");
 }
 
 static void output_file(FILE *fp, const int lines, int edge[lines][2])
@@ -317,7 +297,7 @@ static void output_file(FILE *fp, const int lines, int edge[lines][2])
 
 int main(int argc, char *argv[])
 {
-  int rank, size, namelen;
+  int namelen;
   char processor_name[MPI_MAX_PROCESSOR_NAME];
 
   MPI_Init(&argc, &argv);
@@ -334,25 +314,26 @@ int main(int argc, char *argv[])
 
   // Initial parameters
   long long ncalcs = 10000, num_accepts = 0;
-  int random_seed = 0, thread_num = 1, groups = 1, opt = 0, cooling_cycle = 1;
+  int random_seed = 0, thread_num = 1, groups = 1, cooling_cycle = 1;
   int add_degree_to_center = -1;
   double max_temp = 80.0, min_temp = 0.2, accept_rate = 1.0, max_diff_energy = 0;
   bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false, center_flag = false;
-  bool hill_climbing_flag = false, auto_temp_flag = false, detect_temp_flag = false;
-  bool halfway_flag = false;
+  bool hill_climbing_flag = false, detect_temp_flag = false, halfway_flag = false;
   char *infname  = malloc(MAX_FILENAME_LENGTH);
   char *outfname = malloc(MAX_FILENAME_LENGTH);
 
   // Set arguments
-  set_args(argc, argv, rank, infname, outfname, &outfnameflag, 
-	   &random_seed, &thread_num, &ncalcs, &max_temp, &max_temp_flag, 
-	   &min_temp, &min_temp_flag, &auto_temp_flag, &accept_rate, &cooling_cycle, 
-	   &hill_climbing_flag, &detect_temp_flag, &groups, &opt,
+  set_args(argc, argv, infname, outfname, &outfnameflag, &random_seed,
+	   &thread_num, &ncalcs, &max_temp, &max_temp_flag, 
+	   &min_temp, &min_temp_flag, &accept_rate, &cooling_cycle, 
+	   &hill_climbing_flag, &detect_temp_flag, &groups, 
 	   &center_flag, &add_degree_to_center, &halfway_flag);
 
-  if((max_temp_flag && auto_temp_flag && hill_climbing_flag) || 
-     (min_temp_flag && auto_temp_flag && hill_climbing_flag))
+  if((max_temp_flag && hill_climbing_flag) || (min_temp_flag && hill_climbing_flag))
     ERROR("Two of (-w or -c), -a, and -y cannot be used.\n");
+
+  if(detect_temp_flag && groups != 1)
+    ERROR("When using -d option, -g must be 1.\n");
   
   if(hill_climbing_flag && detect_temp_flag)
     ERROR("Both -h and -d cannot be used.\n");
@@ -360,11 +341,11 @@ int main(int argc, char *argv[])
   srandom(random_seed);
   omp_set_num_threads(thread_num);
 
-  int based_lines = count_lines(rank, infname);
+  int based_lines = count_lines(infname);
   int lines       = (halfway_flag)? based_lines : based_lines * groups;
   int (*edge)[2]  = malloc(sizeof(int)*lines*2); // int edge[lines][2];
 
-  read_file(edge, rank, infname);
+  read_file(edge, infname);
   int based_nodes = max_node_num(based_lines, (int *)edge) + 1;
   if(halfway_flag){
     if(based_nodes%groups != 0) ERROR("based_nodes must be divisible by groups\n");
@@ -390,29 +371,24 @@ int main(int argc, char *argv[])
     memcpy(tmp_edge, edge, sizeof(int)*original_based_lines*2);
     free(edge);
     edge = tmp_edge;
-    create_symmetric_edge_with_center(edge, based_nodes, based_lines, groups, degree, rank, size,
+    create_symmetric_edge_with_center(edge, based_nodes, based_lines, groups, degree,
 				      original_based_lines,add_degree_to_center, nodes);
     //    for(int i=0;i<lines;i++)
     //      printf("%d %d\n", edge[i][0], edge[i][1]);
   }
   else{
     if(!halfway_flag)
-      create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, rank, size, opt, center_flag);
+      create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, center_flag);
   }
   
-  verfy_graph(rank, nodes, based_nodes, degree, groups, lines, edge, center_flag, add_degree_to_center);
+  verfy_graph(nodes, based_nodes, degree, groups, lines, edge, center_flag, add_degree_to_center);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
-  check_current_edge(nodes, degree, lines, groups, based_nodes, edge, low_ASPL, rank, size, center_flag);
+  check_current_edge(nodes, degree, lines, groups, based_nodes, edge, low_ASPL, center_flag);
   double average_time = estimated_elapse_time(ncalcs, nodes, based_nodes, lines, degree, groups,
-					      edge, rank, size, opt, center_flag, add_degree_to_center);
+					      edge, center_flag, add_degree_to_center);
 
   if(hill_climbing_flag){
     max_temp = min_temp = 0.0;
-    cooling_rate = 1.0;
-  }
-  else if(auto_temp_flag){
-    double neighborhood = 2.0 / (nodes * (nodes-1));
-    max_temp = min_temp = -1.0 * neighborhood / log(accept_rate) * nodes * (nodes-1);
     cooling_rate = 1.0;
   }
   else{
@@ -428,24 +404,23 @@ int main(int argc, char *argv[])
       ERROR("Cannot open %s\n", outfname);
   }
 
-  if(rank == 0)
-    output_params(size, nodes, degree, groups, opt, random_seed, thread_num, max_temp, 
-		  min_temp, accept_rate, ncalcs, cooling_cycle, cooling_rate, infname, outfname, 
-		  outfnameflag, average_time, hill_climbing_flag, auto_temp_flag, center_flag);
+  output_params(nodes, degree, groups, random_seed, thread_num, max_temp, min_temp,
+		accept_rate, ncalcs, cooling_cycle, cooling_rate, infname, outfname, 
+		outfnameflag, average_time, hill_climbing_flag, center_flag);
   
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, degree, groups, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
-		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, rank, 
-		      size, opt, cooling_cycle, center_flag, add_degree_to_center, based_nodes, &num_accepts);
+		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, 
+		      cooling_cycle, center_flag, add_degree_to_center, based_nodes, &num_accepts);
   timer_stop(TIMER_SA);
   
   if(detect_temp_flag){
-    // Set max temperature to accept it 50% in maximum diff energy.
+    // Set max temperature to accept it   50% in maximum diff energy.
     PRINT_R0("Proposed max temperature is %f\n", (-1.0 * max_diff_energy) / log(0.5));
-    // Set min temperature to accept it  5% in minimum diff energy.
-    END("Proposed min temperature is %f\n", (-2.0) / log(0.05));
+    // Set min temperature to accept it 0.01% in minimum diff energy.
+    END("Proposed min temperature is %f\n", (-2.0) / log(0.0001));
   }
 
   // Output results
@@ -466,7 +441,7 @@ int main(int argc, char *argv[])
     fclose(fp);
   }
 
-  verfy_graph(rank, nodes, based_nodes, degree, groups, lines, edge, center_flag, add_degree_to_center);
+  verfy_graph(nodes, based_nodes, degree, groups, lines, edge, center_flag, add_degree_to_center);
 
   MPI_Finalize();
   return 0;

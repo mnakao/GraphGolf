@@ -49,8 +49,7 @@ static int get_num_frontier(const int nodes, const int frontier[nodes])
 }
 
 bool evaluation(const int nodes, int based_nodes, const int groups, const int lines, const int degree,
-		int adjacency[nodes][degree], int *diameter, double *ASPL, int total_distance[based_nodes],
-		const int rank, const int size, const int opt, const int center_flag)
+		int adjacency[nodes][degree], int *diameter, double *ASPL, const int center_flag)
 {
   timer_start(TIMER_BFS);
   int distance[nodes], max = 0;
@@ -60,10 +59,6 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
   int start_node = node_size * rank;
   node_size = MIN(node_size, based_nodes-start_node);
   if(node_size < 0) node_size = 0;
-
-  if(opt == 1)
-    for(int i=0;i<based_nodes;i++)
-      total_distance[i] = 0;
 
 #pragma omp parallel
   {
@@ -103,9 +98,6 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
 	printf("%d ", distance[i] );
       printf("\n");
 #endif
-      if(opt == 1)
-	for(int i=0;i<based_nodes*groups;i++)
-	  total_distance[snode] += distance[i];
 
       for(int i=snode+1;i<groups*based_nodes;i++){
 	if(distance[i] == 0){  // Never visit a node
