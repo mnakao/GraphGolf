@@ -42,6 +42,18 @@ fruits:
 	done; \
 	done
 
+# make fruits DATA="..\/data\/n16d5.random.edges" N=1000000 G=2 W=332.9740153 c=0.667616
+fruits-cooling:
+	cp ../scripts/fruits/ana_cooling.sh ana.sh
+	make clean; make ENV=fruits
+	for C in 1 10 100 1000 10000; do \
+	for s in `seq 1 10`; do \
+	sed "s/@DATA@/$(DATA)/" ../scripts/fruits/submit_cooling.sh | sed "s/@N@/$(N)/" | sed "s/@G@/$(G)/" > /tmp/a; \
+	sed "s/@W@/$$W/" /tmp/a | sed "s/@c@/$$c/" | sed "s/@C@/$$C/" | sed "s/@S@/$$s/" > submit.sh; \
+	sbatch submit.sh; rm /tmp/a; \
+	done; \
+	done
+
 #make coma DATA="..\/data\/n72d4.random.edges" N=1000000 G=1
 #make coma DATA="..\/data\/n36d4.random.edges" N=1000000 G=2
 #make coma DATA="..\/data\/n24d4.random.edges" N=1000000 G=3
