@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
   long long ncalcs = 10000, num_accepts = 0;
   int random_seed = 0, thread_num = 1, groups = 1, cooling_cycle = 1;
   int add_degree_to_center = -1;
-  double max_temp = 80.0, min_temp = 0.2, accept_rate = 1.0, max_diff_energy = 0;
+  double max_temp = 80.0, min_temp = 0.217147, accept_rate = 1.0, max_diff_energy = 0;
   bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false, center_flag = false;
   bool hill_climbing_flag = false, detect_temp_flag = false, halfway_flag = false;
   char *infname  = malloc(MAX_FILENAME_LENGTH);

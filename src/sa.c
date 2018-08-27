@@ -7,18 +7,22 @@ static double uniform_rand()
 
 static void print_result_header()
 {
-  PRINT_R0("   Times\t    Temp\tCurrent ASPL (GAP)\tBest ASPL (GAP)\t\t");
-  PRINT_R0("Current Dia. (GAP)\tBest Dia. (GAP)\n");
+  PRINT_R0("   Times\t    Temp\tCur. ASPL GAP\t\tBest ASPL GAP\t\t");
+  PRINT_R0("Cur. Dia. GAP\t\tBest Dia. GAP\tAccept Rate\n");
 }
 
 static void print_results(const int num, const double temp, const double current_ASPL, 
-			  const double best_ASPL, const double low_ASPL,
-			  const int current_diam, const int best_diam, const int low_diam)
+			  const double best_ASPL, const double low_ASPL, const int current_diam,
+			  const int best_diam, const int low_diam, const int accepts, const int rejects)
 {
   PRINT_R0("%8d\t%f\t", num, temp);
-  PRINT_R0("%f ( %f )\t%f ( %f )\t%d ( %d )\t\t\t%d ( %d )\n",
+  PRINT_R0("%f ( %f )\t%f ( %f )\t%d ( %d )\t\t\t%d ( %d )\t\t",
 	   current_ASPL, current_ASPL-low_ASPL, best_ASPL, best_ASPL-low_ASPL,
 	   current_diam, current_diam-low_diam, best_diam, best_diam-low_diam);
+  if(num != 0)
+    PRINT_R0("%.4f ( %d / %d )\n", (double)accepts/(accepts+rejects), accepts, (accepts+rejects));
+  else
+    PRINT_R0("-\n");
 }  
 
 void create_adjacency(const int nodes, const int lines, const int degree, 
@@ -212,7 +216,7 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
 
 static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, const int groups,
 		   const bool hill_climbing_flag, const bool detect_temp_flag, const int i, double *max_diff_energy,
-		   long long *num_accepts)
+		   long long *total_accepts, int *accepts, int *rejects)
 {
 #if 0
   static double max = 100000;
@@ -226,11 +230,14 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
 #endif
 
   if(ASPL <= current_ASPL){
-    if(i > SKIP_ACCEPTS)
-      *num_accepts +=1;
+    *accepts += 1;
+    if(i > SKIP_ACCEPTS) *total_accepts +=1;
     return true;
   }
-  if(hill_climbing_flag)   return false; // Only accept when ASPL <= current_ASPL.
+  if(hill_climbing_flag){ // Only accept when ASPL <= current_ASPL.
+    *rejects += 1;
+    return false;
+  }
 
   double diff = (double)((current_ASPL-ASPL)*nodes*(nodes-1))/groups;
 
@@ -238,22 +245,25 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
     *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);
 
   if(exp(diff/temp) > uniform_rand()){
-    if(i > SKIP_ACCEPTS)
-      *num_accepts +=1;
+    *accepts += 1;
+    if(i > SKIP_ACCEPTS) *total_accepts +=1;
     return true;
   }
-  else
+  else{
+    *rejects += 1;
     return false;
+  }
 }
 
 long long sa(const int nodes, const int lines, const int degree, const int groups, double temp, 
 	     const long long ncalcs, const double cooling_rate,  const int low_diam,  const double low_ASPL, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
 	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle, const int center_flag,
-	     const int add_degree_to_center, const int based_nodes, long long *num_accepts)
+	     const int add_degree_to_center, const int based_nodes, long long *total_accepts)
 {
   int current_edge[lines][2], best_edge[lines][2];
   long long i;
+  int accepts = 0, rejects = 0;
   edge_copy((int *)best_edge, (int *)edge, lines*2);
 
   // Create adjacency matrix
@@ -270,9 +280,13 @@ long long sa(const int nodes, const int lines, const int degree, const int group
     print_result_header();
 
   for(i=0;i<ncalcs;i++){
-    if(i % print_interval == 0 && !detect_temp_flag)
+    if(i % print_interval == 0 && !detect_temp_flag){
       print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, 
-		    current_diam, best_diam, low_diam);
+		    current_diam, best_diam, low_diam, accepts, rejects);
+      accepts = 0;
+      rejects = 0;
+    }
+    
     while(1){
       edge_copy((int *)current_edge, (int *)edge, lines*2);
       edge_exchange(nodes, lines, groups, based_nodes, current_edge, center_flag, (int)i);
@@ -282,7 +296,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
     }
 
     if(accept(*ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
-	      detect_temp_flag, i, max_diff_energy, num_accepts)){
+	      detect_temp_flag, i, max_diff_energy, total_accepts, &accepts, &rejects)){
       current_ASPL = *ASPL;
       current_diam = *diam;
       edge_copy((int *)edge, (int *)current_edge, lines*2);
@@ -294,7 +308,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       if(best_ASPL == low_ASPL){
 	if(!detect_temp_flag){
 	  print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, 
-			current_diam, best_diam, low_diam);
+			current_diam, best_diam, low_diam, accepts, rejects);
 	  PRINT_R0("---\nFound optimum solution.\n");
 	}
 	break;
