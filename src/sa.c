@@ -45,14 +45,9 @@ int distance(int nodes, const int a, const int b, const int added_centers)
 {
   if(a >= nodes-added_centers || b >= nodes-added_centers) return CENTER_VERTEX;
 
+  int v = MAX(a, b) - MIN(a, b);
   if(added_centers) nodes -= added_centers;
-  // int v = MAX(a, b) - MIN(a, b);
-  //    return (v < nodes/2.0)? v : nodes-v;
-  int max  = MAX(a, b);
-  int min  = MIN(a, b);
-  int tmp1 = max - min;
-  int tmp2 = min + nodes - max;
-  return MIN(tmp1, tmp2);
+  return (v < nodes/2.0)? v : nodes-v;
 }
 
 bool check(const int nodes, const int based_nodes, const int lines, const int degree,
