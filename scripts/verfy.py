@@ -63,6 +63,7 @@ def max_avg_for_matrix(data):
         if max < data[i][j]:
 	  max = data[i][j]
 
+  print "SUM =", sum / 2
   return max, sum / cnt
 
 if __name__ == '__main__':

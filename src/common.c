@@ -40,31 +40,19 @@ void swap(int *a, int *b)
   *b = tmp;
 }
 
-int order(const int nodes, const int a, const int b, const int center_flag)
+int order(int nodes, const int a, const int b, const int added_centers)
 {
-  int center_vertex = nodes - 1;
-  if(!center_flag && nodes%2 == 0 && (a-b)%(nodes/2) == 0)       return MIDDLE;
-  if(center_flag  && (a == center_vertex || b == center_vertex)) return MIDDLE;
+  if(!added_centers && nodes%2 == 0 && (a-b)%(nodes/2) == 0) return MIDDLE;
+  if(a >= nodes-added_centers || b >= nodes-added_centers)   return MIDDLE;
 
-  if(center_flag){
-    if(a < (nodes-1.0)/2.0){ // a = 0, 1, 2, 3, 4
-      if(a > b) return LEFT;
-      return (a+(nodes-1.0)/2.0 > b)? RIGHT : LEFT;
-    }
-    else{
-      if(a < b) return RIGHT;
-      return (a-(nodes-1.0)/2.0 > b)? RIGHT : LEFT;
-    }
+  if(added_centers) nodes -= added_centers;
+  if(a < nodes/2.0){
+    if(a > b) return LEFT;
+    return (a+nodes/2.0 > b)? RIGHT : LEFT;
   }
   else{
-    if(a < nodes/2.0){
-      if(a > b) return LEFT;
-      return (a+nodes/2.0 > b)? RIGHT : LEFT;
-    }
-    else{
-      if(a < b) return RIGHT;
-      return (a-nodes/2.0 > b)? RIGHT : LEFT;
-    }
+    if(a < b) return RIGHT;
+    return (a-nodes/2.0 > b)? RIGHT : LEFT;
   }
 }
 
@@ -97,12 +85,11 @@ bool check_duplicate_edge(const int lines, int edge[lines][2])
 
 bool check_duplicate_current_edge(const int lines, const int groups, const int line[groups],
                                   int (*edge)[2], int tmp_edge[groups][2], const int original_groups,
-				  const int nodes, const int center_flag)
+				  const int nodes, const int added_centers)
 {
   timer_start(TIMER_CHECK);
   int based_lines = lines/original_groups;
   int opt = (groups == original_groups)? 1 : 2;  // 1g-opt : 2g-opt
-  int center_vertex = nodes - 1;
   
   if(original_groups%2 == 1 && opt == 1){
     int tmp = line[0]%based_lines;
@@ -128,7 +115,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
   else{ 
     assert(original_groups%2 == 0 && opt == 1);
     int tmp = line[0]%based_lines;
-    if(distance(nodes, tmp_edge[0][0], tmp_edge[0][1], center_flag, center_vertex) != nodes/2){
+    if(distance(nodes, tmp_edge[0][0], tmp_edge[0][1], added_centers) != nodes/2){
       for(int i=0;i<based_lines;i++)
 	if(i != tmp)
 	  for(int j=0;j<groups;j++)
@@ -152,23 +139,23 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
   return true;
 }
 
-bool edge_1g_opt(int (*edge)[2], const int nodes, const int based_nodes, const int based_lines, 
-		 const int groups, const int start_line, const int center_flag)
+bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int based_nodes, const int based_lines, 
+		 const int groups, const int start_line, const int added_centers)
 {
-  if(groups == 1)
+  if(groups == 1) // assert ?
     return true;
 
-  if(center_flag){
-    int center_vertex = nodes - 1;
-    if(edge[start_line][0] == center_vertex || edge[start_line][1] == center_vertex)
-      return false;
-  }
+  if(edge[start_line][0] >= nodes-added_centers || edge[start_line][1] >= nodes-added_centers)
+    return false;
 
+  //  printf("start = %d\n", start_line);
+  //  for(int i=0;i<lines;i++)
+  //    printf("%d %d\n", edge[i][0], edge[i][1]);
+  //  exit(0);
   int line[groups], tmp_edge[groups][2];
-  int lines = based_lines * groups;
-
   for(int i=0;i<groups;i++)
     line[i] = start_line % based_lines + i * based_lines;
+  
   int start_edge = edge[line[0]][0] % based_nodes;
   int end_edge   = get_end_edge(start_edge, groups, edge, line, based_nodes);
   if(end_edge == start_edge){
@@ -198,8 +185,8 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int based_nodes, const i
       tmp_edge[0][1] = end_edge + based_nodes * pattern;
       for(int i=1;i<groups;i++){
 	int tmp = tmp_edge[0][1] + based_nodes * i;
-	if(center_flag)
-	  tmp_edge[i][1] = (tmp < nodes-1)? tmp : tmp - (nodes-1);
+	if(added_centers)
+	  tmp_edge[i][1] = (tmp < nodes-added_centers)? tmp : tmp - (nodes-added_centers);
 	else
 	  tmp_edge[i][1] = (tmp < nodes)? tmp : tmp - nodes;
       }
@@ -210,11 +197,11 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int based_nodes, const i
       
   assert(check_loop(groups, tmp_edge));
   assert(check_duplicate_edge(groups, tmp_edge));
-  if(!check_duplicate_current_edge(lines, groups, line, edge, tmp_edge, groups, nodes, center_flag))
+  if(!check_duplicate_current_edge(lines, groups, line, edge, tmp_edge, groups, nodes, added_centers))
     return false;
 
   for(int i=0;i<groups;i++){
-    if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], center_flag) == RIGHT){
+    if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT){
       swap(&tmp_edge[i][0], &tmp_edge[i][1]);  // RIGHT -> LEFT
     }
   }

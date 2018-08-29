@@ -41,51 +41,32 @@ void create_adjacency(const int nodes, const int lines, const int degree,
 }
 
 #define CENTER_VERTEX -1
-int distance(const int nodes, const int a, const int b, const int center_flag, const int center_vertex)
+int distance(int nodes, const int a, const int b, const int added_centers)
 {
-  if(center_flag && (a == center_vertex || b == center_vertex)) return CENTER_VERTEX;
-  int v = MAX(a, b) - MIN(a, b);
+  if(a >= nodes-added_centers || b >= nodes-added_centers) return CENTER_VERTEX;
 
-  if(center_flag){
-    //    double m = (nodes-1.0)/2.0;
-    //    return (v < m)? v : nodes-1-v
-    return (v < nodes/2)? v : nodes-1-v;
-  }
-  else{
-    //    return (v < nodes/2)? v : nodes-v;
-    int max  = MAX(a, b);
-    int min  = MIN(a, b);
-    int tmp1 = max - min;
-    int tmp2 = min + nodes - max;
-    return MIN(tmp1, tmp2);
-  }
+  if(added_centers) nodes -= added_centers;
+  // int v = MAX(a, b) - MIN(a, b);
+  //    return (v < nodes/2.0)? v : nodes-v;
+  int max  = MAX(a, b);
+  int min  = MIN(a, b);
+  int tmp1 = max - min;
+  int tmp2 = min + nodes - max;
+  return MIN(tmp1, tmp2);
 }
 
-bool check(const int nodes, const int based_nodes, const int lines,
-	   const int degree, const int groups, int edge[lines][2], 
-	   const int center_flag, const int add_degree_to_center, const int ii)
+bool check(const int nodes, const int based_nodes, const int lines, const int degree,
+	   const int groups, int edge[lines][2], const int added_centers, const int ii)
 {
   int based_lines = lines/groups;
-  int center_vertex = nodes - 1;
 
-  //  printf("--\n");
-  //  for(int i=0;i<lines;i++)
-  //     printf("%d %d\n", edge[i][0], edge[i][1]);
-    /*
-    if(order(nodes, edge[i][0], edge[i][1], center_flag) == RIGHT)
-      printf("%d %d : RIGHT\n", edge[i][0], edge[i][1]);
-    else if(order(nodes, edge[i][0], edge[i][1], center_flag) == LEFT)
-      printf("%d %d : LEFT\n", edge[i][0], edge[i][1]);
-    else
-    printf("%d %d : MIDDLE\n", edge[i][0], edge[i][1]);*/
-  
   for(int i=0;i<based_lines;i++){
     for(int j=1;j<groups;j++){
       int k = j * based_lines + i;
-      if(distance(nodes, edge[i][0], edge[i][1], center_flag, center_vertex) != distance(nodes, edge[k][0], edge[k][1], center_flag, center_vertex)){
+      if(distance(nodes, edge[i][0], edge[i][1], added_centers) != distance(nodes, edge[k][0], edge[k][1], added_centers)){
 	PRINT_R0("check 1: %d\n", ii);
-	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", i, edge[i][0], i, edge[i][1], distance(nodes, edge[i][0], edge[i][1], center_flag, center_vertex));
-	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", k, edge[k][0], k, edge[k][1], distance(nodes, edge[k][0], edge[k][1], center_flag, center_vertex));
+	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", i, edge[i][0], i, edge[i][1], distance(nodes, edge[i][0], edge[i][1], added_centers));
+	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", k, edge[k][0], k, edge[k][1], distance(nodes, edge[k][0], edge[k][1], added_centers));
 	return false;
       }
     }
@@ -94,10 +75,10 @@ bool check(const int nodes, const int based_nodes, const int lines,
   for(int i=0;i<based_lines;i++){
     for(int j=1;j<groups;j++){
       int k = j * based_lines + i;
-      if(order(nodes, edge[i][0], edge[i][1], center_flag) != order(nodes, edge[k][0], edge[k][1], center_flag)){
+      if(order(nodes, edge[i][0], edge[i][1], added_centers) != order(nodes, edge[k][0], edge[k][1], added_centers)){
 	PRINT_R0("check 2 : %d\n", ii);
-	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d %d\n", i, edge[i][0], i, edge[i][1], order(nodes, edge[i][0], edge[i][1], center_flag));
-	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d %d\n", k, edge[k][0], k, edge[k][1], order(nodes, edge[k][0], edge[k][1], center_flag));
+	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d %d\n", i, edge[i][0], i, edge[i][1], order(nodes, edge[i][0], edge[i][1], added_centers));
+	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d %d\n", k, edge[k][0], k, edge[k][1], order(nodes, edge[k][0], edge[k][1], added_centers));
 	return false;
       }
     }
@@ -109,14 +90,14 @@ bool check(const int nodes, const int based_nodes, const int lines,
   }
   
   for(int i=0;i<based_lines;i++){
-    if(order(nodes, edge[i][0], edge[i][1], center_flag) != MIDDLE)
+    if(order(nodes, edge[i][0], edge[i][1], added_centers) != MIDDLE)
       for(int j=1;j<groups;j++){
 	int k = j * based_lines + i;
 	int tmp0 = edge[k][0] - edge[k-based_lines][0];
 	int tmp1 = edge[k][1] - edge[k-based_lines][1];
-	if(center_flag){
-	  tmp0 = (tmp0 < 0)? tmp0+nodes-1 : tmp0;
-	  tmp1 = (tmp1 < 0)? tmp1+nodes-1 : tmp1;
+	if(added_centers){
+	  tmp0 = (tmp0 < 0)? tmp0+nodes-added_centers : tmp0;
+	  tmp1 = (tmp1 < 0)? tmp1+nodes-added_centers : tmp1;
 	}
 	else{
 	  tmp0 = (tmp0 < 0)? tmp0 + nodes : tmp0;
@@ -141,11 +122,10 @@ bool has_duplicated_vertex(const int e00, const int e01, const int e10, const in
 }
 
 static void edge_exchange(const int nodes, const int lines, const int groups, const int based_nodes,
-			  int edge[lines][2], const int center_flag, const int ii)
+			  int edge[lines][2], const int added_centers, const int ii)
 {
   int line[groups*2], tmp_edge[groups*2][2];
   int based_lines = lines / groups;
-  int center_vertex = nodes - 1;
   
   while(1){
     while(1){
@@ -159,19 +139,19 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
 			       edge[line[1]][0], edge[line[1]][1])){
 	if(groups == 1) continue;
 	else{
-	  if(edge_1g_opt(edge, nodes, based_nodes, based_lines, groups, line[0], center_flag)) return;
+	  if(edge_1g_opt(edge, nodes, lines, based_nodes, based_lines, groups, line[0], added_centers)) return;
 	  else continue;
 	}
       }
       else break;
     }
 
-    bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1], center_flag, center_vertex) == nodes/2);
-    bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1], center_flag, center_vertex) == nodes/2);
+    bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1], added_centers) == nodes/2);
+    bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1], added_centers) == nodes/2);
     bool diameter_flag = ((flag0 || flag1) && groups%2 == 0);
 
     if(diameter_flag){
-      if(edge_1g_opt(edge, nodes, based_nodes, based_lines, groups, line[0], center_flag)) return;
+      if(edge_1g_opt(edge, nodes, lines, based_nodes, based_lines, groups, line[0], added_centers)) return;
       else continue;
     }
     else{ // 2g_opt
@@ -197,11 +177,11 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
 
       assert(check_loop(groups*2, tmp_edge));
       if(!check_duplicate_edge(groups*2, tmp_edge)) continue;
-      if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge, groups, nodes, center_flag))
+      if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge, groups, nodes, added_centers))
 	continue;
 
       for(int i=0;i<groups*2;i++)
-	if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], center_flag) == RIGHT)
+	if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)
 	  swap(&tmp_edge[i][0], &tmp_edge[i][1]); // RIGHT -> LEFT
 
       for(int i=0;i<groups*2;i++){
@@ -258,19 +238,18 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
 long long sa(const int nodes, const int lines, const int degree, const int groups, double temp, 
 	     const long long ncalcs, const double cooling_rate,  const int low_diam,  const double low_ASPL, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
-	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle, const int center_flag,
-	     const int add_degree_to_center, const int based_nodes, long long *total_accepts)
+	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle,
+	     const int added_centers, const int added_edges_to_center, const int based_nodes, long long *total_accepts)
 {
-  int current_edge[lines][2], best_edge[lines][2];
+  int current_edge[lines][2], best_edge[lines][2], accepts = 0, rejects = 0;
   long long i;
-  int accepts = 0, rejects = 0;
   edge_copy((int *)best_edge, (int *)edge, lines*2);
 
   // Create adjacency matrix
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, edge, adjacency);
 
-  evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, center_flag);
+  evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers);
   double current_ASPL = *ASPL;
   double best_ASPL    = *ASPL;
   int current_diam    = *diam;
@@ -289,10 +268,10 @@ long long sa(const int nodes, const int lines, const int degree, const int group
     
     while(1){
       edge_copy((int *)current_edge, (int *)edge, lines*2);
-      edge_exchange(nodes, lines, groups, based_nodes, current_edge, center_flag, (int)i);
-      assert(check(nodes, based_nodes, lines, degree, groups, current_edge, center_flag, add_degree_to_center, (int)i));
+      edge_exchange(nodes, lines, groups, based_nodes, current_edge, added_centers, (int)i);
+      assert(check(nodes, based_nodes, lines, degree, groups, current_edge, added_centers, (int)i));
       create_adjacency(nodes, lines, degree, current_edge, adjacency);
-      if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, center_flag)) break;
+      if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers)) break;
     }
 
     if(accept(*ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
@@ -328,8 +307,8 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 }
 
 #define ESTIMATED_TIMES 5
-double estimated_elapse_time(const long long ncals, const int nodes, const int based_nodes, const int lines, const int degree,
-			     const int groups, int edge[lines][2], const int center_flag, const int add_degree_to_center)
+double estimated_elapse_time(const long long ncals, const int nodes, const int based_nodes, const int lines,
+			     const int degree, const int groups, int edge[lines][2], const int added_centers)
 {
   int diam;    // Not use
   double ASPL; // Not use
@@ -339,11 +318,12 @@ double estimated_elapse_time(const long long ncals, const int nodes, const int b
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
     edge_copy((int *)tmp_edge, (int *)edge, lines*2);
-    edge_exchange(nodes, lines, groups, based_nodes, tmp_edge, center_flag, (int)i);
-    assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, center_flag, add_degree_to_center, (int)i));
+    edge_exchange(nodes, lines, groups, based_nodes, tmp_edge, added_centers, (int)i);
+    assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, (int)i));
     create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
-    evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, center_flag);
+    evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, added_centers);
   }
+
   timer_stop(TIMER_ESTIMATED);
   free(adjacency);
 
@@ -352,14 +332,14 @@ double estimated_elapse_time(const long long ncals, const int nodes, const int b
 
 // This function is mainly useful when groupe is 1.
 void check_current_edge(const int nodes, const int degree, const int lines, const int groups,
-			const int based_nodes, int edge[lines][2], const double low_ASPL, const int center_flag)
+			const int based_nodes, int edge[lines][2], const double low_ASPL, const int added_centers)
 {
   int diam;    // Not use
   double ASPL;
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
 
   create_adjacency(nodes, lines, degree, edge, adjacency);
-  if(! evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, center_flag))
+  if(! evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, added_centers))
     ERROR("The input file has a node which is never reached by another node.\n");
 
   if(ASPL == low_ASPL)

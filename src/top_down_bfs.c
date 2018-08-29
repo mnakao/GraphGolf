@@ -49,7 +49,7 @@ static int get_num_frontier(const int nodes, const int frontier[nodes])
 }
 
 bool evaluation(const int nodes, int based_nodes, const int groups, const int lines, const int degree,
-		int adjacency[nodes][degree], int *diameter, double *ASPL, const int center_flag)
+		int adjacency[nodes][degree], int *diameter, double *ASPL, const int added_centers)
 {
   timer_start(TIMER_BFS);
   int distance[nodes], max = 0;
@@ -69,6 +69,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     //    printf("%d %d\n", start_node, start_node+node_size); exit(0);
 #pragma omp for reduction(+:sum) reduction(max:max) private(distance) 
     for(int snode=start_node;snode<start_node+node_size;snode++){
+    //    for(int snode=start_node;snode<nodes;snode++){
       for(int i=0;i<nodes;i++){
 	distance[i] = 0;
 	bitmap[i] = 0;
@@ -93,10 +94,10 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
       } while(num_frontier);
 
 #if 0
-      printf("%d : ", snode);
-      for(int i=0;i<nodes;i++)
-	printf("%d ", distance[i] );
-      printf("\n");
+      //      printf("%d : ", snode);
+      //      for(int i=0;i<nodes;i++)
+      //	printf("%d ", distance[i] );
+      //      printf("\n");
 #endif
 
       for(int i=snode+1;i<groups*based_nodes;i++){
@@ -109,11 +110,52 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
 	  max = distance[i];
 
 	sum += distance[i] * (groups - i/based_nodes);
-	//	sum += distance[i];
+	// sum += distance[i];
+      } 
+
+      for(int i=groups*based_nodes;i<nodes;i++){  // Must visit a center node
+	if(max < distance[i])
+	  max = distance[i];
+	
+	sum += distance[i] * groups;
       }
-      if(center_flag)
-	sum += distance[nodes-1] * groups;
     }
+
+    for(int snode=groups*based_nodes;snode<nodes-1;snode++){
+      for(int i=0;i<nodes;i++){
+	distance[i] = 0;
+	bitmap[i] = 0;
+      }
+      
+      // Initialize
+      frontier[0] = snode;
+      int num_frontier = 1;
+      clear_buffer(nodes, next);
+      clear_buffer(nodes, parents);
+      
+      do{
+	top_down_step(nodes, num_frontier, snode, degree, (int* restrict)adjacency,
+		      frontier, next, parents, distance, bitmap);
+	// Swap frontier <-> next
+	int *tmp = frontier;
+	frontier = next;
+	free(tmp);
+	next = malloc(sizeof(int) * nodes);
+	clear_buffer(nodes, next);
+	num_frontier = get_num_frontier(nodes, frontier);
+      } while(num_frontier);
+      
+      for(int i=snode+1;i<nodes;i++){
+	if(distance[i] == 0){  // Never visit a node
+	  cancel_flag = true;
+	}
+	if(max < distance[i])
+	  max = distance[i];
+	
+	sum += distance[i];
+      }
+    }
+    
     free(frontier);
     free(next);
     free(parents);

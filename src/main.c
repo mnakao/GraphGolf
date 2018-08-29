@@ -4,21 +4,20 @@ static void print_help(char *argv)
 {
   END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] [-g <gruops>] \
 [-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-d] \
-[-a <accept_rate>] [-p <add lines for center>] [-H] [-y] [-h]\n", argv);
+[-a <accept_rate>] [-v <add vertexes>] [-e <add edges>][-H] [-y] [-h]\n", argv);
 }
 
-static void set_args(const int argc, char **argv, char *infname, char *outfname,
-                     bool *outfnameflag, int *random_seed, int *thread_num, long long *ncalcs,
-                     double *max_temp, bool *max_temp_flag, double *min_temp, bool *min_temp_flag,
-                     double *accept_rate, int *cooling_cycle, 
-		     bool *hill_climbing_flag, bool *detect_temp_flag, int *groups, 
-		     bool *center_flag, int *add_degree_to_center, bool *halfway_flag)
+static void set_args(const int argc, char **argv, char *infname, char *outfname, bool *outfnameflag,
+		     int *random_seed, int *thread_num, long long *ncalcs, double *max_temp,
+		     bool *max_temp_flag, double *min_temp, bool *min_temp_flag, double *accept_rate,
+		     int *cooling_cycle, bool *hill_climbing_flag, bool *detect_temp_flag, int *groups,
+		     int *added_centers, int *added_edges_to_center, bool *halfway_flag)
 {
   if(argc < 3)
     print_help(argv[0]);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:C:g:p:dHyh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:C:g:v:e:dHyh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -44,7 +43,7 @@ static void set_args(const int argc, char **argv, char *infname, char *outfname,
     case 'n':
       *ncalcs = atoll(optarg);
       if(*ncalcs <= 0)
-        ERROR("-n value > 0\n");
+        ERROR("-n value >= 1\n");
       break;
     case 'w':
       *max_temp = atof(optarg);
@@ -61,7 +60,7 @@ static void set_args(const int argc, char **argv, char *infname, char *outfname,
     case 'C':
       *cooling_cycle = atoi(optarg);
       if(*cooling_cycle <= 0)
-	ERROR("Cooling Cycle > 0\n");
+	ERROR("Cooling Cycle >= 1\n");
       break;
     case 'g':
       *groups = atoi(optarg);
@@ -74,11 +73,15 @@ static void set_args(const int argc, char **argv, char *infname, char *outfname,
     case 'y':
       *hill_climbing_flag = true;
       break;
-    case 'p':
-      *center_flag = true;
-      *add_degree_to_center = atoi(optarg);
-      if(*add_degree_to_center <= 0)
-	ERROR("-p > 0\n");
+    case 'v':
+      *added_centers = atoi(optarg);
+      if(*added_centers <= 0)
+	ERROR("-v value >= 1\n");
+      break;
+    case 'e':
+      *added_edges_to_center = atoi(optarg);
+      if(*added_edges_to_center <= 0)
+	ERROR("-e value >= 1\n");
       break;
     case 'H':
       *halfway_flag = true;
@@ -130,47 +133,52 @@ static int max_node_num(const int lines, const int edge[lines*2])
   return max;
 }
 
-static void create_symmetric_edge_with_center(int (*edge)[2], const int based_nodes, const int based_lines,
-					      const int groups, const int degree, const int original_based_lines,
-					      const int add_degree_to_center, int const nodes)
+static void create_symmetric_edge_with_vertexes(int (*edge)[2], const int based_nodes, const int based_lines,
+						const int org_based_lines, const int groups, const int degree,
+						const int added_centers, const int added_edges_to_center,
+						int const nodes)
 {
-  if(add_degree_to_center > based_nodes)
-    ERROR("Number of degree or nodes is invalid\n");
-  
-  if(((based_nodes-add_degree_to_center)*groups)%2 == 1)
-    ERROR("Number of degree or nodes is invalid under handshaking lemma\n");
-  
-  int center_vertex  = based_nodes * groups;
-  int connect_vertex = 0; // getRandom(based_nodes);
-  if(groups%2 == 1){
-    for(int i=0;i<based_lines-original_based_lines;i++){
-      int line = original_based_lines + i;
-      edge[line][0] = i;
-      edge[line][1] = (connect_vertex != i)? (nodes-i-1) : center_vertex;
+  if(groups%2 != 1)
+    ERROR("Sorry. Not implemented. -g value (%d) must be odd number\n", groups);
+  else if((based_nodes-added_centers*added_edges_to_center)%2 != 0)
+    ERROR("Sorry. Not implemented. based_nodes (%d) - -v value (%d) * -e value (%d) must be even number\n",
+	  based_nodes, added_centers, added_edges_to_center);
+
+  int org_nodes = nodes - added_centers;
+  for(int i=0;i<added_centers;i++){
+    for(int j=0;j<added_edges_to_center;j++){
+      int line = org_based_lines + i * added_edges_to_center + j;
+      edge[line][0] = i * added_edges_to_center + j;
+      edge[line][1] = org_nodes + i;
     }
-    //      printf("degree         = %d\n", degree);
-    //      printf("nodes          = %d\n", nodes);
-    //      printf("lines          = %d\n", lines);
-    //      printf("based_lines    = %d\n", based_lines);
-    //      printf("center_vertex  = %d\n", center_vertex);
-    //      printf("connect_vertex = %d\n", connect_vertex);
-    
-    for(int j=1;j<groups;j++){
-      for(int i=0;i<based_lines;i++){
-	edge[based_lines*j+i][0] = edge[i][0] + based_nodes * j;
-	if(edge[i][1] == center_vertex)
-	  edge[based_lines*j+i][1] = center_vertex;
-	else{
-	  int next = edge[i][1] + based_nodes * j;
-	  edge[based_lines*j+i][1] = (next < nodes)? next : next-nodes+1;
-	}
-      }
+  }
+
+  int j = 1;
+  for(int i=added_centers*added_edges_to_center;i<based_lines-org_based_lines;i++){
+    int line = org_based_lines + i;
+    edge[line][0] = i;
+    edge[line][1] = 2 * based_nodes - j++;
+  }
+
+  for(int j=1;j<groups;j++){
+    for(int i=0;i<org_based_lines;i++){
+      edge[based_lines*j+i][0] = edge[i][0] + based_nodes * j;
+      edge[based_lines*j+i][1] = edge[i][1] + based_nodes * j;
     }
+    for(int i=org_based_lines;i<org_based_lines+added_centers*added_edges_to_center;i++){
+       edge[based_lines*j+i][0] = edge[i][0] + based_nodes * j;
+       edge[based_lines*j+i][1] = edge[i][1];
+    }
+     for(int i=org_based_lines+added_centers*added_edges_to_center;i<based_lines;i++){
+       edge[based_lines*j+i][0] = edge[i][0] + based_nodes * j;
+       int tmp = edge[i][1] + based_nodes * j;
+       edge[based_lines*j+i][1] = (tmp < org_nodes)? tmp : tmp - org_nodes;
+     }
   }
 }
 
 static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines,
-                                  const int groups, const int degree, const int center_flag)
+                                  const int groups, const int degree)
 {
   for(int j=1;j<groups;j++)
     for(int i=0;i<based_lines;i++){
@@ -186,21 +194,18 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
 
   while(1){
     int start_line = getRandom(based_lines*groups);
-    edge_1g_opt(edge, nodes, based_nodes, based_lines, groups, start_line, center_flag);
+    edge_1g_opt(edge, nodes, lines, based_nodes, based_lines, groups, start_line, 0);
     create_adjacency(nodes, lines, degree, edge, adjacency);
-    if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, center_flag)) break;
+    if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, 0)) break;
   }
   free(adjacency);
 }
 
 static void verfy_graph(const int nodes, const int based_nodes, const int degree, const int groups,
-			const int lines, int edge[lines][2], bool center_flag, const int add_degree_to_center)
+			const int lines, int edge[lines][2], const int added_centers)
 
 {
   PRINT_R0("Verifing a regular graph... ");
-
-  if(nodes < degree)
-    ERROR("NG. n is too small. nodes = %d degree = %d\n", nodes, degree);
 
   if((2*lines)%degree != 0)
     ERROR("NG. lines or n or d is invalid. lines = %d nodes = %d degree = %d\n", lines, nodes, degree);
@@ -224,7 +229,7 @@ static void verfy_graph(const int nodes, const int based_nodes, const int degree
   if(!check_duplicate_edge(lines, edge))
     ERROR("NG\nThe same node conbination in the edge.\n");
 
-  if(!check(nodes, based_nodes, lines, degree, groups, edge, center_flag, add_degree_to_center, 0))
+  if(!check(nodes, based_nodes, lines, degree, groups, edge, added_centers, 0))
     ERROR("NG\nNot symmetric graph.\n");
   
   PRINT_R0("OK\n");
@@ -257,8 +262,9 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
 static void output_params(const int nodes, const int degree, const int groups, const int random_seed,
 			  const int thread_num, const double max_temp, const double min_temp,
                           const double accept_rate, const long long ncalcs, const int cooling_cycle,
-			  const double cooling_rate, const char *infname, const char *outfname, const bool outfnameflag,
-                          const double average_time, const bool hill_climbing_flag, const bool center_flag)
+			  const double cooling_rate, const char *infname, const char *outfname,
+			  const bool outfnameflag, const double average_time, const bool hill_climbing_flag,
+			  const int added_centers, const int added_edges_to_center)
 {
   PRINT_R0("---\n");
   PRINT_R0("Seed: %d\n", random_seed);
@@ -279,11 +285,13 @@ static void output_params(const int nodes, const int degree, const int groups, c
   PRINT_R0("   Average BFS time: %f sec.\n", average_time);
   PRINT_R0("   Estimated elapse time: %f sec.\n", average_time * ncalcs);
   PRINT_R0("Input filename: %s\n", infname);
-  PRINT_R0("   Num. of nodes: %d\n", nodes);
-  PRINT_R0("   Degree: %d\n", degree);
-  PRINT_R0("   Groups: %d\n", groups);
-  if(center_flag) PRINT_R0("   Center Point: Exist\n");
-  else            PRINT_R0("   Center Point: None\n");
+  PRINT_R0("   Vertexes: %d\n", nodes);
+  PRINT_R0("   Degree:   %d\n", degree);
+  PRINT_R0("   Groups:   %d\n", groups);
+  if(added_centers){
+    PRINT_R0("   Center points:    %d\n", added_centers);
+    PRINT_R0("   Edges to centers: %d\n", added_edges_to_center);
+  }
   if(outfnameflag)
     PRINT_R0("Output filename: %s\n", outfname);
   PRINT_R0("---\n");
@@ -297,96 +305,104 @@ static void output_file(FILE *fp, const int lines, int edge[lines][2])
 
 int main(int argc, char *argv[])
 {
-  int namelen;
-  char processor_name[MPI_MAX_PROCESSOR_NAME];
-
+  bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false;
+  bool hill_climbing_flag = false, detect_temp_flag = false, halfway_flag = false;
+  char hostname[MPI_MAX_PROCESSOR_NAME], infname[MAX_FILENAME_LENGTH], outfname[MAX_FILENAME_LENGTH];
+  int namelen, diam = 0, low_diam = 0, random_seed = 0, thread_num = 1;
+  int groups = 1, cooling_cycle = 1, added_centers = 0, added_edges_to_center = 1;
+  long long ncalcs = 10000, num_accepts = 0;
+  double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
+  double max_temp = 80.0, min_temp = 0.217147, accept_rate = 1.0, max_diff_energy = 0;
+  FILE *fp = NULL;
+  
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  MPI_Get_processor_name(processor_name, &namelen);
-  PRINT_R0("Run on %s\n", processor_name);
+  MPI_Get_processor_name(hostname, &namelen);
+  PRINT_R0("Run on %s\n", hostname);
   time_t t = time(NULL);
   PRINT_R0("%s---\n", ctime(&t));
-  
-  int diam = 0, low_diam = 0;
-  double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
-  FILE *fp = NULL;
-
-  // Initial parameters
-  long long ncalcs = 10000, num_accepts = 0;
-  int random_seed = 0, thread_num = 1, groups = 1, cooling_cycle = 1;
-  int add_degree_to_center = -1;
-  double max_temp = 80.0, min_temp = 0.217147, accept_rate = 1.0, max_diff_energy = 0;
-  bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false, center_flag = false;
-  bool hill_climbing_flag = false, detect_temp_flag = false, halfway_flag = false;
-  char *infname  = malloc(MAX_FILENAME_LENGTH);
-  char *outfname = malloc(MAX_FILENAME_LENGTH);
 
   // Set arguments
-  set_args(argc, argv, infname, outfname, &outfnameflag, &random_seed,
-	   &thread_num, &ncalcs, &max_temp, &max_temp_flag, 
-	   &min_temp, &min_temp_flag, &accept_rate, &cooling_cycle, 
-	   &hill_climbing_flag, &detect_temp_flag, &groups, 
-	   &center_flag, &add_degree_to_center, &halfway_flag);
+  set_args(argc, argv, infname, outfname, &outfnameflag, &random_seed, &thread_num,
+	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag,
+	   &accept_rate, &cooling_cycle, &hill_climbing_flag, &detect_temp_flag,
+	   &groups, &added_centers, &added_edges_to_center, &halfway_flag);
 
-  if((max_temp_flag && hill_climbing_flag) || (min_temp_flag && hill_climbing_flag))
-    ERROR("Two of (-w or -c), -a, and -y cannot be used.\n");
-
-  if(detect_temp_flag && groups != 1)
+  if(hill_climbing_flag){
+    if(max_temp_flag)
+      ERROR("Both -y and -w cannot be used.\n");
+    else if(min_temp_flag)
+      ERROR("Both -y and -c cannot be used.\n");
+    else if(detect_temp_flag)
+      ERROR("Both -y and -d cannot be used.\n");
+  }
+  else if(detect_temp_flag && groups != 1){
     ERROR("When using -d option, -g must be 1.\n");
+  }
+  else if(!added_centers && added_edges_to_center != 1){
+    ERROR("-e option must be with -v\n");
+  }
   
-  if(hill_climbing_flag && detect_temp_flag)
-    ERROR("Both -h and -d cannot be used.\n");
-
   srandom(random_seed);
   omp_set_num_threads(thread_num);
 
   int based_lines = count_lines(infname);
   int lines       = (halfway_flag)? based_lines : based_lines * groups;
   int (*edge)[2]  = malloc(sizeof(int)*lines*2); // int edge[lines][2];
-
   read_file(edge, infname);
   int based_nodes = max_node_num(based_lines, (int *)edge) + 1;
+
   if(halfway_flag){
-    if(based_nodes%groups != 0) ERROR("based_nodes must be divisible by groups\n");
-    based_nodes /= groups;
+    if(based_nodes%groups != 0)
+      ERROR("based_nodes must be divisible by groups\n");
+    else
+      based_nodes /= groups;
   }
 
   if(based_nodes < size)
-    ERROR("Number of processes is too big. (Vertexs (%d) < Processes (%d))\n", based_nodes, size);
-  
+    ERROR("Number of processes is too large. (Vertexs (%d) < Processes (%d))\n", based_nodes, size);
+
   int nodes  = based_nodes * groups;
   int degree = 2 * lines / nodes;
+  if(nodes < degree)
+    ERROR("n is too small. nodes = %d degree = %d\n", nodes, degree);
+   
+  if(!halfway_flag){
+    if(!added_centers){
+      create_symmetric_edge(edge, based_nodes, based_lines, groups, degree);
+    }
+    else{
+      degree += 1;
+      nodes  += added_centers;
 
-  if(center_flag){
-    if(add_degree_to_center != 1 || groups%2 == 0 || halfway_flag)
-      ERROR("Not implemented yet1\n");
+      if(added_centers > based_nodes)
+	ERROR("-v value (%d) is invalid\n", added_centers);
+      else if(degree%2 == 1 && nodes%2 == 1)
+	ERROR("Number of degrees or number of nodes is invalid\n");
+      else if(groups*added_edges_to_center != degree)
+	ERROR("-g value (%d) * -e value (%d) == degree + 1 (%d)\n", groups, added_edges_to_center, degree);
+      
+      lines = (nodes*degree)/2;
+      int org_based_lines = based_lines;
+      based_lines = lines / groups;
+      void *tmp = realloc(edge, lines*2*sizeof(int));
+      if(tmp == NULL)
+	ERROR("realloc is failed\n");
+      else
+	edge = tmp;
 
-    degree += 1;
-    nodes  += 1;
-    lines  += ((based_nodes-add_degree_to_center)/2+add_degree_to_center)*groups;
-    int original_based_lines = based_lines;
-    based_lines = lines / groups;
-    int (*tmp_edge)[2] = malloc(sizeof(int)*lines*2);
-    memcpy(tmp_edge, edge, sizeof(int)*original_based_lines*2);
-    free(edge);
-    edge = tmp_edge;
-    create_symmetric_edge_with_center(edge, based_nodes, based_lines, groups, degree,
-				      original_based_lines,add_degree_to_center, nodes);
-    //    for(int i=0;i<lines;i++)
-    //      printf("%d %d\n", edge[i][0], edge[i][1]);
+      create_symmetric_edge_with_vertexes(edge, based_nodes, based_lines, org_based_lines, groups,
+					  degree, added_centers, added_edges_to_center, nodes);
+    }
   }
-  else{
-    if(!halfway_flag)
-      create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, center_flag);
-  }
-  
-  verfy_graph(nodes, based_nodes, degree, groups, lines, edge, center_flag, add_degree_to_center);
+
+  verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
-  check_current_edge(nodes, degree, lines, groups, based_nodes, edge, low_ASPL, center_flag);
-  double average_time = estimated_elapse_time(ncalcs, nodes, based_nodes, lines, degree, groups,
-					      edge, center_flag, add_degree_to_center);
+  check_current_edge(nodes, degree, lines, groups, based_nodes, edge, low_ASPL, added_centers);
 
+  double average_time = estimated_elapse_time(ncalcs, nodes, based_nodes, lines,
+					      degree, groups, edge, added_centers);
   if(hill_climbing_flag){
     max_temp = min_temp = 0.0;
     cooling_rate = 1.0;
@@ -406,14 +422,13 @@ int main(int argc, char *argv[])
 
   output_params(nodes, degree, groups, random_seed, thread_num, max_temp, min_temp,
 		accept_rate, ncalcs, cooling_cycle, cooling_rate, infname, outfname, 
-		outfnameflag, average_time, hill_climbing_flag, center_flag);
-  
+		outfnameflag, average_time, hill_climbing_flag, added_centers, added_edges_to_center);
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, degree, groups, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
 		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, 
-		      cooling_cycle, center_flag, add_degree_to_center, based_nodes, &num_accepts);
+		      cooling_cycle, added_centers, added_edges_to_center, based_nodes, &num_accepts);
   timer_stop(TIMER_SA);
   
   if(detect_temp_flag){
@@ -441,7 +456,7 @@ int main(int argc, char *argv[])
     fclose(fp);
   }
 
-  verfy_graph(nodes, based_nodes, degree, groups, lines, edge, center_flag, add_degree_to_center);
+  verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
 
   MPI_Finalize();
   return 0;
