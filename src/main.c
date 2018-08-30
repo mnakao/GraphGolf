@@ -360,9 +360,9 @@ int main(int argc, char *argv[])
       based_nodes /= groups;
   }
 
-  if(based_nodes < size)
-    ERROR("Number of processes is too large. (Vertexs (%d) < Processes (%d))\n", based_nodes, size);
-
+  if((!added_centers && based_nodes < size) || (added_centers && based_nodes+added_centers-1 < size))
+    ERROR("Number of processes is too large.\n");
+  
   int nodes  = based_nodes * groups;
   int degree = 2 * lines / nodes;
   if(nodes < degree)

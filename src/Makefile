@@ -27,7 +27,7 @@ a.out: $(OBJS)
 run: a.out
 	nohup bash run.sh &
 
-# make fruits DATA="..\/data\/n16d5.random.edges" N=1000000 G=2
+# make fruits DATA="..\/data\/n16d5.random.edges" N=1000000 G=2 K=1
 fruits:
 	cp ../scripts/ana-5-0.5.sh ana.sh
 	make clean; make ENV=fruits
@@ -36,7 +36,7 @@ fruits:
 	1.953470 1.863797 1.778240 1.696611 1.618729 1.544422 1.473526 1.405884 1.341348 1.279774 \
 	1.221027 1.164976 1.111498 1.060475 1.011795 0.965349 0.921035 0.878755 0.838416 0.799929 \
 	0.763209 0.728174 0.694748 0.662856 0.632428 0.603396 0.575698 0.549271 0.524057 0.5 SA1 SA2; do \
-	for s in `seq 1 10`; do \
+	for s in `seq 1 $(K)`; do \
 	sed "s/@DATA@/$(DATA)/" ../scripts/fruits/submit.sh | sed "s/@N@/$(N)/" | sed "s/@G@/$(G)/" | sed "s/@T@/$$t/" | sed "s/@S@/$$s/" > submit.sh; \
 	sbatch submit.sh; \
 	done; \
