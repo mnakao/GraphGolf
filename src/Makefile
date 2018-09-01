@@ -1,6 +1,6 @@
 .PHONY: clean coma
 CC=mpicc
-DEBUG=-DNDEBUG
+#DEBUG=-DNDEBUG
 
 CFLAGS=-std=gnu99 -O3 -Wall -mcmodel=medium -fopenmp $(DEBUG)
 LFLAGS=-lm

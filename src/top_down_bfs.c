@@ -1,9 +1,16 @@
 #include "common.h"
 
-static void clear_buffer(const int nodes, int buffer[nodes])
+static void clear_buffer(const int n, int buffer[n])
 {
-  for(int i=0;i<nodes;i++)
-    buffer[i] = NOT_VISITED;
+  if(n < THRESHOLD){
+    for(int i=0;i<n;i++)
+      buffer[i] = NOT_VISITED;
+  }
+  else{  // When using if-clause, performance becomes slow
+#pragma omp parallel for
+    for(int i=0;i<n;i++)
+      buffer[i] = NOT_VISITED;
+  }
 }
 
 static int add_buffer(int *next, const int n, int count)
@@ -21,18 +28,32 @@ static void top_down_step(const int nodes, const int num_frontier, const int sno
 			  int* restrict parents, int* restrict distance, char* restrict bitmap)
 {
   int count = 0;
-  for(int i=0;i<num_frontier;i++){
-    int v = frontier[i];
-    for(int j=0;j<degree;j++){
-      int n = *(adjacency + v * degree + j);  // adjacency[v][j];
-      if(bitmap[n] == 1 || snode == n) continue;
-      if(parents[n] == NOT_VISITED){
-        bitmap[n] = 1;
-        parents[n] = v;
-        count = add_buffer(next, n, count);
-        distance[n] = distance[v] + 1;
+  int tasks = num_frontier/omp_get_max_threads();
+#pragma omp parallel if(tasks>100)
+  {
+    int  local_count    = 0;
+    int  thread_id      = omp_get_thread_num();
+    int  num_threads    = omp_get_num_threads();
+    int* local_frontier = (int*)malloc(sizeof(int) * nodes);
+    for(int i=thread_id;i<num_frontier;i+=num_threads){
+      int v = frontier[i];
+      for(int j=0;j<degree;j++){
+	int n = *(adjacency + v * degree + j);  // adjacency[v][j];
+	if(bitmap[n] == 1 || snode == n) continue;
+	if(parents[n] == NOT_VISITED){
+	  bitmap[n]   = 1;
+	  parents[n]  = v;
+	  local_count = add_buffer(local_frontier, n, local_count);
+	  distance[n] = distance[v] + 1;
+	}
       }
     }
+#pragma omp critical
+    {
+      memcpy(&next[count], local_frontier, local_count*sizeof(int));
+      count += local_count;
+    }
+    free(local_frontier);
   }
 }
 

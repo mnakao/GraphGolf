@@ -148,10 +148,6 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int bas
   if(edge[start_line][0] >= nodes-added_centers || edge[start_line][1] >= nodes-added_centers)
     return false;
 
-  //  printf("start = %d\n", start_line);
-  //  for(int i=0;i<lines;i++)
-  //    printf("%d %d\n", edge[i][0], edge[i][1]);
-  //  exit(0);
   int line[groups], tmp_edge[groups][2];
   for(int i=0;i<groups;i++)
     line[i] = start_line % based_lines + i * based_lines;

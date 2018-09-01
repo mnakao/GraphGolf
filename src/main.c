@@ -267,6 +267,11 @@ static void output_params(const int nodes, const int degree, const int groups, c
 			  const int added_centers, const int added_edges_to_center)
 {
   PRINT_R0("---\n");
+#ifdef NDEBUG
+  PRINT_R0("NO DEBUG MODE\n");
+#else
+  PRINT_R0("DEBUG MODE\n");
+#endif
   PRINT_R0("Seed: %d\n", random_seed);
   PRINT_R0("Num. of processes: %d\n", size);
   PRINT_R0("Num. of threads  : %d\n", thread_num);
