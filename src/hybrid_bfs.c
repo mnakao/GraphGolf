@@ -1,4 +1,6 @@
 #include "common.h"
+#define TOP_DOWN_STEP  0
+#define BOTTOM_UP_STEP 1
 
 static void clear_buffer(const int n, int buffer[n])
 {
@@ -56,6 +58,44 @@ static int top_down_step(const int nodes, const int num_frontier, const int snod
     return count;
 }
 
+static int bottom_up_step(const int nodes, const int num_frontier, const int snode, const int degree,
+			   const int* restrict adjacency, int* restrict frontier, int* restrict next,
+			   int* restrict parents, int* restrict distance, char* restrict bitmap)
+{
+  int count = 0;
+#pragma omp parallel
+  {
+    int  local_count    = 0;
+    int* local_frontier = (int*)malloc(sizeof(int) * nodes);
+#pragma omp for
+    for(int v=0;v<nodes;v++){
+      if(bitmap[v] == 1) continue;
+      if(parents[v] == NOT_VISITED){
+	for(int i=0;i<degree;i++){
+	  int n = *(adjacency + v * degree + i);  // adjacency[v][i];
+	  for(int j=0;j<num_frontier;j++){
+	    if(n == frontier[j]){
+	      bitmap[v]  = 1;
+	      parents[v] = n;
+	      if(v != snode)
+		distance[v] = distance[n] + 1;
+	      local_count = add_buffer(local_frontier, v, local_count);
+	      break;
+	    }
+	  }
+	}
+      }
+    }
+#pragma omp critical
+    {
+      memcpy(&next[count], local_frontier, local_count*sizeof(int));
+      count += local_count;
+    }
+    free(local_frontier);
+  }
+  return count;
+}
+
 bool evaluation(const int nodes, int based_nodes, const int groups, const int lines, const int degree,
 		int adjacency[nodes][degree], int *diameter, double *ASPL, const int added_centers)
 {
@@ -63,6 +103,9 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
   bool cancel_flag = false;
   int distance[nodes], max = 0;
   double sum = 0.0;
+  int alpha = 10, beta = 14;
+  double top_down_thd  = (double)lines/alpha;
+  double bottom_up_thd = (double)(nodes*nodes)/(beta*lines);
   
   int first_task  = based_nodes;
   int second_task = added_centers - 1;
@@ -86,6 +129,8 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     tmp_per_task = 0;
   
   for(int snode=start_task;snode<start_task+tmp_per_task;snode++){
+    int current_step = TOP_DOWN_STEP;
+    
     for(int i=0;i<nodes;i++){
       distance[i] = 0;
       bitmap[i] = 0;
@@ -98,8 +143,19 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     clear_buffer(nodes, parents);
 
     do{
-      num_frontier = top_down_step(nodes, num_frontier, snode, degree, (int* restrict)adjacency,
-				   frontier, next, parents, distance, bitmap);
+      if(snode == start_task)
+	current_step = TOP_DOWN_STEP;
+      else if(current_step == TOP_DOWN_STEP && num_frontier*degree > top_down_thd)
+      	current_step = BOTTOM_UP_STEP;
+      else if(current_step == BOTTOM_UP_STEP && num_frontier < bottom_up_thd)
+      	current_step = TOP_DOWN_STEP;
+      
+      if(current_step == TOP_DOWN_STEP)
+	num_frontier = top_down_step(nodes, num_frontier, snode, degree, (int* restrict)adjacency,
+				     frontier, next, parents, distance, bitmap);
+      else
+	num_frontier = bottom_up_step(nodes, num_frontier, snode, degree, (int* restrict)adjacency, 
+				      frontier, next, parents, distance, bitmap);
   
       // Swap frontier <-> next
       int *tmp = frontier;
@@ -139,6 +195,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
   
   tmp_per_task = per_task - tmp_per_task;
   for(int snode=start_task;snode<start_task+tmp_per_task;snode++){
+     int current_step = TOP_DOWN_STEP;
     for(int i=0;i<nodes;i++){
       distance[i] = 0;
       bitmap[i] = 0;
@@ -151,8 +208,19 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     clear_buffer(nodes, parents);
     
     do{
-      num_frontier = top_down_step(nodes, num_frontier, snode, degree, (int* restrict)adjacency,
-				   frontier, next, parents, distance, bitmap);
+      if(snode == start_task)
+	 current_step = TOP_DOWN_STEP;
+      else if(current_step == TOP_DOWN_STEP && num_frontier*degree > top_down_thd)
+	current_step = BOTTOM_UP_STEP;
+      else if(current_step == BOTTOM_UP_STEP && num_frontier < bottom_up_thd)
+	current_step = TOP_DOWN_STEP;
+
+      if(current_step == TOP_DOWN_STEP)
+	num_frontier = top_down_step(nodes, num_frontier, snode, degree, (int* restrict)adjacency,
+				     frontier, next, parents, distance, bitmap);
+      else
+	num_frontier = bottom_up_step(nodes, num_frontier, snode, degree, (int* restrict)adjacency,
+				      frontier, next, parents, distance, bitmap);
 	  
       // Swap frontier <-> next
       int *tmp = frontier;

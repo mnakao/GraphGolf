@@ -308,7 +308,7 @@ double estimated_elapse_time(const long long ncals, const int nodes, const int b
   int diam;    // Not use
   double ASPL; // Not use
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-  int tmp_edge[lines][2];
+  int (*tmp_edge)[2]       = malloc(sizeof(int)*lines*2);      // int tmp_edge[lines][2];
 
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
@@ -320,6 +320,7 @@ double estimated_elapse_time(const long long ncals, const int nodes, const int b
   }
 
   timer_stop(TIMER_ESTIMATED);
+  free(tmp_edge);
   free(adjacency);
 
   return timer_read(TIMER_ESTIMATED)/ESTIMATED_TIMES;
