@@ -53,14 +53,14 @@ static int top_down_step(const int nodes, const int num_frontier, const int snod
     }
     free(local_frontier);
   }
-    return count;
+  return count;
 }
 
 bool evaluation(const int nodes, int based_nodes, const int groups, const int lines, const int degree,
 		int adjacency[nodes][degree], int *diameter, double *ASPL, const int added_centers)
 {
   timer_start(TIMER_BFS);
-  bool cancel_flag = false;
+  bool reeached = true;
   int distance[nodes], max = 0;
   double sum = 0.0;
   
@@ -111,7 +111,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     
     for(int i=snode+1;i<groups*based_nodes;i++){
       if(distance[i] == 0)  // Never visit a node
-	cancel_flag = true;
+	reeached = false;
       
       if(max < distance[i])
 	max = distance[i];
@@ -122,7 +122,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     
     for(int i=groups*based_nodes;i<nodes;i++){
       if(distance[i] == 0)  // Never visit a node
-	cancel_flag = true;
+	reeached = false;
       
       if(max < distance[i])
 	max = distance[i];
@@ -164,7 +164,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     
     for(int i=snode+1;i<nodes;i++){
       if(distance[i] == 0)  // Never visit a node
-	cancel_flag = true;
+	reeached = false;
       
       if(max < distance[i])
 	max = distance[i];
@@ -178,8 +178,8 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
   free(parents);
   free(bitmap);
 
-  MPI_Allreduce(MPI_IN_PLACE, &cancel_flag, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-  if(cancel_flag){
+  MPI_Allreduce(MPI_IN_PLACE, &reeached, 1, MPI_BYTE, MPI_BAND, MPI_COMM_WORLD);
+  if(! reeached){
     timer_stop(TIMER_BFS);
     return false;
   }

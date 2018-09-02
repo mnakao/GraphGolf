@@ -53,8 +53,11 @@ int distance(int nodes, const int a, const int b, const int added_centers)
 bool check(const int nodes, const int based_nodes, const int lines, const int degree,
 	   const int groups, int edge[lines][2], const int added_centers, const int ii)
 {
+  bool flag = true;
   int based_lines = lines/groups;
 
+#pragma omp parallel
+#pragma omp for
   for(int i=0;i<based_lines;i++){
     for(int j=1;j<groups;j++){
       int k = j * based_lines + i;
@@ -62,11 +65,14 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
 	PRINT_R0("check 1: %d\n", ii);
 	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", i, edge[i][0], i, edge[i][1], distance(nodes, edge[i][0], edge[i][1], added_centers));
 	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", k, edge[k][0], k, edge[k][1], distance(nodes, edge[k][0], edge[k][1], added_centers));
-	return false;
+#pragma omp cancel for
+	flag = false;
       }
     }
   }
 
+#pragma omp parallel
+#pragma omp for
   for(int i=0;i<based_lines;i++){
     for(int j=1;j<groups;j++){
       int k = j * based_lines + i;
@@ -74,7 +80,8 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
 	PRINT_R0("check 2 : %d\n", ii);
 	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d %d\n", i, edge[i][0], i, edge[i][1], order(nodes, edge[i][0], edge[i][1], added_centers));
 	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d %d\n", k, edge[k][0], k, edge[k][1], order(nodes, edge[k][0], edge[k][1], added_centers));
-	return false;
+#pragma omp cancel for
+	flag = false;
       }
     }
   }
@@ -83,7 +90,9 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
     PRINT_R0("check 3\n");
     return false;
   }
-  
+
+#pragma omp parallel
+#pragma omp for
   for(int i=0;i<based_lines;i++){
     if(order(nodes, edge[i][0], edge[i][1], added_centers) != MIDDLE)
       for(int j=1;j<groups;j++){
@@ -103,12 +112,13 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
 	  PRINT_R0("The different group relationship\n");
 	  PRINT_R0("edge[%d][0]-edge[%d][0] = %d - %d = %d\n", k, k-based_lines, edge[k][0], edge[k-based_lines][0], tmp0);
 	  PRINT_R0("edge[%d][1]-edge[%d][1] = %d - %d = %d\n", k, k-based_lines, edge[k][1], edge[k-based_lines][1], tmp1);
-	  return false;
+#pragma omp cancel for
+	  flag = false;
 	}
       }
   }
 
-  return true;
+  return flag;
 }
 
 bool has_duplicated_vertex(const int e00, const int e01, const int e10, const int e11)

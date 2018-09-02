@@ -4,20 +4,20 @@ static void print_help(char *argv)
 {
   END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] [-g <gruops>] \
 [-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-d] \
-[-a <accept_rate>] [-v <add vertexes>] [-e <add edges>][-H] [-y] [-h]\n", argv);
+[-a <accept_rate>] [-v <add vertexes>] [-e <add edges>] [-H] [-N] [-y] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, char *infname, char *outfname, bool *outfnameflag,
 		     int *random_seed, int *thread_num, long long *ncalcs, double *max_temp,
 		     bool *max_temp_flag, double *min_temp, bool *min_temp_flag, double *accept_rate,
 		     int *cooling_cycle, bool *hill_climbing_flag, bool *detect_temp_flag, int *groups,
-		     int *added_centers, int *added_edges_to_center, bool *halfway_flag)
+		     int *added_centers, int *added_edges_to_center, bool *halfway_flag, bool *verify_flag)
 {
   if(argc < 3)
     print_help(argv[0]);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:C:g:v:e:dHyh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:C:g:v:e:dHNyh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -85,6 +85,9 @@ static void set_args(const int argc, char **argv, char *infname, char *outfname,
       break;
     case 'H':
       *halfway_flag = true;
+      break;
+    case 'N':
+      *verify_flag = false;
       break;
     case 'h':
     default:
@@ -266,7 +269,6 @@ static void output_params(const int nodes, const int degree, const int groups, c
 			  const bool outfnameflag, const double average_time, const bool hill_climbing_flag,
 			  const int added_centers, const int added_edges_to_center)
 {
-  PRINT_R0("---\n");
 #ifdef NDEBUG
   PRINT_R0("NO DEBUG MODE\n");
 #else
@@ -310,7 +312,7 @@ static void output_file(FILE *fp, const int lines, int edge[lines][2])
 
 int main(int argc, char *argv[])
 {
-  bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false;
+  bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false, verify_flag = true;
   bool hill_climbing_flag = false, detect_temp_flag = false, halfway_flag = false;
   char hostname[MPI_MAX_PROCESSOR_NAME], infname[MAX_FILENAME_LENGTH], outfname[MAX_FILENAME_LENGTH];
   int namelen, diam = 0, low_diam = 0, random_seed = 0, thread_num = 1;
@@ -332,7 +334,7 @@ int main(int argc, char *argv[])
   set_args(argc, argv, infname, outfname, &outfnameflag, &random_seed, &thread_num,
 	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag,
 	   &accept_rate, &cooling_cycle, &hill_climbing_flag, &detect_temp_flag,
-	   &groups, &added_centers, &added_edges_to_center, &halfway_flag);
+	   &groups, &added_centers, &added_edges_to_center, &halfway_flag, &verify_flag);
 
   if(hill_climbing_flag){
     if(max_temp_flag)
@@ -402,7 +404,8 @@ int main(int argc, char *argv[])
     }
   }
 
-  verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
+  if(verify_flag)
+    verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
   check_current_edge(nodes, degree, lines, groups, based_nodes, edge, low_ASPL, added_centers);
 
@@ -461,7 +464,8 @@ int main(int argc, char *argv[])
     fclose(fp);
   }
 
-  verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
+  if(verify_flag)
+    verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
 
   MPI_Finalize();
   return 0;

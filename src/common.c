@@ -59,28 +59,38 @@ int order(int nodes, const int a, const int b, const int added_centers)
 bool check_loop(const int lines, int edge[lines][2])
 {
   timer_start(TIMER_CHECK);
+  bool flag = true;
+  
+#pragma omp parallel
+#pragma omp for
   for(int i=0;i<lines;i++)
     if(edge[i][0] == edge[i][1]){
-      timer_stop(TIMER_CHECK);
-      return false;
+      flag = false;
+#pragma omp cancel for
     }
 
   timer_stop(TIMER_CHECK);
-  return true;
+  return flag;
 }
 
 bool check_duplicate_edge(const int lines, int edge[lines][2])
 {
   timer_start(TIMER_CHECK);
-  for(int i=0;i<lines;i++)
+  bool flag = true;
+
+#pragma omp parallel
+#pragma omp for
+  for(int i=rank;i<lines;i+=size)
     for(int j=i+1;j<lines;j++)
       if(has_duplicated_edge(edge[i][0], edge[i][1], edge[j][0], edge[j][1])){
-	timer_stop(TIMER_CHECK);
-        return false;
+	flag = false;
+#pragma omp cancel for
       }
 
+  MPI_Allreduce(MPI_IN_PLACE, &flag, 1, MPI_BYTE, MPI_BAND, MPI_COMM_WORLD);
+  
   timer_stop(TIMER_CHECK);
-  return true;
+  return flag;
 }
 
 bool check_duplicate_current_edge(const int lines, const int groups, const int line[groups],
@@ -90,53 +100,62 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
   timer_start(TIMER_CHECK);
   int based_lines = lines/original_groups;
   int opt = (groups == original_groups)? 1 : 2;  // 1g-opt : 2g-opt
+  bool flag = true;
   
   if(original_groups%2 == 1 && opt == 1){
     int tmp = line[0]%based_lines;
+#pragma omp parallel
+#pragma omp for
     for(int i=0;i<based_lines;i++)
       if(i != tmp)
 	for(int j=0;j<groups;j++)
 	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
-	    timer_stop(TIMER_CHECK);
-	    return false;
+	    flag = false;
+#pragma omp cancel for
 	  }
   }
   else if(opt == 2){
     int tmp0 = line[0]%based_lines;
     int tmp1 = line[1]%based_lines;
+#pragma omp parallel
+#pragma omp for
     for(int i=0;i<based_lines;i++)
       if(i != tmp0 && i != tmp1)
 	for(int j=0;j<groups;j++)
 	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
-	    timer_stop(TIMER_CHECK);
-	    return false;
+	    flag = false;
+#pragma omp cancel for
 	  }
   }
   else{ 
     assert(original_groups%2 == 0 && opt == 1);
     int tmp = line[0]%based_lines;
     if(distance(nodes, tmp_edge[0][0], tmp_edge[0][1], added_centers) != nodes/2){
+#pragma omp parallel
+#pragma omp for
       for(int i=0;i<based_lines;i++)
 	if(i != tmp)
 	  for(int j=0;j<groups;j++)
 	    if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
-	      timer_stop(TIMER_CHECK);
-	      return false;
+	      flag = false;
+#pragma omp cancel for
 	    }
     }
     else{
+#pragma omp parallel
+#pragma omp for
       for(int i=0;i<lines;i++)
         if(i%based_lines != tmp)
           for(int j=0;j<groups;j++)
             if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
-	      timer_stop(TIMER_CHECK);
-	      return false;
+	      flag = false;
+#pragma omp cancel for
 	    }
     }
   }
   
   timer_stop(TIMER_CHECK);
-  return true;
+  return flag;
 }
 
 bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int based_nodes, const int based_lines, 
