@@ -12,6 +12,10 @@ else ifeq ($(ENV), ofp)
 CC=mpiicc
 CFLAGS=-axMIC-AVX512 -O3 -std=gnu99 -qopenmp
 LFLAGS=
+else ifeq ($(ENV), K)
+CC=mpifccpx
+CFLAGS=-Kfast -D_ENV_K
+LFLAGS=
 endif
 SRCS := main.c sa.c timer.c top_down_bfs.c common.c
 OBJS := $(SRCS:%.c=%.o)
@@ -26,6 +30,14 @@ a.out: $(OBJS)
 
 run: a.out
 	nohup bash run.sh &
+
+# make K DATA="..\/data\/n72d4.random.edges" N=10000 G=2 K=1 T=100 C=1
+K:
+	make clean; make ENV=K
+	@for s in `seq 1 $(K)`; do \
+	sed "s/@DATA@/$(DATA)/" ../scripts/K/submit.sh | sed "s/@N@/$(N)/" | sed "s/@G@/$(G)/" | sed "s/@T@/$(T)/" | sed "s/@C@/$(C)/" | sed "s/@S@/$$s/" > submit.sh; \
+	ksub --rsc-list rscgrp=micro ../scripts/K/submit.sh; \
+	done
 
 # make fruits DATA="..\/data\/n16d5.random.edges" N=1000000 G=2 K=1
 fruits:

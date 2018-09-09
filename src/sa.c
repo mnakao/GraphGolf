@@ -56,8 +56,7 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
   bool flag = true;
   int based_lines = lines/groups;
 
-#pragma omp parallel
-#pragma omp for
+#pragma omp parallel for
   for(int i=0;i<based_lines;i++){
     for(int j=1;j<groups;j++){
       int k = j * based_lines + i;
@@ -65,14 +64,12 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
 	PRINT_R0("check 1: %d\n", ii);
 	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", i, edge[i][0], i, edge[i][1], distance(nodes, edge[i][0], edge[i][1], added_centers));
 	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d d=%d\n", k, edge[k][0], k, edge[k][1], distance(nodes, edge[k][0], edge[k][1], added_centers));
-#pragma omp cancel for
 	flag = false;
       }
     }
   }
 
-#pragma omp parallel
-#pragma omp for
+#pragma omp parallel for
   for(int i=0;i<based_lines;i++){
     for(int j=1;j<groups;j++){
       int k = j * based_lines + i;
@@ -80,7 +77,6 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
 	PRINT_R0("check 2 : %d\n", ii);
 	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d %d\n", i, edge[i][0], i, edge[i][1], order(nodes, edge[i][0], edge[i][1], added_centers));
 	PRINT_R0("edge[%d][0] = %d : edge[%d][1] = %d %d\n", k, edge[k][0], k, edge[k][1], order(nodes, edge[k][0], edge[k][1], added_centers));
-#pragma omp cancel for
 	flag = false;
       }
     }
@@ -91,8 +87,7 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
     return false;
   }
 
-#pragma omp parallel
-#pragma omp for
+#pragma omp parallel for
   for(int i=0;i<based_lines;i++){
     if(order(nodes, edge[i][0], edge[i][1], added_centers) != MIDDLE)
       for(int j=1;j<groups;j++){
@@ -112,7 +107,6 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
 	  PRINT_R0("The different group relationship\n");
 	  PRINT_R0("edge[%d][0]-edge[%d][0] = %d - %d = %d\n", k, k-based_lines, edge[k][0], edge[k-based_lines][0], tmp0);
 	  PRINT_R0("edge[%d][1]-edge[%d][1] = %d - %d = %d\n", k, k-based_lines, edge[k][1], edge[k-based_lines][1], tmp1);
-#pragma omp cancel for
 	  flag = false;
 	}
       }
@@ -139,14 +133,12 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
 	line[1] = getRandom(lines);
 	if(line[0] != line[1]) break;
       }
-      if((line[0] - line[1]) % based_lines == 0 || 
-	 has_duplicated_vertex(edge[line[0]][0], edge[line[0]][1],
-			       edge[line[1]][0], edge[line[1]][1])){
-	if(groups == 1) continue;
-	else{
-	  if(edge_1g_opt(edge, nodes, lines, based_nodes, based_lines, groups, line[0], added_centers)) return;
-	  else continue;
-	}
+      if(has_duplicated_vertex(edge[line[0]][0], edge[line[0]][1], edge[line[1]][0], edge[line[1]][1])){
+        continue;
+      }
+      else if((line[0] - line[1]) % based_lines == 0){
+	if(edge_1g_opt(edge, nodes, lines, based_nodes, based_lines, groups, line[0], added_centers)) return;
+	else continue;
       }
       else break;
     }

@@ -352,8 +352,9 @@ int main(int argc, char *argv[])
   }
   
   srandom(random_seed);
+#ifndef _ENV_K
   omp_set_num_threads(thread_num);
-
+#endif
   int based_lines = count_lines(infname);
   int lines       = (halfway_flag)? based_lines : based_lines * groups;
   int (*edge)[2]  = malloc(sizeof(int)*lines*2); // int edge[lines][2];
@@ -416,7 +417,7 @@ int main(int argc, char *argv[])
     cooling_rate = 1.0;
   }
   else{
-    cooling_rate = (max_temp != min_temp)? pow(min_temp/max_temp, 1.0/((double)ncalcs/cooling_cycle)) : 1.0;
+    cooling_rate = (max_temp != min_temp)? pow(min_temp/max_temp, (double)cooling_cycle/ncalcs) : 1.0;
   }
 
   if(outfnameflag){

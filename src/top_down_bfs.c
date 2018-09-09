@@ -98,7 +98,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     clear_buffer(nodes, parents);
 
     do{
-      num_frontier = top_down_step(nodes, num_frontier, snode, degree, (int* restrict)adjacency,
+      num_frontier = top_down_step(nodes, num_frontier, snode, degree, (int *)adjacency,
 				   frontier, next, parents, distance, bitmap);
   
       // Swap frontier <-> next
@@ -151,7 +151,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     clear_buffer(nodes, parents);
     
     do{
-      num_frontier = top_down_step(nodes, num_frontier, snode, degree, (int* restrict)adjacency,
+      num_frontier = top_down_step(nodes, num_frontier, snode, degree, (int *)adjacency,
 				   frontier, next, parents, distance, bitmap);
 	  
       // Swap frontier <-> next
