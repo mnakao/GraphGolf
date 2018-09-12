@@ -16,7 +16,7 @@
 #include <assert.h>
 #include <time.h>
 
-int rank, size;
+int rank, size, threads;
 #define NOT_VISITED -1
 
 #define RIGHT  0

@@ -8,7 +8,7 @@ static void print_help(char *argv)
 }
 
 static void set_args(const int argc, char **argv, char *infname, char *outfname, bool *outfnameflag,
-		     int *random_seed, int *thread_num, long long *ncalcs, double *max_temp,
+		     int *random_seed, long long *ncalcs, double *max_temp,
 		     bool *max_temp_flag, double *min_temp, bool *min_temp_flag, double *accept_rate,
 		     int *cooling_cycle, bool *hill_climbing_flag, bool *detect_temp_flag, int *groups,
 		     int *added_centers, int *added_edges_to_center, bool *halfway_flag, bool *verify_flag)
@@ -36,8 +36,8 @@ static void set_args(const int argc, char **argv, char *infname, char *outfname,
         ERROR("-s value >= 0\n");
       break;
     case 't':
-      *thread_num = atoi(optarg);
-      if(*thread_num < 1)
+      threads = atoi(optarg);
+      if(threads < 1)
         ERROR("-s value >= 1\n");
       break;
     case 'n':
@@ -263,7 +263,7 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
 }
 
 static void output_params(const int nodes, const int degree, const int groups, const int random_seed,
-			  const int thread_num, const double max_temp, const double min_temp,
+			  const double max_temp, const double min_temp,
                           const double accept_rate, const long long ncalcs, const int cooling_cycle,
 			  const double cooling_rate, const char *infname, const char *outfname,
 			  const bool outfnameflag, const double average_time, const bool hill_climbing_flag,
@@ -276,7 +276,7 @@ static void output_params(const int nodes, const int degree, const int groups, c
 #endif
   PRINT_R0("Seed: %d\n", random_seed);
   PRINT_R0("Num. of processes: %d\n", size);
-  PRINT_R0("Num. of threads  : %d\n", thread_num);
+  PRINT_R0("Num. of threads  : %d\n", threads);
   if(hill_climbing_flag == false){
     PRINT_R0("Algorithm: Simulated Annealing\n");
     PRINT_R0("   MAX Temperature: %f\n", max_temp);
@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
   bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false, verify_flag = true;
   bool hill_climbing_flag = false, detect_temp_flag = false, halfway_flag = false;
   char hostname[MPI_MAX_PROCESSOR_NAME], infname[MAX_FILENAME_LENGTH], outfname[MAX_FILENAME_LENGTH];
-  int namelen, diam = 0, low_diam = 0, random_seed = 0, thread_num = 1;
+  int namelen, diam = 0, low_diam = 0, random_seed = 0;
   int groups = 1, cooling_cycle = 1, added_centers = 0, added_edges_to_center = 1;
   long long ncalcs = 10000, num_accepts = 0;
   double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
@@ -331,7 +331,8 @@ int main(int argc, char *argv[])
   PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
-  set_args(argc, argv, infname, outfname, &outfnameflag, &random_seed, &thread_num,
+  threads = 1;
+  set_args(argc, argv, infname, outfname, &outfnameflag, &random_seed,
 	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag,
 	   &accept_rate, &cooling_cycle, &hill_climbing_flag, &detect_temp_flag,
 	   &groups, &added_centers, &added_edges_to_center, &halfway_flag, &verify_flag);
@@ -353,7 +354,7 @@ int main(int argc, char *argv[])
   
   srandom(random_seed);
 #ifndef _ENV_K
-  omp_set_num_threads(thread_num);
+  omp_set_num_threads(threads);
 #endif
   int based_lines = count_lines(infname);
   int lines       = (halfway_flag)? based_lines : based_lines * groups;
@@ -420,7 +421,7 @@ int main(int argc, char *argv[])
     cooling_rate = (max_temp != min_temp)? pow(min_temp/max_temp, (double)cooling_cycle/ncalcs) : 1.0;
   }
 
-  if(outfnameflag){
+  if(outfnameflag && rank == 0){
     struct stat stat_buf;
     if(stat(outfname, &stat_buf) == 0)
       ERROR("Output file %s exsits. \n", outfname);
@@ -429,9 +430,9 @@ int main(int argc, char *argv[])
       ERROR("Cannot open %s\n", outfname);
   }
 
-  output_params(nodes, degree, groups, random_seed, thread_num, max_temp, min_temp,
-		accept_rate, ncalcs, cooling_cycle, cooling_rate, infname, outfname, 
-		outfnameflag, average_time, hill_climbing_flag, added_centers, added_edges_to_center);
+  output_params(nodes, degree, groups, random_seed, max_temp, min_temp, accept_rate,
+		ncalcs, cooling_cycle, cooling_rate, infname, outfname, outfnameflag,
+		average_time, hill_climbing_flag, added_centers, added_edges_to_center);
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);

@@ -23,9 +23,9 @@ static int add_buffer(int *next, const int n, int count)
   return ++count;
 }
 
-static int top_down_step(const int nodes, const int num_frontier, const int snode, const int degree,
-			  const int* restrict adjacency, int* restrict frontier, int* restrict next, 
-			  int* restrict parents, int* restrict distance, char* restrict bitmap)
+static int top_down_step_thread(const int nodes, const int num_frontier, const int snode, const int degree,
+				const int* restrict adjacency, int* restrict frontier, int* restrict next, 
+				int* restrict parents, int* restrict distance, char* restrict bitmap)
 {
   int count = 0;
 #pragma omp parallel
@@ -34,24 +34,45 @@ static int top_down_step(const int nodes, const int num_frontier, const int snod
     int* local_frontier = (int*)malloc(sizeof(int) * nodes);
 #pragma omp for
      for(int i=0;i<num_frontier;i++){
-      int v = frontier[i];
-      for(int j=0;j<degree;j++){
-	int n = *(adjacency + v * degree + j);  // adjacency[v][j];
-	if(bitmap[n] == 1 || snode == n) continue;
-	if(parents[n] == NOT_VISITED){
-	  bitmap[n]   = 1;
-	  parents[n]  = v;
-	  local_count = add_buffer(local_frontier, n, local_count);
-	  distance[n] = distance[v] + 1;
-	}
-      }
+       int v = frontier[i];
+       for(int j=0;j<degree;j++){
+	 int n = *(adjacency + v * degree + j);  // adjacency[v][j];
+	 if(bitmap[n] == 1 || snode == n) continue;
+	 if(parents[n] == NOT_VISITED){
+	   bitmap[n]   = 1;
+	   parents[n]  = v;
+	   local_count = add_buffer(local_frontier, n, local_count);
+	   distance[n] = distance[v] + 1;
+	 }
+       }
      }
 #pragma omp critical
-    {
-      memcpy(&next[count], local_frontier, local_count*sizeof(int));
-      count += local_count;
+     {
+       memcpy(&next[count], local_frontier, local_count*sizeof(int));
+       count += local_count;
+     }
+     free(local_frontier);
+  }
+  return count;
+}
+
+static int top_down_step_nothread(const int nodes, const int num_frontier, const int snode, const int degree,
+				  const int* restrict adjacency, int* restrict frontier, int* restrict next, 
+				  int* restrict parents, int* restrict distance, char* restrict bitmap)
+{
+  int count = 0;
+  for(int i=0;i<num_frontier;i++){
+    int v = frontier[i];
+    for(int j=0;j<degree;j++){
+      int n = *(adjacency + v * degree + j);  // adjacency[v][j];
+      if(bitmap[n] == 1 || snode == n) continue;
+      if(parents[n] == NOT_VISITED){
+        bitmap[n] = 1;
+        parents[n] = v;
+        count = add_buffer(next, n, count);
+        distance[n] = distance[v] + 1;
+      }
     }
-    free(local_frontier);
   }
   return count;
 }
@@ -63,7 +84,15 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
   bool reeached = true;
   int distance[nodes], max = 0;
   double sum = 0.0;
-  
+
+  int (*top_down_step)(const int, const int, const int, const int,
+		       const int* restrict, int* restrict, int* restrict,
+		       int* restrict, int* restrict, char* restrict);
+  if(threads == 1)
+    top_down_step = top_down_step_nothread;
+  else
+    top_down_step = top_down_step_thread;
+    
   int first_task  = based_nodes;
   int second_task = added_centers - 1;
   int whole_task  = (added_centers)? first_task+second_task : first_task;
