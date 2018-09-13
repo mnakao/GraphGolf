@@ -1,15 +1,15 @@
 #include "common.h"
 
-static void clear_buffer(const int n, int buffer[n])
+static void clear_buffer(const int n, int buffer[n], int value)
 {
   if(n<THRESHOLD){
     for(int i=0;i<n;i++)
-      buffer[i] = NOT_VISITED;
+      buffer[i] = value;
   }
   else{  // When using if-clause, performance becomes slow
 #pragma omp parallel for
     for(int i=0;i<n;i++)
-      buffer[i] = NOT_VISITED;
+      buffer[i] = value;
   }
 }
 
@@ -23,6 +23,8 @@ static int add_buffer(int *next, const int n, int count)
   return ++count;
 }
 
+int local_frontier[MAX_NODES];
+#pragma omp threadprivate (local_frontier)
 static int top_down_step_thread(const int nodes, const int num_frontier, const int snode, const int degree,
 				const int* restrict adjacency, int* restrict frontier, int* restrict next, 
 				int* restrict parents, int* restrict distance, char* restrict bitmap)
@@ -30,8 +32,7 @@ static int top_down_step_thread(const int nodes, const int num_frontier, const i
   int count = 0;
 #pragma omp parallel
   {
-    int  local_count    = 0;
-    int* local_frontier = (int*)malloc(sizeof(int) * nodes);
+    int local_count = 0;
 #pragma omp for
      for(int i=0;i<num_frontier;i++){
        int v = frontier[i];
@@ -51,7 +52,6 @@ static int top_down_step_thread(const int nodes, const int num_frontier, const i
        memcpy(&next[count], local_frontier, local_count*sizeof(int));
        count += local_count;
      }
-     free(local_frontier);
   }
   return count;
 }
@@ -92,7 +92,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     top_down_step = top_down_step_nothread;
   else
     top_down_step = top_down_step_thread;
-    
+
   int first_task  = based_nodes;
   int second_task = added_centers - 1;
   int whole_task  = (added_centers)? first_task+second_task : first_task;
@@ -115,16 +115,12 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     tmp_per_task = 0;
   
   for(int snode=start_task;snode<start_task+tmp_per_task;snode++){
-    for(int i=0;i<nodes;i++){
-      distance[i] = 0;
-      bitmap[i] = 0;
-    }
-    
     // Initialize
     frontier[0] = snode;
     int num_frontier = 1;
-    clear_buffer(nodes, next);
-    clear_buffer(nodes, parents);
+    clear_buffer(nodes, parents, NOT_VISITED);
+    clear_buffer(nodes, distance, 0);
+    memset(bitmap, 0, nodes);
 
     do{
       num_frontier = top_down_step(nodes, num_frontier, snode, degree, (int *)adjacency,
@@ -135,9 +131,8 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
       frontier = next;
       free(tmp);
       next = malloc(sizeof(int) * nodes);
-      clear_buffer(nodes, next);
     } while(num_frontier);
-    
+
     for(int i=snode+1;i<groups*based_nodes;i++){
       if(distance[i] == 0)  // Never visit a node
 	reeached = false;
@@ -168,16 +163,12 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
   
   tmp_per_task = per_task - tmp_per_task;
   for(int snode=start_task;snode<start_task+tmp_per_task;snode++){
-    for(int i=0;i<nodes;i++){
-      distance[i] = 0;
-      bitmap[i] = 0;
-    }
-      
     // Initialize
     frontier[0] = snode;
     int num_frontier = 1;
-    clear_buffer(nodes, next);
-    clear_buffer(nodes, parents);
+    clear_buffer(nodes, parents,  NOT_VISITED);
+    clear_buffer(nodes, distance, 0);
+    memset(bitmap, 0, nodes);
     
     do{
       num_frontier = top_down_step(nodes, num_frontier, snode, degree, (int *)adjacency,
@@ -188,7 +179,6 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
       frontier = next;
       free(tmp);
       next = malloc(sizeof(int) * nodes);
-      clear_buffer(nodes, next);
     } while(num_frontier);
     
     for(int i=snode+1;i<nodes;i++){
