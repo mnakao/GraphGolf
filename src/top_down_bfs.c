@@ -1,33 +1,18 @@
 #include "common.h"
+// https://github.com/chaihf/BFS-OpenMP/blob/master/bfs/bfs_up_down_omp.cpp
 
 static void clear_buffer(const int n, int buffer[n], int value)
 {
-  if(n<THRESHOLD){
-    for(int i=0;i<n;i++)
-      buffer[i] = value;
-  }
-  else{  // When using if-clause, performance becomes slow
 #pragma omp parallel for
     for(int i=0;i<n;i++)
       buffer[i] = value;
-  }
-}
-
-static int add_buffer(int *next, const int n, int count)
-{
-  for(int i=0;i<count;i++)
-    if(next[i] == n)
-      return count;
-
-  next[count] = n;
-  return ++count;
 }
 
 int local_frontier[MAX_NODES];
 #pragma omp threadprivate (local_frontier)
 static int top_down_step_thread(const int nodes, const int num_frontier, const int snode, const int degree,
 				const int* restrict adjacency, int* restrict frontier, int* restrict next, 
-				int* restrict parents, int* restrict distance, char* restrict bitmap)
+				int* restrict parents, char* restrict bitmap)
 {
   int count = 0;
 #pragma omp parallel
@@ -39,11 +24,9 @@ static int top_down_step_thread(const int nodes, const int num_frontier, const i
        for(int j=0;j<degree;j++){
 	 int n = *(adjacency + v * degree + j);  // adjacency[v][j];
 	 if(bitmap[n] == 1 || snode == n) continue;
-	 if(parents[n] == NOT_VISITED){
+	 if(__sync_bool_compare_and_swap(&parents[n], NOT_VISITED, parents[v]+1)){
 	   bitmap[n]   = 1;
-	   parents[n]  = v;
-	   local_count = add_buffer(local_frontier, n, local_count);
-	   distance[n] = distance[v] + 1;
+	   local_frontier[local_count++] = n;
 	 }
        }
      }
@@ -58,7 +41,7 @@ static int top_down_step_thread(const int nodes, const int num_frontier, const i
 
 static int top_down_step_nothread(const int nodes, const int num_frontier, const int snode, const int degree,
 				  const int* restrict adjacency, int* restrict frontier, int* restrict next, 
-				  int* restrict parents, int* restrict distance, char* restrict bitmap)
+				  int* restrict parents, char* restrict bitmap)
 {
   int count = 0;
   for(int i=0;i<num_frontier;i++){
@@ -68,9 +51,8 @@ static int top_down_step_nothread(const int nodes, const int num_frontier, const
       if(bitmap[n] == 1 || snode == n) continue;
       if(parents[n] == NOT_VISITED){
         bitmap[n] = 1;
-        parents[n] = v;
-        count = add_buffer(next, n, count);
-        distance[n] = distance[v] + 1;
+        parents[n] = parents[v] + 1;
+	next[count++] = n;
       }
     }
   }
@@ -82,12 +64,12 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
 {
   timer_start(TIMER_BFS);
   bool reeached = true;
-  int distance[nodes], max = 0;
+  int max = 0;
   double sum = 0.0;
 
   int (*top_down_step)(const int, const int, const int, const int,
 		       const int* restrict, int* restrict, int* restrict,
-		       int* restrict, int* restrict, char* restrict);
+		       int* restrict, char* restrict);
   if(threads == 1)
     top_down_step = top_down_step_nothread;
   else
@@ -118,40 +100,38 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     // Initialize
     frontier[0] = snode;
     int num_frontier = 1;
+    int tmp_diameter = 0;
     clear_buffer(nodes, parents, NOT_VISITED);
-    clear_buffer(nodes, distance, 0);
     memset(bitmap, 0, nodes);
 
     do{
       num_frontier = top_down_step(nodes, num_frontier, snode, degree, (int *)adjacency,
-				   frontier, next, parents, distance, bitmap);
+				   frontier, next, parents, bitmap);
   
       // Swap frontier <-> next
       int *tmp = frontier;
       frontier = next;
       free(tmp);
       next = malloc(sizeof(int) * nodes);
+      if(num_frontier != 0) tmp_diameter++;
     } while(num_frontier);
 
+    if(max < tmp_diameter)
+      max = tmp_diameter;
+       
     for(int i=snode+1;i<groups*based_nodes;i++){
-      if(distance[i] == 0)  // Never visit a node
+      if(parents[i] == NOT_VISITED)  // Never visit a node
 	reeached = false;
       
-      if(max < distance[i])
-	max = distance[i];
-      
-      sum += distance[i] * (groups - i/based_nodes);
+      sum += (parents[i] + 1) * (groups - i/based_nodes);
       // sum += distance[i];
     } 
     
     for(int i=groups*based_nodes;i<nodes;i++){
-      if(distance[i] == 0)  // Never visit a node
+      if(parents[i] == NOT_VISITED)  // Never visit a node
 	reeached = false;
       
-      if(max < distance[i])
-	max = distance[i];
-      
-      sum += distance[i] * groups;
+      sum += (parents[i]+1) * groups;
     }
   }
 
@@ -166,29 +146,30 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     // Initialize
     frontier[0] = snode;
     int num_frontier = 1;
+    int tmp_diameter = 0;
     clear_buffer(nodes, parents,  NOT_VISITED);
-    clear_buffer(nodes, distance, 0);
     memset(bitmap, 0, nodes);
     
     do{
       num_frontier = top_down_step(nodes, num_frontier, snode, degree, (int *)adjacency,
-				   frontier, next, parents, distance, bitmap);
+				   frontier, next, parents, bitmap);
 	  
       // Swap frontier <-> next
       int *tmp = frontier;
       frontier = next;
       free(tmp);
       next = malloc(sizeof(int) * nodes);
+      if(num_frontier != 0) tmp_diameter++;
     } while(num_frontier);
     
+    if(max < tmp_diameter)
+      max = tmp_diameter;
+	
     for(int i=snode+1;i<nodes;i++){
-      if(distance[i] == 0)  // Never visit a node
+      if(parents[i] == NOT_VISITED)  // Never visit a node
 	reeached = false;
       
-      if(max < distance[i])
-	max = distance[i];
-      
-      sum += distance[i];
+      sum += parents[i] + 1;
     }
   }
   

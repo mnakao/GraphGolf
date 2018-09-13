@@ -2,14 +2,9 @@
 
 void edge_copy(int *restrict buf1, const int *restrict buf2, const int n)
 {
-  if(n < THRESHOLD){
-    memcpy(buf1, buf2, sizeof(int)*n);
-  }
-  else{ // When using if-clause, performance becomes slow
 #pragma omp parallel for
-    for(int i=0;i<n;i++)
-      buf1[i] = buf2[i];
-  }
+  for(int i=0;i<n;i++)
+    buf1[i] = buf2[i];
 }
 
 int getRandom(const int max)

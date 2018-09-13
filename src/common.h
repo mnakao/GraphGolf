@@ -31,7 +31,6 @@ int rank, size, threads;
 
 #define MAX_FILENAME_LENGTH 255
 #define NUM_OF_PROGRESS     100
-#define THRESHOLD           300000
 #define SKIP_ACCEPTS        10000
 #define MAX_NODES           400000
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
