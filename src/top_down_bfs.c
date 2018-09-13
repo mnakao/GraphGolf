@@ -1,15 +1,13 @@
 #include "common.h"
-// https://github.com/chaihf/BFS-OpenMP/blob/master/bfs/bfs_up_down_omp.cpp
+// Ref. https://github.com/chaihf/BFS-OpenMP/blob/master/bfs/bfs_up_down_omp.cpp
 
 static void clear_buffer(const int n, int buffer[n], int value)
 {
 #pragma omp parallel for
-    for(int i=0;i<n;i++)
-      buffer[i] = value;
+  for(int i=0;i<n;i++)
+    buffer[i] = value;
 }
 
-int local_frontier[MAX_NODES];
-#pragma omp threadprivate (local_frontier)
 static int top_down_step_thread(const int nodes, const int num_frontier, const int snode, const int degree,
 				const int* restrict adjacency, int* restrict frontier, int* restrict next, 
 				int* restrict parents, char* restrict bitmap)
@@ -18,6 +16,7 @@ static int top_down_step_thread(const int nodes, const int num_frontier, const i
 #pragma omp parallel
   {
     int local_count = 0;
+    int *local_frontier = malloc(nodes * sizeof(int));  // (num_frontier*degree)/threads * sizeof(int)
 #pragma omp for
      for(int i=0;i<num_frontier;i++){
        int v = frontier[i];
@@ -35,6 +34,7 @@ static int top_down_step_thread(const int nodes, const int num_frontier, const i
        memcpy(&next[count], local_frontier, local_count*sizeof(int));
        count += local_count;
      }
+     free(local_frontier);
   }
   return count;
 }
@@ -64,7 +64,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
 {
   timer_start(TIMER_BFS);
   bool reeached = true;
-  int max = 0;
+  int max_diam = 0;
   double sum = 0.0;
 
   int (*top_down_step)(const int, const int, const int, const int,
@@ -100,7 +100,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     // Initialize
     frontier[0] = snode;
     int num_frontier = 1;
-    int tmp_diameter = 0;
+    int tmp_diam = 0;
     clear_buffer(nodes, parents, NOT_VISITED);
     memset(bitmap, 0, nodes);
 
@@ -113,11 +113,11 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
       frontier = next;
       free(tmp);
       next = malloc(sizeof(int) * nodes);
-      if(num_frontier != 0) tmp_diameter++;
+      if(num_frontier != 0) tmp_diam++;
     } while(num_frontier);
 
-    if(max < tmp_diameter)
-      max = tmp_diameter;
+    if(max_diam < tmp_diam)
+      max_diam = tmp_diam;
        
     for(int i=snode+1;i<groups*based_nodes;i++){
       if(parents[i] == NOT_VISITED)  // Never visit a node
@@ -131,7 +131,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
       if(parents[i] == NOT_VISITED)  // Never visit a node
 	reeached = false;
       
-      sum += (parents[i]+1) * groups;
+      sum += (parents[i] + 1) * groups;
     }
   }
 
@@ -146,8 +146,8 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     // Initialize
     frontier[0] = snode;
     int num_frontier = 1;
-    int tmp_diameter = 0;
-    clear_buffer(nodes, parents,  NOT_VISITED);
+    int tmp_diam = 0;
+    clear_buffer(nodes, parents, NOT_VISITED);
     memset(bitmap, 0, nodes);
     
     do{
@@ -159,11 +159,11 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
       frontier = next;
       free(tmp);
       next = malloc(sizeof(int) * nodes);
-      if(num_frontier != 0) tmp_diameter++;
+      if(num_frontier != 0) tmp_diam++;
     } while(num_frontier);
     
-    if(max < tmp_diameter)
-      max = tmp_diameter;
+    if(max_diam < tmp_diam)
+      max_diam = tmp_diam;
 	
     for(int i=snode+1;i<nodes;i++){
       if(parents[i] == NOT_VISITED)  // Never visit a node
@@ -184,10 +184,11 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     return false;
   }
 
-  MPI_Allreduce(MPI_IN_PLACE, &max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  int all_max_diam = 0;
+  MPI_Reduce(&max_diam, &all_max_diam, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
   MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-  *diameter = max;
+  *diameter = all_max_diam;
   *ASPL     = (sum) / (((nodes-1)*nodes)/2);
   //  printf("%d\n", (int)sum);
   timer_stop(TIMER_BFS);
