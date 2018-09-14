@@ -10,11 +10,11 @@ CFLAGS=-O3 -qopenmp -std=gnu99 $(DEBUG)
 LFLAGS=
 else ifeq ($(ENV), ofp)
 CC=mpiicc
-CFLAGS=-axMIC-AVX512 -O3 -std=gnu99 -qopenmp
+CFLAGS=-axMIC-AVX512 -O3 -std=gnu99 -qopenmp $(DEBUG)
 LFLAGS=
 else ifeq ($(ENV), K)
 CC=mpifccpx
-CFLAGS=-Kfast -D_ENV_K
+CFLAGS=-Kfast,openmp -noansi -Xg -D_ENV_K $(DEBUG)
 LFLAGS=
 endif
 SRCS := main.c sa.c timer.c top_down_bfs.c common.c
