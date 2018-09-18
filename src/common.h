@@ -56,7 +56,7 @@ extern bool check_duplicate_edge(const int lines, int (*edge)[2]);
 extern bool check_duplicate_current_edge(const int lines, const int groups, const int line[groups], int (*edge)[2],
 					 int tmp_edge[groups][2], const int original_groups, int nodes, const int add_centers);
 extern void create_adjacency(const int nodes, const int lines, const int degree,
-                             int edge[lines][2], int adjacency[nodes][degree]);
+                             const int edge[lines][2], int adjacency[nodes][degree]);
 extern int getRandom(const int max);
 extern void timer_clear_all();
 extern void timer_clear(const int n);

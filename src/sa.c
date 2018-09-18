@@ -26,17 +26,45 @@ static void print_results(const int num, const double temp, const double current
 }  
 
 void create_adjacency(const int nodes, const int lines, const int degree, 
-		      int edge[lines][2], int adjacency[nodes][degree])
+		      const int edge[lines][2], int adjacency[nodes][degree])
 {
   int count[nodes];
   for(int i=0;i<nodes;i++)
     count[i] = 0;
 
-  for(int i=0;i<lines;i++){
-    int n1 = edge[i][0];
-    int n2 = edge[i][1];
-    adjacency[n1][count[n1]++] = n2;
-    adjacency[n2][count[n2]++] = n1;
+  if(threads == 1){
+    for(int i=0;i<lines;i++){
+      int n1 = edge[i][0];
+      int n2 = edge[i][1];
+      adjacency[n1][count[n1]++] = n2;
+      adjacency[n2][count[n2]++] = n1;
+    }
+  }
+  else{
+    int local_count[nodes*threads], local_adjacency[nodes][degree*threads];
+#pragma omp parallel
+    {
+      int id = omp_get_thread_num();
+
+#pragma omp for nowait
+      for(int i=0;i<nodes*threads;i++)
+        local_count[i] = 0;
+
+#pragma omp for nowait
+      for(int i=0;i<lines;i++){
+        int n1 = edge[i][0];
+        int n2 = edge[i][1];
+	local_adjacency[n1][id*degree+local_count[n1+id*nodes]++] = n2;
+        local_adjacency[n2][id*degree+local_count[n2+id*nodes]++] = n1;
+      }
+    } // end omp parallel
+
+    // merge
+#pragma omp parallel for
+    for(int i=0;i<nodes;i++)
+      for(int t=0;t<threads;t++)
+        for(int j=0;j<local_count[i+t*nodes];j++)
+          adjacency[i][count[i]++] = local_adjacency[i][j+t*degree];
   }
 }
 

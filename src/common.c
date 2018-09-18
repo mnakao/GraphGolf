@@ -94,7 +94,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
   if(original_groups%2 == 1 && opt == 1){
     int tmp = line[0]%based_lines;
 #pragma omp parallel for
-    for(int i=0;i<based_lines;i++)
+    for(int i=rank;i<based_lines;i+=size)
       if(i != tmp)
 	for(int j=0;j<groups;j++)
 	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
@@ -104,7 +104,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
     int tmp0 = line[0]%based_lines;
     int tmp1 = line[1]%based_lines;
 #pragma omp parallel for
-    for(int i=0;i<based_lines;i++)
+    for(int i=rank;i<based_lines;i+=size)
       if(i != tmp0 && i != tmp1)
 	for(int j=0;j<groups;j++)
 	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
@@ -115,7 +115,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
     int tmp = line[0]%based_lines;
     if(distance(nodes, tmp_edge[0][0], tmp_edge[0][1], added_centers) != nodes/2){
 #pragma omp parallel for
-      for(int i=0;i<based_lines;i++)
+      for(int i=rank;i<based_lines;i+=size)
 	if(i != tmp)
 	  for(int j=0;j<groups;j++)
 	    if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
@@ -123,7 +123,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
     }
     else{
 #pragma omp parallel for
-      for(int i=0;i<lines;i++)
+      for(int i=rank;i<lines;i+=size)
         if(i%based_lines != tmp)
           for(int j=0;j<groups;j++)
             if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
@@ -131,6 +131,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
     }
   }
   
+  MPI_Allreduce(MPI_IN_PLACE, &flag, 1, MPI_BYTE, MPI_BAND, MPI_COMM_WORLD);
   timer_stop(TIMER_CHECK);
   return flag;
 }

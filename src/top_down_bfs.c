@@ -17,14 +17,14 @@ static int top_down_step_thread(const int nodes, const int num_frontier, const i
   {
     int local_count = 0;
     int *local_frontier = malloc(nodes * sizeof(int));  // (num_frontier*degree)/threads * sizeof(int)
-#pragma omp for
+#pragma omp for nowait
      for(int i=0;i<num_frontier;i++){
        int v = frontier[i];
        for(int j=0;j<degree;j++){
 	 int n = *(adjacency + v * degree + j);  // adjacency[v][j];
 	 if(bitmap[n] == 1 || snode == n) continue;
 	 if(__sync_bool_compare_and_swap(&parents[n], NOT_VISITED, parents[v]+1)){
-	   bitmap[n]   = 1;
+	   bitmap[n] = 1;
 	   local_frontier[local_count++] = n;
 	 }
        }
