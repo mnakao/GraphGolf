@@ -45,8 +45,7 @@ def save_image(g, filepath, is_num, centers):
 	import matplotlib as mpl
 	mpl.use('Agg')
 	import matplotlib.pyplot as plt
-	
-	if centers != 0:
+	if centers != None:
 		layout = my_circular_layout(g, centers)
 	else:
 		layout = nx.circular_layout(g)

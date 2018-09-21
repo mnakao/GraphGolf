@@ -194,11 +194,11 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   int nodes = based_nodes * groups;
   int lines = based_lines * groups;
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-
+  create_adjacency(nodes, lines, degree, edge, adjacency);
+  
   while(1){
     int start_line = getRandom(based_lines*groups);
-    edge_1g_opt(edge, nodes, lines, based_nodes, based_lines, groups, start_line, 0);
-    create_adjacency(nodes, lines, degree, edge, adjacency);
+    edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, 0, adjacency);
     if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, 0)) break;
   }
   free(adjacency);
@@ -232,7 +232,7 @@ static void verfy_graph(const int nodes, const int based_nodes, const int degree
   if(!check_duplicate_edge(lines, edge))
     ERROR("NG\nThe same node conbination in the edge.\n");
 
-  if(!check(nodes, based_nodes, lines, degree, groups, edge, added_centers, 0))
+  if(!check(nodes, based_nodes, lines, degree, groups, edge, added_centers, NULL, 0))
     ERROR("NG\nNot symmetric graph.\n");
   
   PRINT_R0("OK\n");
@@ -371,12 +371,12 @@ int main(int argc, char *argv[])
 
   if((!added_centers && based_nodes < size) || (added_centers && based_nodes+added_centers-1 < size))
     ERROR("Number of processes is too large.\n");
-  
+
   int nodes  = based_nodes * groups;
   int degree = 2 * lines / nodes;
   if(nodes < degree)
     ERROR("n is too small. nodes = %d degree = %d\n", nodes, degree);
-   
+
   if(!halfway_flag){
     if(!added_centers){
       create_symmetric_edge(edge, based_nodes, based_lines, groups, degree);

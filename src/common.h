@@ -48,8 +48,8 @@ extern void check_current_edge(const int nodes, const int degree, const int line
 			       const int based_nodes, int edge[lines][2], const double low_ASPL, const int added_centers);
 extern double estimated_elapse_time(const long long ncals, const int nodes, const int based_nodes, const int lines, const int degree,
 				    const int groups, int edge[lines][2], const int add_degree_to_center);
-extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int based_nodes, const int based_lines, const int groups,
-			const int start_line, const int add_centers);
+extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes, const int based_lines, const int groups,
+			const int start_line, const int add_centers, int adjacency[nodes][(lines*2)/nodes]);
 extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);
 extern bool check_loop(const int lines, int (*edge)[2]);
 extern bool check_duplicate_edge(const int lines, int (*edge)[2]);
@@ -67,6 +67,6 @@ extern bool evaluation(const int nodes, const int based_nodes, const int groups,
 		       int adjacency[nodes][degree], int *diameter, double *ASPL, const int added_centers);
 extern void edge_copy(int *restrict buf1, const int *restrict buf2, const int n);
 extern int distance(int nodes, const int a, const int b, const int added_centers);
-extern bool check(const int nodes, const int based_nodes, const int lines, const int degree,
-		  const int groups, int edge[lines][2], const int add_degree_to_center, const int ii);
+extern bool check(const int nodes, const int based_nodes, const int lines, const int degree, const int groups,
+		  int edge[lines][2], const int add_degree_to_center, const int adjacency[nodes][degree], const int ii);
 #endif

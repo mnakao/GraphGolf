@@ -191,6 +191,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
   *diameter = all_max_diam;
   *ASPL     = (sum) / (((nodes-1)*nodes)/2);
   //  printf("%d\n", (int)sum);
+
   timer_stop(TIMER_BFS);
   return true;
 }

@@ -25,6 +25,57 @@ static void print_results(const int num, const double temp, const double current
     PRINT_R0("-\n");
 }  
 
+static void change_adjacency_2g_opt(const int nodes, const int degree, int adjacency[nodes][degree], const int groups,
+				    int tmp_edge[groups*2][2], const int r)
+{
+#pragma omp parallel for
+  for(int i=0;i<groups*2;i+=2){
+    int t0, t1, t2, t3;
+    if(r==0){
+      t0 = tmp_edge[i][0];
+      for(t1=0;t1<degree;t1++)
+        if(adjacency[t0][t1] == tmp_edge[i][1])
+          break;
+      t2 = tmp_edge[i+1][0];
+      for(t3=0;t3<degree;t3++)
+        if(adjacency[t2][t3] == tmp_edge[i+1][1])
+          break;
+      swap(&adjacency[t0][t1], &adjacency[t2][t3]);
+      
+      t0 = tmp_edge[i+1][1];
+      for(t1=0;t1<degree;t1++)
+        if(adjacency[t0][t1] == tmp_edge[i+1][0])
+          break;
+      t2 = tmp_edge[i][1];
+      for(t3=0;t3<degree;t3++)
+        if(adjacency[t2][t3] == tmp_edge[i][0])
+          break;
+      swap(&adjacency[t0][t1], &adjacency[t2][t3]);
+    }
+    else{
+      t0 = tmp_edge[i][0];
+      for(t1=0;t1<degree;t1++)
+        if(adjacency[t0][t1] == tmp_edge[i][1])
+          break;
+      t2 = tmp_edge[i+1][1];
+      for(t3=0;t3<degree;t3++)
+        if(adjacency[t2][t3] == tmp_edge[i+1][0])
+          break;
+      swap(&adjacency[t0][t1], &adjacency[t2][t3]);
+ 
+      t0 = tmp_edge[i][1];
+      for(t1=0;t1<degree;t1++)
+        if(adjacency[t0][t1] == tmp_edge[i][0])
+          break;
+      t2 = tmp_edge[i+1][0];
+      for(t3=0;t3<degree;t3++)
+        if(adjacency[t2][t3] == tmp_edge[i+1][1])
+          break;
+      swap(&adjacency[t0][t1], &adjacency[t2][t3]);
+    }
+  }
+}
+
 void create_adjacency(const int nodes, const int lines, const int degree, 
 		      const int edge[lines][2], int adjacency[nodes][degree])
 {
@@ -32,39 +83,11 @@ void create_adjacency(const int nodes, const int lines, const int degree,
   for(int i=0;i<nodes;i++)
     count[i] = 0;
 
-  if(threads == 1){
-    for(int i=0;i<lines;i++){
-      int n1 = edge[i][0];
-      int n2 = edge[i][1];
-      adjacency[n1][count[n1]++] = n2;
-      adjacency[n2][count[n2]++] = n1;
-    }
-  }
-  else{
-    int local_count[nodes*threads], local_adjacency[nodes][degree*threads];
-#pragma omp parallel
-    {
-      int id = omp_get_thread_num();
-
-#pragma omp for nowait
-      for(int i=0;i<nodes*threads;i++)
-        local_count[i] = 0;
-
-#pragma omp for nowait
-      for(int i=0;i<lines;i++){
-        int n1 = edge[i][0];
-        int n2 = edge[i][1];
-	local_adjacency[n1][id*degree+local_count[n1+id*nodes]++] = n2;
-        local_adjacency[n2][id*degree+local_count[n2+id*nodes]++] = n1;
-      }
-    } // end omp parallel
-
-    // merge
-#pragma omp parallel for
-    for(int i=0;i<nodes;i++)
-      for(int t=0;t<threads;t++)
-        for(int j=0;j<local_count[i+t*nodes];j++)
-          adjacency[i][count[i]++] = local_adjacency[i][j+t*degree];
+  for(int i=0;i<lines;i++){
+    int n1 = edge[i][0];
+    int n2 = edge[i][1];
+    adjacency[n1][count[n1]++] = n2;
+    adjacency[n2][count[n2]++] = n1;
   }
 }
 
@@ -78,8 +101,8 @@ int distance(int nodes, const int a, const int b, const int added_centers)
   return (v < nodes/2.0)? v : nodes-v;
 }
 
-bool check(const int nodes, const int based_nodes, const int lines, const int degree,
-	   const int groups, int edge[lines][2], const int added_centers, const int ii)
+bool check(const int nodes, const int based_nodes, const int lines, const int degree, const int groups,
+	   int edge[lines][2], const int added_centers, const int adjacency[nodes][degree], const int ii)
 {
   bool flag = true;
   int based_lines = lines/groups;
@@ -140,6 +163,24 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
       }
   }
 
+  if(adjacency != NULL){
+    int (*tmp_adjacency)[degree] = malloc(sizeof(int)*nodes*degree);
+    create_adjacency(nodes, lines, degree, edge, tmp_adjacency);
+  
+    int sum[2] = {0,0};
+    for(int i=0;i<nodes;i++){
+      for(int j=0;j<degree;j++){
+	sum[0] += adjacency[i][j];
+	sum[1] += tmp_adjacency[i][j];
+      }
+      if(sum[0] != sum[1]){
+	PRINT_R0("Eroor 5\n");
+	flag = false;
+      }
+    }
+    free(tmp_adjacency);
+  }
+  
   return flag;
 }
 
@@ -148,10 +189,10 @@ bool has_duplicated_vertex(const int e00, const int e01, const int e10, const in
   return (e00 == e10 || e01 == e11 || e00 == e11 || e01 == e10);
 }
 
-static void edge_exchange(const int nodes, const int lines, const int groups, const int based_nodes,
-			  int edge[lines][2], const int added_centers, const int ii)
+static void edge_exchange(const int nodes, const int lines, const int groups, const int degree, const int based_nodes,
+			  int edge[lines][2], const int added_centers, int adjacency[nodes][degree], const int ii)
 {
-  int line[groups*2], tmp_edge[groups*2][2];
+  int line[groups*2], tmp_edge[groups*2][2], edge_for_adj[groups*2][2], r;
   int based_lines = lines / groups;
   
   while(1){
@@ -165,7 +206,9 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
         continue;
       }
       else if((line[0] - line[1]) % based_lines == 0){
-	if(edge_1g_opt(edge, nodes, lines, based_nodes, based_lines, groups, line[0], added_centers)) return;
+	if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, line[0], added_centers, adjacency)){
+	  return;
+	}
 	else continue;
       }
       else break;
@@ -176,7 +219,8 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
     bool diameter_flag = ((flag0 || flag1) && groups%2 == 0);
 
     if(diameter_flag){
-      if(edge_1g_opt(edge, nodes, lines, based_nodes, based_lines, groups, line[0], added_centers)) return;
+      if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, line[0], added_centers, adjacency))
+	return;
       else continue;
     }
     else{ // 2g_opt
@@ -189,9 +233,10 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
 
       for(int i=0;i<groups*2;i++)
 	for(int j=0;j<2;j++)
-	  tmp_edge[i][j] = edge[line[i]][j];
+	  edge_for_adj[i][j] = tmp_edge[i][j] = edge[line[i]][j];
 
-      if(getRandom(2) == 0){
+      r = getRandom(2);
+      if(r == 0){
 	for(int i=0;i<groups;i++)
 	  swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][1]);
       }
@@ -211,12 +256,56 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
 
       for(int i=0;i<groups*2;i++){
 	edge[line[i]][0] = tmp_edge[i][0];
-	edge[line[i]][1] = tmp_edge[i][1];
+        edge[line[i]][1] = tmp_edge[i][1];
       }
 
       break;
     }
   }
+
+  /*
+  int tmp_adjacency[nodes][degree];
+  printf("--- START (ii=%d, r=%d) ---\n", ii, r);
+  for(int i=0;i<groups*2;i++)
+    printf("%d\t%d\n", edge_for_adj[i][0], edge_for_adj[i][1]);
+  
+  printf("--- CURRENT ADJ ---\n");
+  for(int i=0;i<nodes;i++){
+    for(int j=0;j<degree;j++)
+      printf("%d\t", adjacency[i][j]);
+    printf("\n");
+  }
+
+  printf("--- CORRECT ADJ ---\n");
+  */
+  //  create_adjacency(nodes, lines, degree, edge, tmp_adjacency);
+  /*
+  for(int i=0;i<nodes;i++){
+     for(int j=0;j<degree;j++)
+       printf("%d\t", tmp_adjacency[i][j]);
+     printf("\n");
+  }
+  printf("--- NEW ADJ ---\n");
+  */
+  change_adjacency_2g_opt(nodes, degree, adjacency, groups, edge_for_adj, r);
+  //  create_adjacency(nodes, lines, degree, edge,adjacency);
+  /*
+  for(int i=0;i<nodes;i++){
+    for(int j=0;j<degree;j++)
+      printf("%d\t", adjacency[i][j]);
+    printf("\n");
+  }
+
+  int sum[2] = {0,0};
+  for(int i=0;i<nodes;i++)
+    for(int j=0;j<degree;j++){
+      sum[0] += adjacency[i][j];
+      sum[1] += tmp_adjacency[i][j];
+    }
+  if(sum[0] != sum[1]){
+    printf("E\n");
+    exit(0);
+    }*/
 }
 
 static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, const int groups,
@@ -266,7 +355,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle,
 	     const int added_centers, const int added_edges_to_center, const int based_nodes, long long *total_accepts)
 {
-  int current_edge[lines][2], best_edge[lines][2], accepts = 0, rejects = 0;
+  int current_edge[lines][2], best_edge[lines][2], accepts = 0, rejects = 0, current_adjacency[nodes][degree];
   long long i;
   edge_copy((int *)best_edge, (int *)edge, lines*2);
 
@@ -293,10 +382,10 @@ long long sa(const int nodes, const int lines, const int degree, const int group
     
     while(1){
       edge_copy((int *)current_edge, (int *)edge, lines*2);
-      edge_exchange(nodes, lines, groups, based_nodes, current_edge, added_centers, (int)i);
-      assert(check(nodes, based_nodes, lines, degree, groups, current_edge, added_centers, (int)i));
-      create_adjacency(nodes, lines, degree, current_edge, adjacency);
-      if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers)) break;
+      edge_copy((int *)current_adjacency, (int *)adjacency, nodes*degree);
+      edge_exchange(nodes, lines, groups, degree, based_nodes, current_edge, added_centers, current_adjacency, (int)i);
+      assert(check(nodes, based_nodes, lines, degree, groups, current_edge, added_centers, current_adjacency, (int)i));
+      if(evaluation(nodes, based_nodes, groups, lines, degree, current_adjacency, diam, ASPL, added_centers)) break;
     }
 
     if(accept(*ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
@@ -304,6 +393,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       current_ASPL = *ASPL;
       current_diam = *diam;
       edge_copy((int *)edge, (int *)current_edge, lines*2);
+      edge_copy((int *)adjacency, (int *)current_adjacency, nodes*degree);
       if(best_ASPL > current_ASPL){
 	edge_copy((int *)best_edge, (int *)current_edge, lines*2);
 	best_ASPL = current_ASPL;
@@ -338,20 +428,24 @@ double estimated_elapse_time(const long long ncals, const int nodes, const int b
   int diam;    // Not use
   double ASPL; // Not use
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
+  int (*current_adjacency)[degree] = malloc(sizeof(int)*nodes*degree);
   int (*tmp_edge)[2]       = malloc(sizeof(int)*lines*2);      // int tmp_edge[lines][2];
+
+  create_adjacency(nodes, lines, degree, edge, adjacency);
 
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
     edge_copy((int *)tmp_edge, (int *)edge, lines*2);
-    edge_exchange(nodes, lines, groups, based_nodes, tmp_edge, added_centers, (int)i);
-    assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, (int)i));
-    create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
+    edge_copy((int *)current_adjacency, (int *)adjacency, nodes*degree);
+    edge_exchange(nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, current_adjacency, (int)i);
+    assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, current_adjacency, (int)i));
     evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, added_centers);
   }
-
   timer_stop(TIMER_ESTIMATED);
+  
   free(tmp_edge);
   free(adjacency);
+  free(current_adjacency);
 
   return timer_read(TIMER_ESTIMATED)/ESTIMATED_TIMES;
 }
