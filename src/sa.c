@@ -333,7 +333,7 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
     return false;
   }
 
-  double diff = (double)((current_ASPL-ASPL)*nodes*(nodes-1))/groups;
+  double diff = ((current_ASPL-ASPL)*nodes*(nodes-1))/groups;
 
   if(detect_temp_flag)
     *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);

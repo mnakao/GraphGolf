@@ -28,7 +28,7 @@ static int top_down_step_thread(const int nodes, const int num_frontier, const i
 	   local_frontier[local_count++] = n;
 	 }
        }
-     }
+     }  // end for i
 #pragma omp critical
      {
        memcpy(&next[count], local_frontier, local_count*sizeof(int));
@@ -189,7 +189,7 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
   MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   *diameter = all_max_diam;
-  *ASPL     = (sum) / (((nodes-1)*nodes)/2);
+  *ASPL     = sum / ((((double)nodes-1)*nodes)/2);
   //  printf("%d\n", (int)sum);
 
   timer_stop(TIMER_BFS);
