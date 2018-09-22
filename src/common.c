@@ -186,13 +186,10 @@ bool check_duplicate_edge(const int lines, int edge[lines][2])
   timer_start(TIMER_CHECK);
   bool flag = true;
 
-#pragma omp parallel for
-  for(int i=rank;i<lines;i+=size)
-    for(int j=i+1;j<lines;j++)
+  for(int i=0;i<2;i++)
+    for(int j=2;j<lines;j++)
       if(has_duplicated_edge(edge[i][0], edge[i][1], edge[j][0], edge[j][1]))
-	flag = false;
-
-  MPI_Allreduce(MPI_IN_PLACE, &flag, 1, MPI_BYTE, MPI_BAND, MPI_COMM_WORLD);
+        flag = false;
   
   timer_stop(TIMER_CHECK);
   return flag;
