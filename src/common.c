@@ -2,8 +2,11 @@
 
 static void change_adjacency_1g_opt(const int nodes, const int degree, int adjacency[nodes][degree],
 				    const int groups, const int based_nodes, const int added_centers,
-				    int edge_prev[groups][2], int edge_after[groups][2], const int pattern)
+				    int edge_prev[groups][2], int edge_after[groups][2], const int pattern,
+				    int restore_adjacency[groups*2][2][3])
 {
+  /* restore_adjacency[][][] only uses restore_adjacency[0:groups][:][:]. */
+  
   int t0, t1;
   if(abs(edge_prev[0][0]-edge_prev[0][1]) == (nodes-added_centers)/2 && groups%2 == 0){
     for(int i=0;i<groups/2;i++){
@@ -11,12 +14,18 @@ static void change_adjacency_1g_opt(const int nodes, const int degree, int adjac
       for(t1=0;t1<degree;t1++)
 	if(adjacency[t0][t1] == edge_prev[i][1])
 	  break;
+      restore_adjacency[i][0][0] = t0;
+      restore_adjacency[i][0][1] = t1;
+      restore_adjacency[i][0][2] = adjacency[t0][t1];
       adjacency[t0][t1] = edge_after[i][1];
       
       t0 = edge_prev[i][1];
       for(t1=0;t1<degree;t1++)
 	if(adjacency[t0][t1] == edge_prev[i][0])
 	  break;
+      restore_adjacency[i][1][0] = t0;
+      restore_adjacency[i][1][1] = t1;
+      restore_adjacency[i][1][2] = adjacency[t0][t1];
       adjacency[t0][t1] = edge_after[i+groups/2][1];
     }
     
@@ -27,6 +36,9 @@ static void change_adjacency_1g_opt(const int nodes, const int degree, int adjac
 	  break;
       int offset = i - pattern;
       int r = (offset-groups/2 >= 0)? offset-groups/2 : offset+groups/2;
+      restore_adjacency[i][0][0] = t0;
+      restore_adjacency[i][0][1] = t1;
+      restore_adjacency[i][0][2] = adjacency[t0][t1];
       adjacency[t0][t1] = edge_after[r][0];
       
       t0 = edge_prev[i][1];
@@ -34,6 +46,9 @@ static void change_adjacency_1g_opt(const int nodes, const int degree, int adjac
 	if(adjacency[t0][t1] == edge_prev[i][0])
 	  break;
       r = (offset >= 0)? offset : offset+groups;
+      restore_adjacency[i][1][0] = t0;
+      restore_adjacency[i][1][1] = t1;
+      restore_adjacency[i][1][2] = adjacency[t0][t1];
       adjacency[t0][t1] = edge_after[r][0];
     }
   }
@@ -50,6 +65,9 @@ static void change_adjacency_1g_opt(const int nodes, const int degree, int adjac
       for(t1=0;t1<degree;t1++)
 	if(adjacency[t0][t1] == edge_prev[i][1])
 	  break;
+      restore_adjacency[i][0][0] = t0;
+      restore_adjacency[i][0][1] = t1;
+      restore_adjacency[i][0][2] = adjacency[t0][t1];
       if(i < groups/2)
 	adjacency[t0][t1] = edge_after[i][1];
       else
@@ -59,6 +77,9 @@ static void change_adjacency_1g_opt(const int nodes, const int degree, int adjac
       for(t1=0;t1<degree;t1++)
 	if(adjacency[t0][t1] == edge_prev[i][0])
 	  break;
+      restore_adjacency[i][1][0] = t0;
+      restore_adjacency[i][1][1] = t1;
+      restore_adjacency[i][1][2] = adjacency[t0][t1];
       if(i < groups/2)
 	adjacency[t0][t1] = edge_after[i+groups/2][1];
       else
@@ -105,12 +126,18 @@ static void change_adjacency_1g_opt(const int nodes, const int degree, int adjac
       for(t1=0;t1<degree;t1++)
 	if(adjacency[t0][t1] == edge_prev[i][1])
 	  break;
+      restore_adjacency[i][0][0] = t0;
+      restore_adjacency[i][0][1] = t1;
+      restore_adjacency[i][0][2] = adjacency[t0][t1];
       adjacency[t0][t1] = edge_after[i][1];
       
       t0 = edge_prev[i][1];
       for(t1=0;t1<degree;t1++)
 	if(adjacency[t0][t1] == edge_prev[i][0])
 	  break;
+      restore_adjacency[i][1][0] = t0;
+      restore_adjacency[i][1][1] = t1;
+      restore_adjacency[i][1][2] = adjacency[t0][t1];
       adjacency[t0][t1] = edge_after[offset][0];
     }
   }
@@ -250,7 +277,8 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
 }
 
 bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes, const int based_lines, 
-		 const int groups, const int start_line, const int added_centers, int adjacency[nodes][(lines*2)/nodes])
+		 const int groups, const int start_line, const int added_centers, int adjacency[nodes][degree],
+		 int restore_edge[groups*2][2], int restore_adjacency[groups*2][2][3], int restore_line[groups*2], int *restores)
 {
   if(groups == 1) // assert ?
     return true;
@@ -262,7 +290,7 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
   int pattern;
   for(int i=0;i<groups;i++)
     line[i] = start_line % based_lines + i * based_lines;
-  
+
   int start_edge = edge[line[0]][0] % based_nodes;
   int end_edge   = get_end_edge(start_edge, groups, edge, line, based_nodes);
   if(end_edge == start_edge){
@@ -316,58 +344,15 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
   
   // Set vertexs
   for(int i=0;i<groups;i++){
+    restore_line[i]    = line[i];
+    restore_edge[i][0] = edge[line[i]][0];
+    restore_edge[i][1] = edge[line[i]][1];
     edge[line[i]][0] = tmp_edge[i][0];
     edge[line[i]][1] = tmp_edge[i][1];
   }
 
-#ifdef _A
-   int tmp_adjacency[nodes][degree];
-  printf("--- START (r=%d) ---\n", pattern);
-  for(int i=0;i<groups;i++)
-    printf("edge_prev[%d][:]  = %d\t%d\n", i, edge_prev[i][0], edge_prev[i][1]);
-  for(int i=0;i<groups;i++)
-    printf("edge_after[%d][:] = %d\t%d\n", i, edge_after[i][0], edge_after[i][1]);
-
-  printf("--- CURRENT ADJ ---\n");
-  for(int i=0;i<nodes;i++){
-    for(int j=0;j<degree;j++)
-      printf("%d\t", adjacency[i][j]);
-    printf("\n");
-  }
-
-  printf("--- CORRECT ADJ ---\n");
-  create_adjacency(nodes, lines, degree, edge, tmp_adjacency);
-  for(int i=0;i<nodes;i++){
-    for(int j=0;j<degree;j++)
-      printf("%d\t", tmp_adjacency[i][j]);
-    printf("\n");
-  }
-  printf("--- NEW ADJ ---\n");
-
-  printf("%d(%d - %d) %d\n", abs(edge_prev[0][0]-edge_prev[0][1]),  edge_prev[0][0], edge_prev[0][1], nodes/2);
-#endif
+  *restores = groups;
   change_adjacency_1g_opt(nodes, degree, adjacency, groups, based_nodes,
-			  added_centers, edge_prev, edge_after, pattern);
-#ifdef _A
-  for(int i=0;i<nodes;i++){
-    for(int j=0;j<degree;j++)
-      printf("%d\t", adjacency[i][j]);
-    printf("\n");
-  }
-  
-  int sum[2] = {0,0};
-  for(int i=0;i<nodes;i++){
-    for(int j=0;j<degree;j++){
-      sum[0] += adjacency[i][j];
-      sum[1] += tmp_adjacency[i][j];
-    }
-    if(sum[0] != sum[1]){
-      printf("E\n");
-      exit(0);
-    }
-  }
-
-#endif
-  
+			  added_centers, edge_prev, edge_after, pattern, restore_adjacency);
   return true;
 }
