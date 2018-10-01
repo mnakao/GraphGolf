@@ -365,6 +365,7 @@ int main(int argc, char *argv[])
   int based_nodes = max_node_num(based_lines, (int *)edge) + 1;
 
   if(halfway_flag){
+    if(added_centers) based_nodes -= added_centers;
     if(based_nodes%groups != 0)
       ERROR("based_nodes must be divisible by groups\n");
     else
@@ -407,7 +408,10 @@ int main(int argc, char *argv[])
 					  degree, added_centers, added_edges_to_center, nodes);
     }
   }
-
+  else{
+    if(added_centers) nodes += added_centers;
+  }
+  
   if(verify_flag)
     verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
