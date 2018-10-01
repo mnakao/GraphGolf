@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH -p batch
 #SBATCH -N 1                     # Num of nodes         (<--kaeru)
 #SBATCH -n 1                     # Num of MPI processes (<--kaeru)
 #SBATCH --ntasks-per-node=1      # Num of MPI processes per node
