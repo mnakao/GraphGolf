@@ -443,7 +443,7 @@ int main(int argc, char *argv[])
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, degree, groups, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
 		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, 
-		      cooling_cycle, added_centers, added_edges_to_center, based_nodes, &num_accepts);
+		      cooling_cycle, added_centers, based_nodes, &num_accepts);
   timer_stop(TIMER_SA);
   
   if(detect_temp_flag){

@@ -44,7 +44,7 @@ extern int order(int nodes, const int a, const int b, const int added_centers);
 extern long long sa(const int nodes, const int lines, const int degree, const int groups,
 		    double temp, const long long ncalcs, const double cooling_rate, const int low_diam, const double low_ASPL,
 		    const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy, int edge[lines][2], int *diameter, double *ASPL,
-		    const int cooling_cyclie, const int added_centers, const int added_edges_to_center, const int based_nodes, long long *num_accepts);
+		    const int cooling_cyclie, const int added_centers, const int based_nodes, long long *num_accepts);
 extern void check_current_edge(const int nodes, const int degree, const int lines, const int groups,
 			       const int based_nodes, int edge[lines][2], const double low_ASPL, const int added_centers);
 extern double estimated_elapse_time(const long long ncals, const int nodes, const int based_nodes, const int lines, const int degree,

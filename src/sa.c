@@ -379,7 +379,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	     const long long ncalcs, const double cooling_rate,  const int low_diam,  const double low_ASPL, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
 	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle,
-	     const int added_centers, const int added_edges_to_center, const int based_nodes, long long *total_accepts)
+	     const int added_centers, const int based_nodes, long long *total_accepts)
 {
   int restore_edge[groups*2][2], restore_adjacency[groups*2][2][3], restore_line[groups*2], restores = 0;
   int best_edge[lines][2], accepts = 0, rejects = 0;
