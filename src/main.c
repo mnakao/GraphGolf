@@ -2,9 +2,9 @@
 
 static void print_help(char *argv)
 {
-  END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] [-g <gruops>] \
-[-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-d] \
-[-a <accept_rate>] [-v <add vertexes>] [-e <add edges>] [-H] [-N] [-y] [-h]\n", argv);
+  END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] \
+[-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-N] [-d] \
+[-g <gruops>] [-v <add vertexes>] [-e <add edges>] [-H] [-y] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, char *infname, char *outfname, bool *outfnameflag,
@@ -75,8 +75,8 @@ static void set_args(const int argc, char **argv, char *infname, char *outfname,
       break;
     case 'v':
       *added_centers = atoi(optarg);
-      if(*added_centers <= 0)
-	ERROR("-v value >= 1\n");
+      if(*added_centers < 0)
+	ERROR("-v value >= 0\n");
       break;
     case 'e':
       *added_edges_to_center = atoi(optarg);
@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
   int groups = 1, cooling_cycle = 1, added_centers = 0, added_edges_to_center = 1;
   long long ncalcs = 10000, num_accepts = 0;
   double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
-  double max_temp = 80.0, min_temp = 0.217147, accept_rate = 1.0, max_diff_energy = 0;
+  double max_temp = 100.0, min_temp = 0.217147, accept_rate = 1.0, max_diff_energy = 0;
   FILE *fp = NULL;
   
   MPI_Init(&argc, &argv);
