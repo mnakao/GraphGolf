@@ -1,4 +1,4 @@
-CC=mpicc
+CC=gcc
 CFLAGS=-std=gnu99 -O2 -Wall -mcmodel=medium -fopenmp $(DEBUG)
 SRCS := main.c
 OBJS := $(SRCS:%.c=%.o)
