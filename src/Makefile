@@ -83,9 +83,10 @@ coma:
 	sbatch submit-$$i.sh; \
 	done
 
+#make ofp DATA="..\/data\/n6d4.random.edges" N=1000000 G=12
 ofp:
 	cp ../scripts/ana.sh .
-	make clean; make ENV=ofp; \
+	make clean; make ENV=ofp
 	@for i in `seq 0 16`; do \
 	sed "s/@DATA@/$(DATA)/" ../scripts/ofp/submit-$$i.sh | sed "s/@N@/$(N)/" | sed "s/@G@/$(G)/" > submit-$$i.sh; \
 	pjsub submit-$$i.sh; \
