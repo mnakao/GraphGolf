@@ -54,37 +54,21 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
 		int adjacency[nodes][degree], int *diameter, double *ASPL, const int added_centers)
 {
   timer_start(TIMER_BFS);
-  double sum      = 0.0;
-  int first_task  = based_nodes;
-  int second_task = added_centers - 1;
-  int whole_task  = (added_centers)? first_task+second_task : first_task;
-  int per_task    = (whole_task%size==0)? whole_task/size : whole_task/size+1;
-  int start_task  = per_task*rank;
-  if(whole_task <= start_task)
-    per_task = 0;
-  else if(whole_task <= start_task + per_task)
-    per_task = whole_task - start_task;
-  
-  int *frontier         = malloc(sizeof(int));
-  unsigned char *bitmap = malloc(sizeof(unsigned char) * nodes);
-  int *next             = malloc(sizeof(int) * nodes);
-  bool reached          = true;
-  *diameter             = 0;
 
-  //// First Search ////
-  int tmp_per_task = (first_task < start_task)? 0 : per_task;
-  tmp_per_task = MIN(tmp_per_task, first_task-start_task);
-  if(tmp_per_task < 0)
-    tmp_per_task = 0;
-  
-  for(int s=start_task;s<start_task+tmp_per_task;s++){
-    frontier[0] = s;
+  unsigned char *bitmap = malloc(sizeof(unsigned char) * nodes);
+  int *frontier = malloc(sizeof(int));
+  int *next     = malloc(sizeof(int) * nodes);
+  bool reached  = true;
+  double sum    = 0.0;
+  *diameter     = 0;
+
+  for(int s=rank;s<based_nodes;s+=size){
     int num_frontier = 1, level = 0;
     for(int i=0;i<nodes;i++)
       bitmap[i] = NOT_VISITED;
 
-    frontier[0]  = s;
-    bitmap[s] = level;
+    frontier[0] = s;
+    bitmap[s]   = level;
 
     while(1){
       num_frontier = top_down_step(level++, nodes, num_frontier, degree,
@@ -99,36 +83,25 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
 
     *diameter = MAX(*diameter, level-1);
        
-    for(int i=s+1;i<groups*based_nodes;i++){
+    for(int i=s+1;i<nodes;i++){
       if(bitmap[i] == NOT_VISITED)
 	reached = false;
-      
-      sum += (bitmap[i] + 1) * (groups - i/based_nodes);
-    }
-    
-    for(int i=groups*based_nodes;i<nodes;i++){
-      if(bitmap[i] == NOT_VISITED)
-	reached = false;
-      
-      sum += (bitmap[i] + 1) * groups;
+
+      if(i < groups*based_nodes)
+	sum += (bitmap[i] + 1) * (groups - i/based_nodes);
+      else
+	sum += (bitmap[i] + 1) * groups; // for add_centers
     }
   }
 
-  //// Second Search (only if add_centers exists) ////
-  if(start_task > first_task)
-    start_task = based_nodes * groups + (start_task-first_task);
-  else
-    start_task = based_nodes * groups;
-  
-  tmp_per_task = per_task - tmp_per_task;
-  for(int s=start_task;s<start_task+tmp_per_task;s++){
-    frontier[0] = s;
+  // for add_centers
+  for(int s=based_nodes*groups+rank;s<nodes;s+=size){
     int num_frontier = 1, level = 0;
     for(int i=0;i<nodes;i++)
       bitmap[i] = NOT_VISITED;
     
-    frontier[0]  = s;
-    bitmap[s] = level;
+    frontier[0] = s;
+    bitmap[s]   = level;
     
     while(1){
       num_frontier = top_down_step(level++, nodes, num_frontier, degree,
@@ -150,10 +123,10 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
       sum += bitmap[i] + 1;
     }
   }
-  
+
+  free(bitmap);
   free(frontier);
   free(next);
-  free(bitmap);
 
   MPI_Allreduce(MPI_IN_PLACE, &reached, 1, MPI_C_BOOL, MPI_LAND, MPI_COMM_WORLD);
   if(!reached){
@@ -161,12 +134,10 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
     return false;
   }
 
-
-  MPI_Allreduce(MPI_IN_PLACE, diameter, 1, MPI_INT,    MPI_MAX,  MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, diameter, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   MPI_Allreduce(MPI_IN_PLACE, &sum,  1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   *ASPL = sum / ((((double)nodes-1)*nodes)/2);
 
   timer_stop(TIMER_BFS);
   return true;
 }
-
