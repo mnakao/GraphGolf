@@ -4,7 +4,9 @@ static void edge_restore(const int lines, const int groups,
 			 int edge[lines][2], const int restore_edge[groups*2][2],
 			 const int restore_line[groups*2], const int restores)
 {
+#ifdef _OPENMP
 #pragma omp parallel for collapse(2)
+#endif
   for(int i=0;i<restores;i++) // Value of "restores" is groups or groups * 2.
     for(int j=0;j<2;j++)
       edge[restore_line[i]][j] = restore_edge[i][j];
@@ -14,7 +16,9 @@ static void adjacency_restore(const int nodes, const int degree, const int group
 			      const int restore_adjacency[groups*2][2][3], const int restores)
 {
   if(restores == groups){
+#ifdef _OPENMP
 #pragma omp parallel for collapse(2)
+#endif
     for(int i=0;i<groups;i++){
       for(int j=0;j<2;j++){
 	int t0 = restore_adjacency[i][j][0];
@@ -67,7 +71,9 @@ static void print_results(const int num, const double temp, const double current
 static void change_adjacency_2g_opt(const int nodes, const int degree, int adjacency[nodes][degree], const int groups,
 				    int tmp_edge[groups*2][2], int restore_adjacency[groups*2][2][3], const int r)
 {
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
   for(int i=0;i<groups*2;i+=2){
     int t0, t1, t2, t3;
     if(r==0){
@@ -176,7 +182,9 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
   bool flag = true;
   int based_lines = lines/groups;
 
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
   for(int i=0;i<based_lines;i++){
     for(int j=1;j<groups;j++){
       int k = j * based_lines + i;
@@ -188,8 +196,10 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
       }
     }
   }
-
+  
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
   for(int i=0;i<based_lines;i++){
     for(int j=1;j<groups;j++){
       int k = j * based_lines + i;
@@ -207,7 +217,9 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
     return false;
   }
 
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
   for(int i=0;i<based_lines;i++){
     if(order(nodes, edge[i][0], edge[i][1], added_centers) != MIDDLE)
       for(int j=1;j<groups;j++){
@@ -328,7 +340,9 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
 	if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)
 	  swap(&tmp_edge[i][0], &tmp_edge[i][1]); // RIGHT -> LEFT
 
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
       for(int i=0;i<groups*2;i++){
 	restore_line[i]    = line[i];
 	restore_edge[i][0] = edge[line[i]][0];

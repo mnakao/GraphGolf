@@ -11,13 +11,12 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <stdint.h>
-#include <omp.h>
 #include <stdbool.h>
 #include <assert.h>
 #include <time.h>
 
 int rank, size, threads;
-#define NOT_VISITED -1
+#define NOT_VISITED 255
 
 #define RIGHT  0
 #define LEFT   1
@@ -38,6 +37,7 @@ int rank, size, threads;
 #define PRINT_R0(...)   do{if(rank==0) printf(__VA_ARGS__);}while(0)
 #define END(...)        do{if(rank==0) printf(__VA_ARGS__); MPI_Finalize(); exit(0);}while(0)
 #define ERROR(...)      do{if(rank==0) printf(__VA_ARGS__); ABORT();}while(0)
+#define EXIT(r)         do{MPI_Finalize(); exit(r);}while(0)
 
 extern void swap(int *a, int *b);
 extern int order(int nodes, const int a, const int b, const int added_centers);

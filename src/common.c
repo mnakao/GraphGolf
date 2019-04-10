@@ -145,7 +145,9 @@ static void change_adjacency_1g_opt(const int nodes, const int degree, int adjac
 
 void edge_copy(int *restrict buf1, const int *restrict buf2, const int n)
 {
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
   for(int i=0;i<n;i++)
     buf1[i] = buf2[i];
 }
@@ -198,8 +200,10 @@ bool check_loop(const int lines, int edge[lines][2])
 {
   timer_start(TIMER_CHECK);
   bool flag = true;
-  
+
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
   for(int i=0;i<lines;i++)
     if(edge[i][0] == edge[i][1])
       flag = false;
@@ -233,7 +237,9 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
   
   if(original_groups%2 == 1 && opt == 1){
     int tmp = line[0]%based_lines;
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
     for(int i=rank;i<based_lines;i+=size)
       if(i != tmp)
 	for(int j=0;j<groups;j++)
@@ -243,7 +249,9 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
   else if(opt == 2){
     int tmp0 = line[0]%based_lines;
     int tmp1 = line[1]%based_lines;
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
     for(int i=rank;i<based_lines;i+=size)
       if(i != tmp0 && i != tmp1)
 	for(int j=0;j<groups;j++)
@@ -254,7 +262,9 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
     assert(original_groups%2 == 0 && opt == 1);
     int tmp = line[0]%based_lines;
     if(distance(nodes, tmp_edge[0][0], tmp_edge[0][1], added_centers) != nodes/2){
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
       for(int i=rank;i<based_lines;i+=size)
 	if(i != tmp)
 	  for(int j=0;j<groups;j++)
@@ -262,7 +272,9 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
 	      flag = false;
     }
     else{
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
       for(int i=rank;i<lines;i+=size)
         if(i%based_lines != tmp)
           for(int j=0;j<groups;j++)

@@ -2,7 +2,7 @@
 
 static void print_help(char *argv)
 {
-  END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-t <num_threads>] \
+  END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] \
 [-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-N] [-d] \
 [-g <gruops>] [-v <add vertexes>] [-e <add edges>] [-H] [-y] [-h]\n", argv);
 }
@@ -17,7 +17,7 @@ static void set_args(const int argc, char **argv, char *infname, char *outfname,
     print_help(argv[0]);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:s:t:n:w:c:C:g:v:e:dHNyh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:s:n:w:c:C:g:v:e:dHNyh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -34,11 +34,6 @@ static void set_args(const int argc, char **argv, char *infname, char *outfname,
       *random_seed = atoi(optarg);
       if(*random_seed < 0)
         ERROR("-s value >= 0\n");
-      break;
-    case 't':
-      threads = atoi(optarg);
-      if(threads < 1)
-        ERROR("-s value >= 1\n");
       break;
     case 'n':
       *ncalcs = atoll(optarg);
@@ -278,7 +273,9 @@ static void output_params(const int nodes, const int degree, const int groups, c
 #endif
   PRINT_R0("Seed: %d\n", random_seed);
   PRINT_R0("Num. of processes: %d\n", size);
-  PRINT_R0("Num. of threads  : %d\n", threads);
+#ifdef _OPENMP
+  PRINT_R0("Num. of threads  : %d\n", omp_get_max_threads());
+#endif
   if(hill_climbing_flag == false){
     PRINT_R0("Algorithm: Simulated Annealing\n");
     PRINT_R0("   MAX Temperature: %f\n", max_temp);
@@ -333,7 +330,6 @@ int main(int argc, char *argv[])
   PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
-  threads = 1;
   set_args(argc, argv, infname, outfname, &outfnameflag, &random_seed,
 	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag,
 	   &accept_rate, &cooling_cycle, &hill_climbing_flag, &detect_temp_flag,
@@ -355,9 +351,6 @@ int main(int argc, char *argv[])
   }
   
   srandom(random_seed);
-#ifndef _ENV_K
-  omp_set_num_threads(threads);
-#endif
   int based_lines = count_lines(infname);
   int lines       = (halfway_flag)? based_lines : based_lines * groups;
   int (*edge)[2]  = malloc(sizeof(int)*lines*2); // int edge[lines][2];

@@ -1,16 +1,20 @@
-.PHONY: clean coma
-CC=mpicc
+.PHONY: clean coma ofp K
 DEBUG=-DNDEBUG
-
-CFLAGS=-std=gnu99 -O3 -Wall -mcmodel=medium -fopenmp $(DEBUG)
+#########################################################
+CC=mpicc
+CFLAGS=-std=gnu99 -O3 -Wall -mcmodel=medium $(DEBUG)
+OPENMP=-fopenmp
 LFLAGS=-lm
+#########################################################
 ifeq ($(ENV), coma)
 CC=mpiicc
-CFLAGS=-O2 -qopenmp -std=gnu99 $(DEBUG)
+CFLAGS=-O2 -std=gnu99 $(DEBUG)
+OPENMP=-qopenmp
 LFLAGS=
 else ifeq ($(ENV), ofp)
 CC=mpiicc
-CFLAGS=-axMIC-AVX512 -O3 -std=gnu99 -qopenmp $(DEBUG)
+CFLAGS=-axMIC-AVX512 -O3 -std=gnu99 $(DEBUG)
+OPENMP=-qopenmp
 LFLAGS=
 else ifeq ($(ENV), K)
 CC=mpifccpx
@@ -18,20 +22,30 @@ CC=mpifccpx
 CFLAGS=-D_ENV_K -O3 -Kopenmp,dalign,lib,mfunc,ns,omitfp,prefetch_conditional,rdconv -x- -noansi -Xg $(DEBUG)
 LFLAGS=
 endif
-SRCS := main.c sa.c timer.c top_down_bfs.c common.c
+#########################################################
+SRCS := main.c sa.c timer.c bfs.c common.c
 OBJS := $(SRCS:%.c=%.o)
 
-all: a.out
-
-a.out: $(OBJS)
+gg: $(OBJS)
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $^
 
 %.o: %.c common.h
 	$(CC) $(CFLAGS) -c $<
 
-run: a.out
-	nohup bash run.sh &
+common_omp.o: common.c common.h
+	$(CC) $(CFLAGS) $(OPENMP) -c -o $@ $<
 
+sa_omp.o: sa.c common.h
+	$(CC) $(CFLAGS) $(OPENMP) -c -o $@ $<
+
+bfs_omp.o: bfs.c common.h
+	$(CC) $(CFLAGS) $(OPENMP) -c -o $@ $<
+
+gg_thread: common_omp.o sa_omp.o bfs_omp.o main.o timer.o
+	$(CC) $(CFLAGS) $(OPENMP) $(LFLAGS) -o $@ $^
+
+all: gg gg_thread
+#########################################################
 # make K DATA="..\/data\/n72d4.random.edges" N=10000 G=2 K=1 T=100 C=1
 K:
 	make clean; make ENV=K
@@ -91,12 +105,6 @@ ofp:
 	sed "s/@DATA@/$(DATA)/" ../scripts/ofp/submit-$$i.sh | sed "s/@N@/$(N)/" | sed "s/@G@/$(G)/" > submit-$$i.sh; \
 	pjsub submit-$$i.sh; \
 	done
-
-check: a.out
-	OMP_CANCELLATION=true ./a.out -f data/n32d5k4l228.20170305-fimfgn.edges
-	OMP_CANCELLATION=true ./a.out -f data/n256d18k3l218.20170305-fimf4z.edges
-	OMP_CANCELLATION=true ./a.out -f data/n576d30k3l214.20170305-fimfev.edges
-	OMP_CANCELLATION=true ./a.out -f data/n1344d30k3l248.20170305-fimfao.edges
 
 clean:
 	rm -rf *.o *~

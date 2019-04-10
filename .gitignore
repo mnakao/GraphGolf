@@ -1,5 +1,6 @@
-GraphGolf
 opt_data
+src/gg
+src/gg_thread
 
 # Prerequisites
 *.d
