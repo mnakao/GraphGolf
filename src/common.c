@@ -283,7 +283,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
     }
   }
   
-  MPI_Allreduce(MPI_IN_PLACE, &flag, 1, MPI_BYTE, MPI_BAND, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, &flag, 1,  MPI_C_BOOL, MPI_LAND, MPI_COMM_WORLD);
   timer_stop(TIMER_CHECK);
   return flag;
 }
