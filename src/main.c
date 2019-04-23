@@ -176,7 +176,7 @@ static void create_symmetric_edge_with_vertexes(int (*edge)[2], const int based_
 }
 
 static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines,
-                                  const int groups, const int degree)
+                                  const int groups, const int degree, const int nodes, const int lines)
 {
   for(int j=1;j<groups;j++)
     for(int i=0;i<based_lines;i++){
@@ -186,14 +186,12 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
 
   int diam;    // Not use
   double ASPL; // Not use
-  int nodes = based_nodes * groups;
-  int lines = based_lines * groups;
   int restore_edge[groups*2][2], restore_adjacency[groups*2][2][3], restore_line[groups*2], restores = 0; // Not use
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, edge, adjacency);
   
   while(1){
-    int start_line = getRandom(based_lines*groups);
+    int start_line = getRandom(lines);
     edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, 0,
 		adjacency, restore_edge, restore_adjacency, restore_line, &restores);
     if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, 0)) break;
@@ -365,17 +363,14 @@ int main(int argc, char *argv[])
       based_nodes /= groups;
   }
 
-  if((!added_centers && based_nodes < size) || (added_centers && based_nodes+added_centers-1 < size))
-    ERROR("Number of processes is too large.\n");
-
   int nodes  = based_nodes * groups;
   int degree = 2 * lines / nodes;
-  if(nodes < degree)
+  if(nodes <= degree)
     ERROR("n is too small. nodes = %d degree = %d\n", nodes, degree);
 
   if(!halfway_flag){
     if(!added_centers){
-      create_symmetric_edge(edge, based_nodes, based_lines, groups, degree);
+      create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes, lines);
     }
     else{
       degree += 1;
