@@ -1,5 +1,14 @@
 #include "common.h"
 
+#ifndef NDEBUG
+static void check_edge_restore(const int lines, const int edge[lines][2], const int prev_edge[lines][2])
+{
+  for(int i=0;i<lines;i++)
+    if(edge[i][0] != prev_edge[i][0] || edge[i][1] != prev_edge[i][1])
+      ERROR("Error in check_edge_restore");
+}
+#endif
+
 static void edge_restore(const int lines, const int groups,
 			 int edge[lines][2], const int restore_edge[groups*2][2],
 			 const int restore_line[groups*2], const int restores)
@@ -397,6 +406,9 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 {
   int restore_edge[groups*2][2], restore_adjacency[groups*2][2][3], restore_line[groups*2], restores = 0;
   int best_edge[lines][2], accepts = 0, rejects = 0;
+#ifndef NDEBUG
+  int prev_edge[lines][2];
+#endif
   long long i;
   edge_copy((int *)best_edge, (int *)edge, lines*2);
 
@@ -424,16 +436,13 @@ long long sa(const int nodes, const int lines, const int degree, const int group
     while(1){
       edge_restore(lines, groups, edge, restore_edge, restore_line, restores);
       adjacency_restore(nodes, degree, groups, adjacency, restore_adjacency, restores);
+#ifndef NDEBUG
+      if(restores != 0)
+	check_edge_restore(lines, edge, prev_edge);
+      memcpy(prev_edge, edge, sizeof(int)*lines*2);
+#endif
       edge_exchange(nodes, lines, groups, degree, based_nodes, edge, added_centers,
       		    adjacency, restore_edge, restore_adjacency, restore_line, &restores, (int)i);
-      //      for(int i=0;i<nodes;i++){
-      //	for(int j=0;j<degree;j++)
-      //	  printf("%d ", adjacency[i][j]);
-      //	printf("\n");
-      //      }
-      //      for(int i=0;i<lines;i++)
-      //	printf("%d %d\n", edge[i][0], edge[i][1]);
-
       assert(check(nodes, based_nodes, lines, degree, groups, edge, added_centers, adjacency, (int)i));
       if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers)) break;
     }
