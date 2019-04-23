@@ -378,10 +378,16 @@ int main(int argc, char *argv[])
 
       if(added_centers > based_nodes)
 	ERROR("-v value (%d) is invalid\n", added_centers);
-      else if(degree%2 == 1 && nodes%2 == 1)
-	ERROR("Number of degrees or number of nodes is invalid\n");
+      else if((degree*nodes)%2 != 0)
+	ERROR("Number of degrees or number of nodes is invalid %d %d\n", degree, nodes);
       else if(groups*added_edges_to_center != degree)
 	ERROR("-g value (%d) * -e value (%d) == degree + 1 (%d)\n", groups, added_edges_to_center, degree);
+      else if((nodes-added_centers)/groups%2 != 0)
+	ERROR("Number of nodes, groups, or added_centers is invalid 1\n");
+      else if(((nodes-added_centers)/groups - degree/groups*added_centers)%2 != 0)
+	ERROR("Number of nodes, groups, or added_centers is invalid 2\n");
+      else if(((nodes-added_centers)/groups - degree/groups*added_centers)%2 < 0)
+	ERROR("Number of nodes, groups, or added_centers is invalid 3\n");
       
       lines = (nodes*degree)/2;
       int org_based_lines = based_lines;
