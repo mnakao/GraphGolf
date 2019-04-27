@@ -16,7 +16,8 @@
 #include <time.h>
 
 int rank, size, threads;
-#define NOT_VISITED 255
+#define VISITED     1
+#define NOT_VISITED 0
 
 #define RIGHT  0
 #define LEFT   1

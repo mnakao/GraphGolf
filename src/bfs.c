@@ -3,7 +3,7 @@
 #ifdef _OPENMP
 static int top_down_step(const int level, const int nodes, const int num_frontier,
                          const int degree, const int* restrict adjacency, int* restrict frontier,
-                         int* restrict next, unsigned char* restrict bitmap)
+                         int* restrict next, int* restrict distance, char* restrict bitmap)
 {
   int count = 0;
   int local_frontier[nodes];
@@ -16,7 +16,8 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
        for(int j=0;j<degree;j++){
          int n = *(adjacency + v * degree + j);  // adjacency[v][j];
          if(bitmap[n] == NOT_VISITED){
-           bitmap[n] = level;
+           bitmap[n]   = VISITED;
+	   distance[n] = level;
            local_frontier[local_count++] = n;
          }
        }
@@ -32,7 +33,7 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
 #else
 static int top_down_step(const int level, const int nodes, const int num_frontier,
                          const int degree, const int* restrict adjacency, int* restrict frontier,
-                         int* restrict next, unsigned char* restrict bitmap)
+                         int* restrict next, int* restrict distance, char* restrict bitmap)
 {
   int count = 0;
   for(int i=0;i<num_frontier;i++){
@@ -40,7 +41,8 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
     for(int j=0;j<degree;j++){
       int n = *(adjacency + v * degree + j);  // int n = adjacency[v][j];
       if(bitmap[n] == NOT_VISITED){
-        bitmap[n] = level;
+	bitmap[n]   = VISITED;
+	distance[n] = level;
         next[count++] = n;
       }
     }
@@ -55,8 +57,9 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
 {
   timer_start(TIMER_BFS);
 
-  unsigned char *bitmap = malloc(sizeof(unsigned char) * nodes);
+  char *bitmap  = malloc(sizeof(char) * nodes);
   int *frontier = malloc(sizeof(int));
+  int *distance = malloc(sizeof(int) * nodes);
   int *next     = malloc(sizeof(int) * nodes);
   bool reached  = true;
   double sum    = 0.0;
@@ -68,11 +71,12 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
       bitmap[i] = NOT_VISITED;
 
     frontier[0] = s;
-    bitmap[s]   = level;
+    distance[s] = level;
+    bitmap[s]   = VISITED;
 
     while(1){
       num_frontier = top_down_step(level++, nodes, num_frontier, degree,
-				   (int *)adjacency, frontier, next, bitmap);
+				   (int *)adjacency, frontier, next, distance, bitmap);
       if(num_frontier == 0) break;
   
       int *tmp = frontier;
@@ -88,9 +92,9 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
 	reached = false;
 
       if(i < groups*based_nodes)
-	sum += (bitmap[i] + 1) * (groups - i/based_nodes);
+	sum += (distance[i] + 1) * (groups - i/based_nodes);
       else
-	sum += (bitmap[i] + 1) * groups; // for add_centers
+	sum += (distance[i] + 1) * groups; // for add_centers
     }
   }
 
@@ -101,11 +105,12 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
       bitmap[i] = NOT_VISITED;
     
     frontier[0] = s;
-    bitmap[s]   = level;
+    distance[s] = level;
+    bitmap[s]   = VISITED;
     
     while(1){
       num_frontier = top_down_step(level++, nodes, num_frontier, degree,
-				   (int *)adjacency, frontier, next, bitmap);
+				   (int *)adjacency, frontier, next, distance, bitmap);
       if(num_frontier == 0) break;
 	  
       int *tmp = frontier;
@@ -120,12 +125,13 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
       if(bitmap[i] == NOT_VISITED)
 	reached = false;
       
-      sum += bitmap[i] + 1;
+      sum += distance[i] + 1;
     }
   }
 
   free(bitmap);
   free(frontier);
+  free(distance);
   free(next);
 
   MPI_Allreduce(MPI_IN_PLACE, &reached, 1, MPI_C_BOOL, MPI_LAND, MPI_COMM_WORLD);
