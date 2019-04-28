@@ -1,4 +1,4 @@
-.PHONY: clean coma ofp K
+.PHONY: clean cygnus ofp K
 DEBUG=-DNDEBUG
 #########################################################
 CC=mpicc
@@ -6,7 +6,7 @@ CFLAGS=-std=gnu99 -O3 -Wall -mcmodel=medium $(DEBUG)
 OPENMP=-fopenmp
 LFLAGS=-lm
 #########################################################
-ifeq ($(ENV), coma)
+ifeq ($(ENV), cygnus)
 CC=mpiicc
 CFLAGS=-O2 -std=gnu99 $(DEBUG)
 OPENMP=-qopenmp
@@ -81,20 +81,11 @@ fruits-cooling:
 	done; \
 	done
 
-#make coma DATA="..\/data\/n72d4.random.edges" N=1000000 G=1
-#make coma DATA="..\/data\/n36d4.random.edges" N=1000000 G=2
-#make coma DATA="..\/data\/n24d4.random.edges" N=1000000 G=3
-#make coma DATA="..\/data\/n18d4.random.edges" N=1000000 G=4
-#make coma DATA="..\/data\/n12d4.random.edges" N=1000000 G=6
-#make coma DATA="..\/data\/n9d4.random.edges" N=1000000 G=8
-#make coma DATA="..\/data\/n8d4.random.edges" N=1000000 G=9
-#make coma DATA="..\/data\/n6d4.random.edges" N=1000000 G=12
-coma: 
-	cp ../scripts/coma/ana-5-0.5.sh ana.sh
-	make clean; make ENV=coma
-	@for i in `seq 0 9`; do \
-	sed "s/@DATA@/$(DATA)/" ../scripts/coma/submit-$$i.sh | sed "s/@N@/$(N)/" | sed "s/@G@/$(G)/" > submit-$$i.sh; \
-	sbatch submit-$$i.sh; \
+#make cygnus DATA="..\/data\/n72d4.random.edges" N=1000000 G=1 T=100
+cygnus: 
+	@for S in `seq 0 9`; do \
+	sed "s/@DATA@/$(DATA)/" ../scripts/cygnus/submit.sh | sed "s/@N@/$(N)/" | sed "s/@G@/$(G)/" | sed "s/@T@/$(T)/" | sed "s/@S@/$$S/" > submit.sh; \
+	qsub submit.sh; \
 	done
 
 #make ofp DATA="..\/data\/n6d4.random.edges" N=1000000 G=12
