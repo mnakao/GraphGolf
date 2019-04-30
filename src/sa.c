@@ -246,8 +246,8 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
 	if(tmp0 != based_nodes || tmp1 != based_nodes){
 	  PRINT_R0("check 4: %d\n", ii);
 	  PRINT_R0("The different group relationship\n");
-	  PRINT_R0("edge[%d][0]-edge[%d][0] = %d - %d = %d\n", k, k-based_lines, edge[k][0], edge[k-based_lines][0], tmp0);
-	  PRINT_R0("edge[%d][1]-edge[%d][1] = %d - %d = %d\n", k, k-based_lines, edge[k][1], edge[k-based_lines][1], tmp1);
+	  PRINT_R0("edge[%d][0]-edge[%d][0] = %d - %d = %d != %d\n", k, k-based_lines, edge[k][0], edge[k-based_lines][0], tmp0, based_nodes);
+	  PRINT_R0("edge[%d][1]-edge[%d][1] = %d - %d = %d != %d\n", k, k-based_lines, edge[k][1], edge[k-based_lines][1], tmp1, based_nodes);
 	  flag = false;
 	}
       }
@@ -308,13 +308,14 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
       else break;
     }
 
-    bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1], added_centers) == nodes/2);
-    bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1], added_centers) == nodes/2);
+    bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1], added_centers) == (nodes-added_centers)/2);
+    bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1], added_centers) == (nodes-added_centers)/2);
     bool diameter_flag = ((flag0 || flag1) && groups%2 == 0);
 
     if(diameter_flag){
       if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, line[0], added_centers, adjacency,
 		     restore_edge, restore_adjacency, restore_line, restores))
+	
 	return;
       else continue;
     }
@@ -415,7 +416,6 @@ long long sa(const int nodes, const int lines, const int degree, const int group
   // Create adjacency matrix
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, edge, adjacency);
-  
   evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers);
   double current_ASPL = *ASPL;
   double best_ASPL    = *ASPL;
