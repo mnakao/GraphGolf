@@ -184,6 +184,7 @@ int order(int nodes, const int a, const int b, const int added_centers)
 {
   if(!added_centers && nodes%2 == 0 && (a-b)%(nodes/2) == 0) return MIDDLE;
   if(a >= nodes-added_centers || b >= nodes-added_centers)   return MIDDLE;
+  if(added_centers && (nodes-added_centers)%2 == 0 && (a-b)%((nodes-added_centers)/2)==0) return MIDDLE;
 
   if(added_centers) nodes -= added_centers;
   if(a < nodes/2.0){
@@ -234,7 +235,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
   int based_lines = lines/original_groups;
   int opt = (groups == original_groups)? 1 : 2;  // 1g-opt : 2g-opt
   bool flag = true;
-  
+
   if(original_groups%2 == 1 && opt == 1){
     int tmp = line[0]%based_lines;
 #ifdef _OPENMP
@@ -261,7 +262,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
   else{ 
     assert(original_groups%2 == 0 && opt == 1);
     int tmp = line[0]%based_lines;
-    if(distance(nodes, tmp_edge[0][0], tmp_edge[0][1], added_centers) != nodes/2){
+    if(distance(nodes, tmp_edge[0][0], tmp_edge[0][1], added_centers) != (nodes-added_centers)/2){
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif

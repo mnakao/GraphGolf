@@ -83,7 +83,7 @@ fruits-cooling:
 
 #make cygnus DATA="..\/data\/n72d4.random.edges" N=1000000 G=1 T=100
 cygnus: 
-	@for S in `seq 0 9`; do \
+	@for S in `seq 1 10`; do \
 	sed "s/@DATA@/$(DATA)/" ../scripts/cygnus/submit.sh | sed "s/@N@/$(N)/" | sed "s/@G@/$(G)/" | sed "s/@T@/$(T)/" | sed "s/@S@/$$S/" > submit.sh; \
 	qsub submit.sh; \
 	done
@@ -92,7 +92,7 @@ cygnus:
 ofp:
 	cp ../scripts/ana.sh .
 	make clean; make ENV=ofp
-	@for i in `seq 0 16`; do \
+	@for i in `seq 1 16`; do \
 	sed "s/@DATA@/$(DATA)/" ../scripts/ofp/submit-$$i.sh | sed "s/@N@/$(N)/" | sed "s/@G@/$(G)/" > submit-$$i.sh; \
 	pjsub submit-$$i.sh; \
 	done

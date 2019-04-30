@@ -136,9 +136,7 @@ static void create_symmetric_edge_with_vertexes(int (*edge)[2], const int based_
 						const int added_centers, const int added_edges_to_center,
 						int const nodes)
 {
-  if(groups%2 != 1)
-    ERROR("Sorry. Not implemented. -g value (%d) must be odd number\n", groups);
-  else if((based_nodes-added_centers*added_edges_to_center)%2 != 0)
+  if((based_nodes-added_centers*added_edges_to_center)%2 != 0)
     ERROR("Sorry. Not implemented. based_nodes (%d) - -v value (%d) * -e value (%d) must be even number\n",
 	  based_nodes, added_centers, added_edges_to_center);
 
@@ -408,6 +406,7 @@ int main(int argc, char *argv[])
   
   if(verify_flag)
     verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
+
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
   check_current_edge(nodes, degree, lines, groups, based_nodes, edge, low_ASPL, added_centers);
   double average_time = estimated_elapse_time(ncalcs, nodes, based_nodes, lines,
