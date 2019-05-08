@@ -53,7 +53,7 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
 #endif
 
 bool evaluation(const int nodes, int based_nodes, const int groups, const int lines, const int degree,
-		int adjacency[nodes][degree], int *diameter, double *ASPL, const int added_centers)
+		int adjacency[nodes][degree], int *diameter, double *ASPL, const int added_centers, double *node_value)
 {
   timer_start(TIMER_BFS);
 
@@ -64,6 +64,9 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
   bool reached  = true;
   double sum    = 0.0;
   *diameter     = 0;
+  if(node_value != NULL)
+    for(int i=0;i<based_nodes;i++)
+      node_value[i] = 0.0;
 
   for(int s=rank;s<based_nodes;s+=size){
     int num_frontier = 1, level = 0;
@@ -96,6 +99,10 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
       else
 	sum += (distance[i] + 1) * groups; // for add_centers
     }
+
+    if(node_value != NULL)
+      for(int i=0;i<nodes;i++)
+	node_value[s] += (double)distance[i];
   }
 
   // for add_centers
@@ -127,6 +134,10 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
       
       sum += distance[i] + 1;
     }
+
+    if(node_value != NULL)
+      for(int i=0;i<nodes;i++)
+	node_value[s] += (double)distance[i];
   }
 
   free(bitmap);
@@ -142,6 +153,8 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
 
   MPI_Allreduce(MPI_IN_PLACE, diameter, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   MPI_Allreduce(MPI_IN_PLACE, &sum,  1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  if(node_value != NULL)
+    MPI_Allreduce(MPI_IN_PLACE, node_value, based_nodes, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   *ASPL = sum / ((((double)nodes-1)*nodes)/2);
 
   timer_stop(TIMER_BFS);

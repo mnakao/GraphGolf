@@ -154,6 +154,7 @@ void edge_copy(int *restrict buf1, const int *restrict buf2, const int n)
 
 int getRandom(const int max)
 {
+  if(max == 1) return 0;
   return (int)(random()*((double)max)/(1.0+RAND_MAX));
 }
 

@@ -192,7 +192,7 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
     int start_line = getRandom(lines);
     edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, 0,
 		adjacency, restore_edge, restore_adjacency, restore_line, &restores);
-    if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, 0)) break;
+    if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, 0, NULL)) break;
   }
   free(adjacency);
 }
@@ -361,6 +361,7 @@ int main(int argc, char *argv[])
       based_nodes /= groups;
   }
 
+  double *node_value = malloc(sizeof(double)*based_nodes);
   int nodes  = based_nodes * groups;
   int degree = 2 * lines / nodes;
   if(nodes <= degree)
@@ -436,7 +437,7 @@ int main(int argc, char *argv[])
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, degree, groups, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
 		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, 
-		      cooling_cycle, added_centers, based_nodes, &num_accepts);
+		      cooling_cycle, added_centers, based_nodes, &num_accepts, node_value);
   timer_stop(TIMER_SA);
   
   if(detect_temp_flag){

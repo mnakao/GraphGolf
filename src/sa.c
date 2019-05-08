@@ -283,16 +283,72 @@ bool has_duplicated_vertex(const int e00, const int e01, const int e10, const in
 static void edge_exchange(const int nodes, const int lines, const int groups, const int degree, const int based_nodes,
 			  int edge[lines][2], const int added_centers, int adjacency[nodes][degree],
 			  int restore_edge[groups*2][2], int restore_adjacency[groups*2][2][3], int restore_line[groups*2],
-			  int *restores, const int ii)
+			  int *restores, const double *node_value, const int ii)
 {
   int line[groups*2], tmp_edge[groups*2][2], edge_for_adj[groups*2][2], r;
   int based_lines = lines / groups;
+  int fst_edges[based_lines], snd_edges[based_lines];
+  double edge_value[based_lines];
+  int num_of_fsts = 0, num_of_snds = 0;
+
+  if(node_value != NULL){
+    double max = 0;
+    for(int i=0;i<based_lines;i++){
+      edge_value[i] = node_value[edge[i][0]%based_nodes] + node_value[edge[i][1]%based_nodes];
+      //      printf("%d: %d : %d %d\n", i, (int)edge_value[i], edge[i][0], edge[i][1]);
+      if(edge_value[i] > max){
+	max = edge_value[i];
+	fst_edges[0] = i;
+	num_of_fsts  = 1;
+      }
+      else if(edge_value[i] == max)
+	fst_edges[num_of_fsts++] = i;
+    }
+    //    printf("1 max = %d, num = %d\n", (int)max, num_of_fsts);
+
+    if(num_of_fsts == 1){
+      max = 0;
+      for(int i=0;i<based_lines;i++){
+	if(i == fst_edges[0]) continue;
+	edge_value[i] = node_value[edge[i][0]%based_nodes] + node_value[edge[i][1]%based_nodes];
+	if(edge_value[i] > max){
+	  max = edge_value[i];
+	  snd_edges[0] = i;
+	  num_of_snds  = 1;
+	}
+	else if(edge_value[i] == max)
+	  snd_edges[num_of_snds++] = i;
+      }
+      //      printf("2 max = %d, num = %d\n", (int)max, num_of_snds);
+    }
+    //    for(int i=0;i<num_of_fsts;i++)
+    //      printf("%3d", fst_edges[i]);
+    //    printf("\n");
+    //    if(num_of_fsts == 1){
+    //      for(int i=0;i<num_of_snds;i++)
+    //	printf("%3d", snd_edges[i]);
+    //      printf("\n--\n");
+    //    }
+  }
 
   while(1){
     while(1){
       while(1){
-	line[0] = getRandom(lines);
-	line[1] = getRandom(lines);
+	if(node_value != NULL && getRandom(2) == 0){
+	  if(num_of_fsts >= 2){
+	    line[0] = fst_edges[getRandom(num_of_fsts)] + based_lines * getRandom(groups);
+	    line[1] = fst_edges[getRandom(num_of_fsts)] + based_lines * getRandom(groups);
+	  }
+	  else{ // num_of_bests must be 1
+	    line[0] = fst_edges[0] + based_lines * getRandom(groups);
+	    line[1] = snd_edges[getRandom(num_of_snds)] + based_lines * getRandom(groups);
+	  }
+	}
+	else{
+	  line[0] = getRandom(lines);
+	  line[1] = getRandom(lines);
+	}
+
 	if(line[0] != line[1]) break;
       }
       if(has_duplicated_vertex(edge[line[0]][0], edge[line[0]][1], edge[line[1]][0], edge[line[1]][1])){
@@ -402,11 +458,12 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
 long long sa(const int nodes, const int lines, const int degree, const int groups, double temp, 
 	     const long long ncalcs, const double cooling_rate,  const int low_diam,  const double low_ASPL, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
-	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle,
-	     const int added_centers, const int based_nodes, long long *total_accepts)
+	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle, const int added_centers,
+	     const int based_nodes, long long *total_accepts, double *node_value)
 {
   int restore_edge[groups*2][2], restore_adjacency[groups*2][2][3], restore_line[groups*2], restores = 0;
   int best_edge[lines][2], accepts = 0, rejects = 0;
+  double tmp_value[based_nodes];
 #ifndef NDEBUG
   int prev_edge[lines][2];
 #endif
@@ -416,7 +473,9 @@ long long sa(const int nodes, const int lines, const int degree, const int group
   // Create adjacency matrix
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, edge, adjacency);
-  evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers);
+  evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers, node_value);
+  memcpy(tmp_value, node_value, sizeof(double)*based_nodes);
+  
   double current_ASPL = *ASPL;
   double best_ASPL    = *ASPL;
   int current_diam    = *diam;
@@ -441,14 +500,15 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	check_edge_restore(lines, edge, prev_edge);
       memcpy(prev_edge, edge, sizeof(int)*lines*2);
 #endif
-      edge_exchange(nodes, lines, groups, degree, based_nodes, edge, added_centers,
-      		    adjacency, restore_edge, restore_adjacency, restore_line, &restores, (int)i);
+      edge_exchange(nodes, lines, groups, degree, based_nodes, edge, added_centers, adjacency,
+		    restore_edge, restore_adjacency, restore_line, &restores, tmp_value, (int)i);
       assert(check(nodes, based_nodes, lines, degree, groups, edge, added_centers, adjacency, (int)i));
-      if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers)) break;
+      if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers, node_value)) break;
     }
 
     if(accept(*ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
 	      detect_temp_flag, i, max_diff_energy, total_accepts, &accepts, &rejects)){
+      memcpy(tmp_value, node_value, sizeof(double)*based_nodes);
       current_ASPL  = *ASPL;
       current_diam  = *diam;
       restores = 0;
@@ -498,9 +558,9 @@ double estimated_elapse_time(const long long ncals, const int nodes, const int b
     edge_restore(lines, groups, tmp_edge, restore_edge, restore_line, restores);
     adjacency_restore(nodes, degree, groups, adjacency, restore_adjacency, restores);
     edge_exchange(nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-		  adjacency, restore_edge, restore_adjacency, restore_line, &restores, (int)i);
+		  adjacency, restore_edge, restore_adjacency, restore_line, &restores, NULL, (int)i);
     assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, adjacency, (int)i));
-    evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, added_centers);
+    evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, added_centers, NULL);
   }
   timer_stop(TIMER_ESTIMATED);
   
@@ -511,15 +571,15 @@ double estimated_elapse_time(const long long ncals, const int nodes, const int b
 }
 
 // This function is mainly useful when groupe is 1.
-void check_current_edge(const int nodes, const int degree, const int lines, const int groups,
-			const int based_nodes, int edge[lines][2], const double low_ASPL, const int added_centers)
+void check_current_edge(const int nodes, const int degree, const int lines, const int groups, const int based_nodes,
+			int edge[lines][2], const double low_ASPL, const int added_centers)
 {
   int diam;    // Not use
   double ASPL;
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
 
   create_adjacency(nodes, lines, degree, edge, adjacency);
-  if(! evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, added_centers))
+  if(! evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, added_centers, NULL))
     ERROR("The input file has a node which is never reached by another node.\n");
 
   if(ASPL == low_ASPL)
