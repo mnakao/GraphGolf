@@ -12,7 +12,7 @@ def main(filename):
   for line in infile:
     num_of_lines += 1
     itemList = line[:-1].split(' ')
-    max_item = int(max(itemList))
+    max_item = max(int(itemList[0]), int(itemList[1]))
     if max_item > max_vertex_num:
       max_vertex_num = max_item
 
