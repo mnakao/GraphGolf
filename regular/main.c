@@ -9,7 +9,7 @@ static void print_help(char *argv)
 
 static void set_args(const int argc, char **argv, char *infname, char *outfname, bool *outfnameflag,
 		     int *random_seed, long long *ncalcs, double *max_temp,
-		     bool *max_temp_flag, double *min_temp, bool *min_temp_flag, double *accept_rate,
+		     bool *max_temp_flag, double *min_temp, bool *min_temp_flag, 
 		     int *cooling_cycle, bool *hill_climbing_flag, bool *detect_temp_flag, int *groups,
 		     int *added_centers, int *added_edges_to_center, bool *halfway_flag, bool *verify_flag)
 {
@@ -256,8 +256,7 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
 }
 
 static void output_params(const int nodes, const int degree, const int groups, const int random_seed,
-			  const double max_temp, const double min_temp,
-                          const double accept_rate, const long long ncalcs, const int cooling_cycle,
+			  const double max_temp, const double min_temp, const long long ncalcs, const int cooling_cycle,
 			  const double cooling_rate, const char *infname, const char *outfname,
 			  const bool outfnameflag, const double average_time, const bool hill_climbing_flag,
 			  const int added_centers, const int added_edges_to_center)
@@ -314,7 +313,7 @@ int main(int argc, char *argv[])
   int groups = 1, cooling_cycle = 1, added_centers = 0, added_edges_to_center = 1;
   long long ncalcs = 10000, num_accepts = 0;
   double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
-  double max_temp = 100.0, min_temp = 0.217147, accept_rate = 1.0, max_diff_energy = 0;
+  double max_temp = 100.0, min_temp = 0.217147, max_diff_energy = 0;
   FILE *fp = NULL;
   
   MPI_Init(&argc, &argv);
@@ -326,10 +325,10 @@ int main(int argc, char *argv[])
   PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
-  set_args(argc, argv, infname, outfname, &outfnameflag, &random_seed,
-	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag,
-	   &accept_rate, &cooling_cycle, &hill_climbing_flag, &detect_temp_flag,
-	   &groups, &added_centers, &added_edges_to_center, &halfway_flag, &verify_flag);
+  set_args(argc, argv, infname, outfname, &outfnameflag, &random_seed, &ncalcs,
+	   &max_temp, &max_temp_flag, &min_temp, &min_temp_flag, &cooling_cycle,
+	   &hill_climbing_flag, &detect_temp_flag, &groups, &added_centers,
+	   &added_edges_to_center, &halfway_flag, &verify_flag);
 
   if(hill_climbing_flag){
     if(max_temp_flag)
@@ -409,8 +408,8 @@ int main(int argc, char *argv[])
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
   check_current_edge(nodes, degree, lines, groups, based_nodes, edge, low_ASPL, added_centers);
-  double average_time = estimated_elapse_time(ncalcs, nodes, based_nodes, lines,
-					      degree, groups, edge, added_centers);
+  double average_time = estimated_elapse_time(nodes, based_nodes, lines, degree,
+					      groups, edge, added_centers);
   if(hill_climbing_flag){
     max_temp = min_temp = 0.0;
     cooling_rate = 1.0;
@@ -428,7 +427,7 @@ int main(int argc, char *argv[])
       ERROR("Cannot open %s\n", outfname);
   }
 
-  output_params(nodes, degree, groups, random_seed, max_temp, min_temp, accept_rate,
+  output_params(nodes, degree, groups, random_seed, max_temp, min_temp, 
 		ncalcs, cooling_cycle, cooling_rate, infname, outfname, outfnameflag,
 		average_time, hill_climbing_flag, added_centers, added_edges_to_center);
   // Optimization

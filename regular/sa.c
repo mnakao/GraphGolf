@@ -63,16 +63,16 @@ static void print_result_header()
   PRINT_R0("Cur. Dia. GAP\t\tBest Dia. GAP\tAccept Rate\n");
 }
 
-static void print_results(const int num, const double temp, const double current_ASPL, 
+static void print_results(const long long num, const double temp, const double current_ASPL, 
 			  const double best_ASPL, const double low_ASPL, const int current_diam,
-			  const int best_diam, const int low_diam, const int accepts, const int rejects)
+			  const int best_diam, const int low_diam, const long long accepts, const long long rejects)
 {
-  PRINT_R0("%8d\t%f\t", num, temp);
+  PRINT_R0("%8lld\t%f\t", num, temp);
   PRINT_R0("%f ( %f )\t%f ( %f )\t%d ( %d )\t\t\t%d ( %d )\t\t",
 	   current_ASPL, current_ASPL-low_ASPL, best_ASPL, best_ASPL-low_ASPL,
 	   current_diam, current_diam-low_diam, best_diam, best_diam-low_diam);
   if(num != 0)
-    PRINT_R0("%.4f ( %d / %d )\n", (double)accepts/(accepts+rejects), accepts, (accepts+rejects));
+    PRINT_R0("%.4f ( %lld / %lld )\n", (double)accepts/(accepts+rejects), accepts, (accepts+rejects));
   else
     PRINT_R0("-\n");
 }  
@@ -345,10 +345,9 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
       if(!check_duplicate_edge(groups*2, tmp_edge)) continue;
       if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge, groups, nodes, added_centers))
 	continue;
-
       for(int i=0;i<groups*2;i++)
-	if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)
-	  swap(&tmp_edge[i][0], &tmp_edge[i][1]); // RIGHT -> LEFT
+      	if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)
+      	  swap(&tmp_edge[i][0], &tmp_edge[i][1]); // RIGHT -> LEFT
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -370,8 +369,8 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
 }
 
 static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, const int groups,
-		   const bool hill_climbing_flag, const bool detect_temp_flag, const int i, double *max_diff_energy,
-		   long long *total_accepts, int *accepts, int *rejects)
+		   const bool hill_climbing_flag, const bool detect_temp_flag, const long long i,
+		   double *max_diff_energy, long long *total_accepts, long long *accepts, long long *rejects)
 {
   if(ASPL <= current_ASPL){
     *accepts += 1;
@@ -406,11 +405,11 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	     const int added_centers, const int based_nodes, long long *total_accepts)
 {
   int restore_edge[groups*2][2], restore_adjacency[groups*2][2][3], restore_line[groups*2], restores = 0;
-  int best_edge[lines][2], accepts = 0, rejects = 0;
+  int best_edge[lines][2];
 #ifndef NDEBUG
   int prev_edge[lines][2];
 #endif
-  long long i;
+  long long i, accepts = 0, rejects = 0;
   edge_copy((int *)best_edge, (int *)edge, lines*2);
 
   // Create adjacency matrix
@@ -481,8 +480,8 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 }
 
 #define ESTIMATED_TIMES 5
-double estimated_elapse_time(const long long ncals, const int nodes, const int based_nodes, const int lines,
-			     const int degree, const int groups, int edge[lines][2], const int added_centers)
+double estimated_elapse_time(const int nodes, const int based_nodes, const int lines, const int degree,
+			     const int groups, int edge[lines][2], const int added_centers)
 {
   int diam;    // Not use
   double ASPL; // Not use

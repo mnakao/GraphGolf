@@ -48,7 +48,7 @@ extern long long sa(const int nodes, const int lines, const int degree, const in
 		    const int cooling_cyclie, const int added_centers, const int based_nodes, long long *num_accepts);
 extern void check_current_edge(const int nodes, const int degree, const int lines, const int groups,
 			       const int based_nodes, int edge[lines][2], const double low_ASPL, const int added_centers);
-extern double estimated_elapse_time(const long long ncals, const int nodes, const int based_nodes, const int lines, const int degree,
+extern double estimated_elapse_time(const int nodes, const int based_nodes, const int lines, const int degree,
 				    const int groups, int edge[lines][2], const int add_degree_to_center);
 extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes, const int based_lines, const int groups,
 			const int start_line, const int add_centers, int adjacency[nodes][degree], int restore_edge[groups*2][2],
