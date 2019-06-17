@@ -19,10 +19,22 @@ import argparse
 argumentparser = argparse.ArgumentParser()
 argumentparser.add_argument('nnodes', type=int)
 argumentparser.add_argument('degree', type=int)
+argumentparser.add_argument('-l', action='store_true')
+argumentparser.add_argument('-W', required=False, type=int)
+argumentparser.add_argument('-H', required=False, type=int)
 
 def main(args):
 	nnodes = args.nnodes
 	degree = args.degree
+        width  = 0
+        heigth = 0
+        if args.l:
+            assert args.W != None
+            assert args.H != None
+            width  = args.W
+            heigth = args.H
+            assert nnodes == width * heigth
+
 	assert degree < nnodes
 	
 	low_diam, low_aspl = lower_bound_of_diam_aspl(nnodes, degree)
@@ -32,44 +44,32 @@ def main(args):
 		diam, aspl = max_avg_for_matrix(hops)
 	else:
 		diam, aspl = float("inf"), float("inf")
-	print("{}\t{}\t{}\t{}\t{}\t{}\t{}%".format(nnodes, degree, diam, aspl, diam - low_diam, aspl - low_aspl, 100 * (aspl - low_aspl) / low_aspl))
-	
-	basename = "n{}d{}.random".format(nnodes, degree)
-	save_edges(g, basename + ".edges")
-# 	save_image(g, basename + ".png")
-# 	save_json(author, email, text1, basename + ".edges", basename + ".json")
-	return
 
-def save_edges(g, filepath):
-	nx.write_edgelist(g, filepath, data=False)
-	return
+        outfname = ""
+        if args.l:
+            print("Data Type: Grid (W x H = {} x {})".format(width, heigth))
+            outfname = "w{}h{}d{}.random".format(width, heigth, degree) + ".edges"
+        else:
+            print("Data Type: General")
+            outfname = "n{}d{}.random".format(nnodes, degree) + ".edges"
 
-def save_image(g, filepath):
-	import matplotlib as mpl
-	mpl.use('Agg')
-	import matplotlib.pyplot as plt
+        print("Nodes        : {}".format(nnodes))
+        print("Degree       : {}".format(degree))
+        print("Diameter     : {}".format(diam))
+        print("ASPL         : {}".format(aspl))
+        print("Diameter Gap : {}".format(diam - low_diam))
+        print("ASPL Gap     : {}".format(aspl - low_aspl))
+        print("Output file  : {}".format(outfname))
 	
-# 	layout = nx.spring_layout(g)
-	layout = nx.circular_layout(g)
-	nx.draw(g, with_labels=False, node_size=50, linewidths=0, alpha=0.5, node_color='#3399ff', edge_color='#666666', pos=layout)
-	plt.draw()
-	plt.savefig(filepath)
-	return
-
-def save_json(author, email, text1, graph_file, filepath):
-	import os
-	import json
-	from datetime import datetime
-	
-	metadata = {}
-	metadata['author'] = author
-	metadata['email'] = email
-	metadata['text1'] = text1
-	metadata['disclose'] = True
-	metadata['graph_file'] = os.path.basename(graph_file)
-	metadata['stamp'] = datetime.isoformat(datetime.utcnow())
-	with open(filepath, 'w') as f:
-		json.dump(metadata, f, indent=1)
+        fp = open(outfname, mode='w')
+        for a, b in g.edges():
+            if args.l:
+                line = str(a/heigth)+","+str(a%heigth)+" "+str(b/heigth)+","+str(b%heigth)+"\n"
+            else:
+                line = str(a)+" "+str(b)+"\n"
+            fp.write(line)
+            
+        fp.close()
 	return
 
 def lower_bound_of_diam_aspl(nnodes, degree):

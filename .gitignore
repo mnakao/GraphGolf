@@ -1,6 +1,7 @@
 opt_data
-src/gg
-src/gg_thread
+gg
+gg_thread
+*.png
 
 # Prerequisites
 *.d

@@ -8,17 +8,19 @@ static double uniform_rand()
 static void print_result_header()
 {
   PRINT_R0("   Times\t    Temp\tCur. ASPL GAP\t\tBest ASPL GAP\t\t");
-  PRINT_R0("Cur. Dia. GAP\t\tBest Dia. GAP\tAccept Rate\n");
+  PRINT_R0("Cur. Dia. GAP\t\tBest Dia. GAP\tCur. Len. Gap\tAccept Rate\n");
 }
 
 static void print_results(const long long num, const double temp, const double current_ASPL, 
 			  const double best_ASPL, const double low_ASPL, const int current_diam,
-			  const int best_diam, const int low_diam, const long long accepts, const long long rejects)
+			  const int best_diam, const int low_diam, const int current_length,
+			  const int length, const long long accepts, const long long rejects)
 {
   PRINT_R0("%8lld\t%f\t", num, temp);
-  PRINT_R0("%f ( %f )\t%f ( %f )\t%d ( %d )\t\t\t%d ( %d )\t\t",
+  PRINT_R0("%f ( %f )\t%f ( %f )\t%d ( %d )\t\t\t%d ( %d )\t\t%d (%d)\t\t",
 	   current_ASPL, current_ASPL-low_ASPL, best_ASPL, best_ASPL-low_ASPL,
-	   current_diam, current_diam-low_diam, best_diam, best_diam-low_diam);
+	   current_diam, current_diam-low_diam, best_diam, best_diam-low_diam,
+	   current_length, current_length-length);
   if(num != 0)
     PRINT_R0("%.4f ( %lld / %lld )\n", (double)accepts/(accepts+rejects), accepts, (accepts+rejects));
   else
@@ -54,7 +56,7 @@ static void edge_exchange(const int nodes, const int lines, const int degree,
       line[0] = getRandom(lines);
       line[1] = getRandom(lines);
       if(line[0] == line[1]) continue;
-      if(has_duplicated_vertex(edge[line[0]][0], edge[line[0]][1], edge[line[1]][0], edge[line[1]][1]))
+      else if(has_duplicated_vertex(edge[line[0]][0], edge[line[0]][1], edge[line[1]][0], edge[line[1]][1]))
         continue;
       else
 	break;
@@ -77,9 +79,12 @@ static void edge_exchange(const int nodes, const int lines, const int degree,
 
 static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, 
 		   const bool hill_climbing_flag, const bool detect_temp_flag, const long long i,
-		   double *max_diff_energy, long long *total_accepts, long long *accepts, long long *rejects)
+		   double *max_diff_energy, long long *total_accepts, long long *accepts,
+		   long long *rejects, const int total_over_length, const int current_total_over_length,
+		   const double max_temp, const double min_temp)
 {
-  if(ASPL <= current_ASPL){
+  double diff = (current_ASPL-ASPL)*nodes*(nodes-1) + (current_total_over_length - total_over_length);
+  if(diff >= 0){
     *accepts += 1;
     if(i > SKIP_ACCEPTS) *total_accepts +=1;
     return true;
@@ -88,8 +93,6 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
     *rejects += 1;
     return false;
   }
-  
-  double diff = (current_ASPL-ASPL)*nodes*(nodes-1);
 
   if(detect_temp_flag)
     *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);
@@ -105,13 +108,33 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
   }
 }
 
+static void calc_length(const int lines, int edge[lines][2], const int height,
+			const int length, int *current_length, int *total_over_length)
+{
+  *current_length = 0;
+  *total_over_length = 0;
+  
+  for(int i=0;i<lines;i++){
+    int x0 = edge[i][0]/height;
+    int x1 = edge[i][1]/height;
+    int y0 = edge[i][0]%height;
+    int y1 = edge[i][1]%height;
+    int distance = abs(x0 - x1) + abs(y0 - y1);
+    *current_length = MAX((*current_length), distance);
+    if(distance > length)
+      *total_over_length += (distance-length);
+      //      *total_over_length += distance;
+  }
+}
+
 long long sa(const int nodes, const int lines, double temp, const long long ncalcs,
 	     const double cooling_rate, const int low_diam,  const double low_ASPL, 
-	     const bool hill_climbing_flag, const bool detect_temp_flag,
-	     double *max_diff_energy, int edge[lines][2], int *diam, double *ASPL,
-	     const int cooling_cycle, long long *total_accepts)
+	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
+	     const double max_temp, const double min_temp, int edge[lines][2], int *diam, double *ASPL,
+	     const int cooling_cycle, long long *total_accepts, const int height, const int length)
 {
   int degree = 2 * lines / nodes;
+  int current_length = 0, total_over_length = 0;
   int best_edge[lines][2], tmp_edge[lines][2];
   long long i, accepts = 0, rejects = 0;
   edge_copy((int *)best_edge, (int *)edge, lines*2);
@@ -120,18 +143,23 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, edge, adjacency);
   evaluation(nodes, lines, degree, adjacency, diam, ASPL);
+  calc_length(lines, edge, height, length, &current_length, &total_over_length);
+  
   double current_ASPL = *ASPL;
   double best_ASPL    = *ASPL;
   int current_diam    = *diam;
   int best_diam       = *diam;
+  int best_total_over_length    = total_over_length;
+  int current_total_over_length = total_over_length;
   int print_interval  = (ncalcs/NUM_OF_PROGRESS == 0)? 1 : ncalcs/NUM_OF_PROGRESS;
+  
   if(rank == 0 && !detect_temp_flag)
     print_result_header();
 
   for(i=0;i<ncalcs;i++){
     if(i % print_interval == 0 && !detect_temp_flag){
-      print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, 
-		    current_diam, best_diam, low_diam, accepts, rejects);
+      print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, current_diam, best_diam,
+		    low_diam, current_length, length, accepts, rejects);
       accepts = 0;
       rejects = 0;
     }
@@ -143,21 +171,25 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
       if(evaluation(nodes, lines, degree, adjacency, diam, ASPL)) break;
     }
 
-    if(accept(*ASPL, current_ASPL, temp, nodes, hill_climbing_flag, detect_temp_flag,
-	      i, max_diff_energy, total_accepts, &accepts, &rejects)){
+    calc_length(lines, tmp_edge, height, length, &current_length, &total_over_length);
+    if(accept(*ASPL, current_ASPL, temp, nodes, hill_climbing_flag, detect_temp_flag, i,
+	      max_diff_energy, total_accepts, &accepts, &rejects,
+	      total_over_length, current_total_over_length, max_temp, min_temp)){
       current_ASPL  = *ASPL;
       current_diam  = *diam;
+      current_total_over_length = total_over_length;
       edge_copy((int *)edge, (int *)tmp_edge, lines*2);
       if(best_ASPL > current_ASPL && best_diam >= current_diam){
 	edge_copy((int *)best_edge, (int *)edge, lines*2);
 	best_ASPL = current_ASPL;
 	best_diam = current_diam;
+	best_total_over_length = total_over_length;
       }
 
-      if(best_ASPL == low_ASPL){
+      if(best_ASPL == low_ASPL && best_total_over_length == 0){
 	if(!detect_temp_flag){
-	  print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, 
-			current_diam, best_diam, low_diam, accepts, rejects);
+	  print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, current_diam, best_diam,
+			low_diam, current_length, length, accepts, rejects);
 	  PRINT_R0("---\nFound optimum solution.\n");
 	}
 	break;

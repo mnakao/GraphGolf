@@ -18,7 +18,7 @@
 int rank, size, threads;
 #define VISITED     1
 #define NOT_VISITED 0
-
+#define NOT_DEFINED -1
 #define NUM_TIMERS          4
 #define TIMER_SA            0
 #define TIMER_ESTIMATED     1
@@ -39,9 +39,9 @@ int rank, size, threads;
 extern void swap(int *a, int *b);
 extern long long sa(const int nodes, const int lines, double temp, const long long ncalcs,
 		    const double cooling_rate, const int low_diam, const double low_ASPL,
-		    const bool hill_climbing_flag, const bool detect_temp_flag,
-		    double *max_diff_energy, int edge[lines][2], int *diam, double *ASPL,
-		    const int cooling_cyclie, long long *num_accepts);
+		    const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
+		    const double max_temp, const double min_temp, int edge[lines][2], int *diam, double *ASPL,
+		    const int cooling_cyclie, long long *num_accepts, const int height, const int length);
 extern void check_current_edge(const int nodes, const int lines, int edge[lines][2], const double low_ASPL);
 extern double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2]);
 extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);

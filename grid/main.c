@@ -2,12 +2,13 @@
 
 static void print_help(char *argv)
 {
-  END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] [-n <num_calculations>] \
+  END("%s -f <edge_file> [-R length] [-o <output_file>] [-s <random_seed>] [-n <calculations>] \
 [-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-N] [-d] [-y] [-h]\n", argv);
 }
 
-static void set_args(const int argc, char **argv, char *infname, char *outfname, bool *outfnameflag,
-		     int *random_seed, long long *ncalcs, double *max_temp, bool *max_temp_flag,
+static void set_args(const int argc, char **argv, char *infname, int *length,
+		     char *outfname, bool *outfnameflag, int *random_seed,
+		     long long *ncalcs, double *max_temp, bool *max_temp_flag,
 		     double *min_temp, bool *min_temp_flag, int *cooling_cycle,
 		     bool *hill_climbing_flag, bool *detect_temp_flag, bool *verify_flag)
 {
@@ -15,7 +16,7 @@ static void set_args(const int argc, char **argv, char *infname, char *outfname,
     print_help(argv[0]);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:s:n:w:c:C:Ndyh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:W:H:R:s:n:w:c:C:Ndyh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -28,6 +29,11 @@ static void set_args(const int argc, char **argv, char *infname, char *outfname,
       strcpy(outfname, optarg);
       *outfnameflag = true;
       break;
+     case 'R':
+      *length = atoi(optarg);
+      if(*length <= 0)
+        ERROR("-R value > 0\n");
+      break;
     case 's':
       *random_seed = atoi(optarg);
       if(*random_seed < 0)
@@ -35,8 +41,8 @@ static void set_args(const int argc, char **argv, char *infname, char *outfname,
       break;
     case 'n':
       *ncalcs = atoll(optarg);
-      if(*ncalcs <= 0)
-        ERROR("-n value > 0\n");
+      if(*ncalcs < 0)
+        ERROR("-n value >= 0\n");
       break;
     case 'w':
       *max_temp = atof(optarg);
@@ -86,16 +92,31 @@ static int count_lines(const char *fname)
   return lines;
 }
 
-static void read_file(int (*edge)[2], const char *fname)
+static void read_file_lattice(int (*edge)[2], int *w, int *h, const char *fname)
 {
   FILE *fp;
-  if((fp = fopen(fname, "r")) == NULL)
-    ERROR("File not found\n");
+  if((fp = fopen(fname, "r")) == NULL){
+    PRINT_R0("File not found\n");
+    EXIT(1);
+  }
 
-  int n1, n2, i = 0;
-  while(fscanf(fp, "%d %d", &n1, &n2) != EOF){
-    edge[i][0] = n1;
-    edge[i][1] = n2;
+  int n[4];
+  *w = 0;
+  *h = 0;
+  while(fscanf(fp, "%d,%d %d,%d", &n[0], &n[1], &n[2], &n[3]) != EOF){
+    *w = MAX(*w, n[0]);
+    *h = MAX(*w, n[1]);
+    *w = MAX(*w, n[2]);
+    *h = MAX(*w, n[3]);
+  }
+  *w += 1;
+  *h += 1;
+  rewind(fp);
+
+  int i = 0;
+  while(fscanf(fp, "%d,%d %d,%d", &n[0], &n[1], &n[2], &n[3]) != EOF){
+    edge[i][0] = n[0] * (*h) + n[1];
+    edge[i][1] = n[2] * (*h) + n[3];
     i++;
   }
 
@@ -111,14 +132,16 @@ static int max_node_num(const int lines, const int edge[lines*2])
   return max;
 }
 
-static void verfy_graph(const int nodes, const int lines, int edge[lines][2])
+static void verfy_graph(const int nodes, const int lines, const int width, const int height, int edge[lines][2])
 {
   int degree = 2 * lines / nodes;
   
   PRINT_R0("Verifing a regular graph... ");
 
-  if((2*lines)%degree != 0)
-    ERROR("NG. lines or n or d is invalid. nodes = %d degree = %d\n", nodes, degree);
+  if(width*height != nodes)
+    ERROR("NG. Not grid graph (width %d x height %d != nodes %d).\n", width, height, nodes);
+  else if((2*lines)%degree != 0)
+    ERROR("NG. lines or n or d is invalid. nodes = %d degree = %d.\n", nodes, degree);
 
   int n[nodes];
   for(int i=0;i<nodes;i++)
@@ -131,7 +154,7 @@ static void verfy_graph(const int nodes, const int lines, int edge[lines][2])
 
   for(int i=0;i<nodes;i++)
     if(degree != n[i])
-      ERROR("NG\nNot regular graph. degree = %d n[%d] = %d\n", degree, i, n[i]);
+      ERROR("NG\nNot regular graph. degree = %d n[%d] = %d.\n", degree, i, n[i]);
 
   if(!check_loop(lines, edge))
     ERROR("NG\nThe same node in the edge.\n");
@@ -166,10 +189,11 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
   *low_ASPL = aspl;
 }
 
-static void output_params(const int nodes, const int degree, const int random_seed, const double max_temp,
-			  const double min_temp, const long long ncalcs, const int cooling_cycle,
-			  const double cooling_rate, const char *infname, const char *outfname,
-			  const bool outfnameflag, const double average_time, const bool hill_climbing_flag)
+static void output_params(const int nodes, const int degree, const int length, const int random_seed,
+			  const double max_temp, const double min_temp, const long long ncalcs,
+			  const int cooling_cycle, const double cooling_rate, const char *infname,
+			  const char *outfname, const bool outfnameflag, const double average_time,
+			  const bool hill_climbing_flag)
 			  
 {
 #ifdef NDEBUG
@@ -199,16 +223,31 @@ static void output_params(const int nodes, const int degree, const int random_se
   PRINT_R0("Input filename: %s\n", infname);
   PRINT_R0("   Vertexes: %d\n", nodes);
   PRINT_R0("   Degree:   %d\n", degree);
-  PRINT_R0("   Degree:   %d\n", degree);
+  PRINT_R0("   Length:   %d\n", length);
   if(outfnameflag)
     PRINT_R0("Output filename: %s\n", outfname);
   PRINT_R0("---\n");
 }
 
-static void output_file(FILE *fp, const int lines, int edge[lines][2])
+static void output_file(FILE *fp, const int lines, const int height, int edge[lines][2])
 {
   for(int i=0;i<lines;i++)
-    fprintf(fp, "%d %d\n", edge[i][0], edge[i][1]);
+    fprintf(fp, "%d,%d %d,%d\n",
+	    edge[i][0]/height, edge[i][0]%height, edge[i][1]/height, edge[i][1]%height);
+}
+
+static void check_length(const int lines, const int height, const int length, int edge[lines][2])
+{
+  for(int i=0;i<lines;i++){
+    int x0 = edge[i][0]/height;
+    int x1 = edge[i][1]/height;
+    int y0 = edge[i][0]%height;
+    int y1 = edge[i][1]%height;
+    int distance = abs(x0 - x1) + abs(y0 - y1);
+    if(distance > length)
+      printf("Over length in line %d: %d,%d %d,%d : length = %d, distance = %d\n",
+	     i+1, x0, y0, x1, y1, length, distance);
+  }
 }
 
 int main(int argc, char *argv[])
@@ -217,6 +256,7 @@ int main(int argc, char *argv[])
   bool hill_climbing_flag = false, detect_temp_flag = false;
   char hostname[MPI_MAX_PROCESSOR_NAME], infname[MAX_FILENAME_LENGTH], outfname[MAX_FILENAME_LENGTH];
   int namelen, diam = 0, low_diam = 0, random_seed = 0, cooling_cycle = 1;
+  int width = 0, height = 0, length = NOT_DEFINED;
   long long ncalcs = 10000, num_accepts = 0;
   double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
   double max_temp = 100.0, min_temp = 0.217147, max_diff_energy = 0;
@@ -231,12 +271,13 @@ int main(int argc, char *argv[])
   PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
-  set_args(argc, argv, infname, outfname, &outfnameflag,
-	   &random_seed, &ncalcs, &max_temp, &max_temp_flag,
-	   &min_temp, &min_temp_flag, &cooling_cycle,
-	   &hill_climbing_flag, &detect_temp_flag, &verify_flag);
+  set_args(argc, argv, infname, &length, outfname, &outfnameflag, &random_seed,
+	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag,
+	   &cooling_cycle, &hill_climbing_flag, &detect_temp_flag, &verify_flag);
 
-  if(hill_climbing_flag){
+  if(length == NOT_DEFINED)
+    ERROR("Must need -R.\n");
+  else if(hill_climbing_flag){
     if(max_temp_flag)
       ERROR("Both -y and -w cannot be used.\n");
     else if(min_temp_flag)
@@ -248,14 +289,14 @@ int main(int argc, char *argv[])
   srandom(random_seed);
   int lines      = count_lines(infname);
   int (*edge)[2] = malloc(sizeof(int)*lines*2); // int edge[lines][2];
-  read_file(edge, infname);
+  read_file_lattice(edge, &width, &height, infname);
   int nodes      = max_node_num(lines, (int *)edge) + 1;
   int degree     = 2 * lines / nodes;
   if(nodes <= degree)
     ERROR("n is too small. nodes = %d degree = %d\n", nodes, degree);
 
   if(verify_flag)
-    verfy_graph(nodes, lines, edge);
+    verfy_graph(nodes, lines, width, height, edge);
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
   check_current_edge(nodes, lines, edge, low_ASPL);
@@ -277,14 +318,15 @@ int main(int argc, char *argv[])
       ERROR("Cannot open %s\n", outfname);
   }
 
-  output_params(nodes, degree, random_seed, max_temp, min_temp, ncalcs, cooling_cycle,
+  output_params(nodes, degree, length, random_seed, max_temp, min_temp, ncalcs, cooling_cycle,
 		cooling_rate, infname, outfname, outfnameflag, average_time, hill_climbing_flag);
+  
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
-		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam,
-		      &ASPL, cooling_cycle, &num_accepts);
+		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, max_temp, min_temp,
+		      edge, &diam, &ASPL, cooling_cycle, &num_accepts, height, length);
   timer_stop(TIMER_SA);
   
   if(detect_temp_flag){
@@ -308,12 +350,13 @@ int main(int argc, char *argv[])
     PRINT_R0("Accept rate: %f (= %lld/%lld)\n",
 	     (double)num_accepts/(ncalcs-SKIP_ACCEPTS), num_accepts, ncalcs-SKIP_ACCEPTS);
   if(rank == 0 && outfnameflag){
-    output_file(fp, lines, edge);
+    output_file(fp, lines, height, edge);
     fclose(fp);
   }
 
+  check_length(lines, height, length, edge);
   if(verify_flag)
-    verfy_graph(nodes, lines, edge);
+    verfy_graph(nodes, lines, width, height, edge);
 
   MPI_Finalize();
   return 0;

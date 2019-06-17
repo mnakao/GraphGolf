@@ -4,10 +4,10 @@ int main()
 {
   //  int n = 3019, d = 30;
   //  int n = 4855, d = 30;
-  //  int n=1726, d=30;
-  int n=4856, d=15;
-#define N 3
-  int b_g[N] = {3, 5, 15};
+  //  int n=4856, d=15;
+  int n=17, d=3;
+#define N 2
+  int b_g[N] = {1, 3};
   //  #define N 7
   //    int b_g[N] = {2, 3, 5, 6, 10, 15, 30};
   
