@@ -132,17 +132,10 @@ static int max_node_num(const int lines, const int edge[lines*2])
   return max;
 }
 
-static void verfy_graph(const int nodes, const int lines, const int width, const int height, int edge[lines][2])
+static void verfy_graph(const int nodes, const int lines, int edge[lines][2])
 {
-  int degree = 2 * lines / nodes;
-  
   PRINT_R0("Verifing a regular graph... ");
-
-  if(width*height != nodes)
-    ERROR("NG. Not grid graph (width %d x height %d != nodes %d).\n", width, height, nodes);
-  else if((2*lines)%degree != 0)
-    ERROR("NG. lines or n or d is invalid. nodes = %d degree = %d.\n", nodes, degree);
-
+  
   int n[nodes];
   for(int i=0;i<nodes;i++)
     n[i] = 0;
@@ -152,6 +145,7 @@ static void verfy_graph(const int nodes, const int lines, const int width, const
     n[edge[i][1]]++;
   }
 
+  int degree = 2 * lines / nodes;
   for(int i=0;i<nodes;i++)
     if(degree != n[i])
       ERROR("NG\nNot regular graph. degree = %d n[%d] = %d.\n", degree, i, n[i]);
@@ -240,8 +234,8 @@ static void check_length(const int lines, const int height, const int length, in
 {
   for(int i=0;i<lines;i++){
     int x0 = edge[i][0]/height;
-    int x1 = edge[i][1]/height;
     int y0 = edge[i][0]%height;
+    int x1 = edge[i][1]/height;
     int y1 = edge[i][1]%height;
     int distance = abs(x0 - x1) + abs(y0 - y1);
     if(distance > length)
@@ -272,8 +266,8 @@ int main(int argc, char *argv[])
 
   // Set arguments
   set_args(argc, argv, infname, &length, outfname, &outfnameflag, &random_seed,
-	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag,
-	   &cooling_cycle, &hill_climbing_flag, &detect_temp_flag, &verify_flag);
+	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag, &cooling_cycle,
+	   &hill_climbing_flag, &detect_temp_flag, &verify_flag);
 
   if(length == NOT_DEFINED)
     ERROR("Must need -R.\n");
@@ -294,9 +288,11 @@ int main(int argc, char *argv[])
   int degree     = 2 * lines / nodes;
   if(nodes <= degree)
     ERROR("n is too small. nodes = %d degree = %d\n", nodes, degree);
+  else if(width*height != nodes)
+    ERROR("NG. Not grid graph (width %d x height %d != nodes %d).\n", width, height, nodes);
 
   if(verify_flag)
-    verfy_graph(nodes, lines, width, height, edge);
+    verfy_graph(nodes, lines, edge);
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
   check_current_edge(nodes, lines, edge, low_ASPL);
@@ -356,7 +352,7 @@ int main(int argc, char *argv[])
 
   check_length(lines, height, length, edge);
   if(verify_flag)
-    verfy_graph(nodes, lines, width, height, edge);
+    verfy_graph(nodes, lines, edge);
 
   MPI_Finalize();
   return 0;
