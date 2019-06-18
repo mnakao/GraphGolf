@@ -80,12 +80,12 @@ static void edge_exchange(const int nodes, const int lines, const int degree,
 
 static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, 
 		   const bool hill_climbing_flag, const bool detect_temp_flag, const long long i,
-		   double *max_diff_energy, long long *total_accepts, long long *accepts,
-		   long long *rejects, const int total_over_length, const int current_total_over_length,
+		   double *max_diff_energy, long long *total_accepts, long long *accepts, long long *rejects,
+		   const int total_over_length, const int current_total_over_length,
 		   const double max_temp, const double min_temp)
 {
-  double weight = (current_total_over_length - total_over_length);
-  double diff = (current_ASPL-ASPL)*nodes*(nodes-1) + weight * 5;
+  //  double weight = (current_total_over_length - total_over_length);
+  double diff = (current_ASPL-ASPL)*nodes*(nodes-1);
   
   if(diff >= 0){
     *accepts += 1;
@@ -136,15 +136,15 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 	     const int cooling_cycle, long long *total_accepts, const int height, const int low_length)
 {
   int degree = 2 * lines / nodes;
-  int length, total_over_length = 0;
   int best_edge[lines][2], tmp_edge[lines][2];
   long long i, accepts = 0, rejects = 0;
-  edge_copy((int *)best_edge, (int *)edge, lines*2);
 
   // Create adjacency matrix
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, edge, adjacency);
   evaluation(nodes, lines, degree, adjacency, diam, ASPL);
+
+  int length, total_over_length = 0;
   calc_length(lines, edge, height, low_length, &length, &total_over_length);
   
   double current_ASPL = *ASPL,  best_ASPL   = *ASPL;
@@ -152,7 +152,8 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
   int current_length  = length, best_length = length;
   int current_total_over_length = total_over_length;
   int print_interval  = (ncalcs/NUM_OF_PROGRESS == 0)? 1 : ncalcs/NUM_OF_PROGRESS;
-  
+  edge_copy((int *)best_edge, (int *)edge, lines*2);
+    
   if(rank == 0 && !detect_temp_flag)
     print_result_header();
 
