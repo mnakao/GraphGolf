@@ -41,7 +41,13 @@ sa_omp.o: sa.c common.h
 bfs_omp.o: bfs.c common.h
 	$(CC) $(CFLAGS) $(OPENMP) -c -o $@ $<
 
-gg_thread: common_omp.o sa_omp.o bfs_omp.o main.o timer.o
+main_omp.o: main.c common.h
+	$(CC) $(CFLAGS) $(OPENMP) -c -o $@ $<
+
+timer_omp.o: timer.c common.h
+	$(CC) $(CFLAGS) $(OPENMP) -c -o $@ $<
+
+gg_thread: common_omp.o sa_omp.o bfs_omp.o main_omp.o timer_omp.o
 	$(CC) $(CFLAGS) $(OPENMP) $(LFLAGS) -o $@ $^
 
 all: gg gg_thread

@@ -451,13 +451,13 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       current_ASPL  = *ASPL;
       current_diam  = *diam;
       restores = 0;
-      if(best_ASPL > current_ASPL && best_diam >= current_diam){
+      if((best_diam > current_diam) || (best_diam == current_diam && best_ASPL > current_ASPL)){
 	edge_copy((int *)best_edge, (int *)edge, lines*2);
 	best_ASPL = current_ASPL;
 	best_diam = current_diam;
       }
 
-      if(best_ASPL == low_ASPL){
+      if(best_diam == current_diam && best_ASPL == low_ASPL){
 	if(!detect_temp_flag){
 	  print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, 
 			current_diam, best_diam, low_diam, accepts, rejects);

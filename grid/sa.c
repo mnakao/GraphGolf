@@ -78,14 +78,22 @@ static void edge_exchange(const int nodes, const int lines, const int degree,
   }
 }
 
+#define ALPHA 0.01
+static double pre_w;
 static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, 
 		   const bool hill_climbing_flag, const bool detect_temp_flag, const long long i,
 		   double *max_diff_energy, long long *total_accepts, long long *accepts, long long *rejects,
 		   const int total_over_length, const int current_total_over_length,
 		   const double max_temp, const double min_temp)
 {
-  //  double weight = (current_total_over_length - total_over_length);
-  double diff = (current_ASPL-ASPL)*nodes*(nodes-1);
+  double f = (current_ASPL-ASPL)*nodes*(nodes-1);
+  double p = (current_total_over_length - total_over_length);
+  //  double w = (p==0)? pre_w : fabs(f/p) * ALPHA + pre_w * (1-ALPHA);
+  //  pre_w = w;
+  //  double diff = f + p * w;
+  double weight = 2;
+  double diff = f + p * weight;
+  //  printf("diff %f = %f - %f\n", diff, f, current_total_over_length*weight);
   
   if(diff >= 0){
     *accepts += 1;
@@ -184,11 +192,13 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
       current_length = length;
       current_total_over_length = total_over_length;
       edge_copy((int *)edge, (int *)tmp_edge, lines*2);
-      if(best_ASPL >= *ASPL && best_diam >= *diam && best_length >= length){
+      if((best_length > length) ||
+	 (best_length == length && best_diam > *diam) ||
+	 (best_length == length && best_diam == *diam && best_ASPL > *ASPL)){
 	edge_copy((int *)best_edge, (int *)edge, lines*2);
-	best_ASPL   = *ASPL;
-	best_diam   = *diam;
 	best_length = length;
+	best_diam   = *diam;
+	best_ASPL   = *ASPL;
       }
 
       if(best_ASPL == low_ASPL && best_length == low_length){
