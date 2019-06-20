@@ -80,14 +80,14 @@ static void edge_exchange(const int nodes, const int lines, const int degree,
 
 //#define ALPHA 0.01
 //static double pre_w;
-static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, 
+static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, const int degree,
 		   const bool hill_climbing_flag, const bool detect_temp_flag, const long long i,
 		   double *max_diff_energy, long long *total_accepts, long long *accepts, long long *rejects,
 		   const int total_over_length, const int current_total_over_length,
 		   const double max_temp, const double min_temp, const double weight)
 {
   double f = (current_ASPL-ASPL)*nodes*(nodes-1);
-  double p = (current_total_over_length - total_over_length);
+  double p = (double)(current_total_over_length - total_over_length) / degree * nodes;
   //  double w = (p==0)? pre_w : fabs(f/p) * ALPHA + pre_w * (1-ALPHA);
   //  pre_w = w;
   //  double diff = f + p * w;
@@ -183,8 +183,8 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
     }
     calc_length(lines, tmp_edge, height, low_length, &length, &total_over_length);
 
-    if(accept(*ASPL, current_ASPL, temp, nodes, hill_climbing_flag, detect_temp_flag, i,
-	      max_diff_energy, total_accepts, &accepts, &rejects,
+    if(accept(*ASPL, current_ASPL, temp, nodes, degree, hill_climbing_flag, detect_temp_flag,
+	      i, max_diff_energy, total_accepts, &accepts, &rejects,
 	      total_over_length, current_total_over_length, max_temp, min_temp, weight)){
       current_ASPL   = *ASPL;
       current_diam   = *diam;
