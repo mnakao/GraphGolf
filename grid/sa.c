@@ -88,6 +88,8 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
 {
   double f = (current_ASPL-ASPL)*nodes*(nodes-1);
   double p = (double)(current_total_over_length - total_over_length) / degree * nodes;
+  p *= (max_temp - temp) / (max_temp - min_temp);
+  //  if(i%100 == 0) printf("AA : %f %f\n", p, (max_temp - temp) / (max_temp - min_temp));
   //  double w = (p==0)? pre_w : fabs(f/p) * ALPHA + pre_w * (1-ALPHA);
   //  pre_w = w;
   //  double diff = f + p * w;
