@@ -78,20 +78,19 @@ static void edge_exchange(const int nodes, const int lines, const int degree,
   }
 }
 
-#define ALPHA 0.01
-static double pre_w;
+//#define ALPHA 0.01
+//static double pre_w;
 static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, 
 		   const bool hill_climbing_flag, const bool detect_temp_flag, const long long i,
 		   double *max_diff_energy, long long *total_accepts, long long *accepts, long long *rejects,
 		   const int total_over_length, const int current_total_over_length,
-		   const double max_temp, const double min_temp)
+		   const double max_temp, const double min_temp, const double weight)
 {
   double f = (current_ASPL-ASPL)*nodes*(nodes-1);
   double p = (current_total_over_length - total_over_length);
   //  double w = (p==0)? pre_w : fabs(f/p) * ALPHA + pre_w * (1-ALPHA);
   //  pre_w = w;
   //  double diff = f + p * w;
-  double weight = 2;
   double diff = f + p * weight;
   //  printf("diff %f = %f - %f\n", diff, f, current_total_over_length*weight);
   
@@ -141,7 +140,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 	     const double cooling_rate, const int low_diam,  const double low_ASPL, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
 	     const double max_temp, const double min_temp, int edge[lines][2], int *diam, double *ASPL,
-	     const int cooling_cycle, long long *total_accepts, const int height, const int low_length)
+	     const int cooling_cycle, long long *total_accepts, const int height, const int low_length, double weight)
 {
   int degree = 2 * lines / nodes;
   int best_edge[lines][2], tmp_edge[lines][2];
@@ -186,7 +185,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 
     if(accept(*ASPL, current_ASPL, temp, nodes, hill_climbing_flag, detect_temp_flag, i,
 	      max_diff_energy, total_accepts, &accepts, &rejects,
-	      total_over_length, current_total_over_length, max_temp, min_temp)){
+	      total_over_length, current_total_over_length, max_temp, min_temp, weight)){
       current_ASPL   = *ASPL;
       current_diam   = *diam;
       current_length = length;

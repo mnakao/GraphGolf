@@ -3,20 +3,20 @@
 static void print_help(char *argv)
 {
   END("%s -f <edge_file> [-R length] [-o <output_file>] [-s <random_seed>] [-n <calculations>] \
-[-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-N] [-d] [-y] [-h]\n", argv);
+[-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-W <weight>] [-N] [-d] [-y] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, char *infname, int *length,
 		     char *outfname, bool *outfnameflag, int *random_seed,
 		     long long *ncalcs, double *max_temp, bool *max_temp_flag,
-		     double *min_temp, bool *min_temp_flag, int *cooling_cycle,
+		     double *min_temp, bool *min_temp_flag, int *cooling_cycle, double *weight,
 		     bool *hill_climbing_flag, bool *detect_temp_flag, bool *verify_flag)
 {
   if(argc < 3)
     print_help(argv[0]);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:W:H:R:s:n:w:c:C:Ndyh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:W:H:R:s:n:w:c:C:W:Ndyh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -60,6 +60,9 @@ static void set_args(const int argc, char **argv, char *infname, int *length,
       *cooling_cycle = atoi(optarg);
       if(*cooling_cycle <= 0)
 	ERROR("Cooling Cycle > 0\n");
+      break;
+    case 'W':
+      *weight = atof(optarg);
       break;
     case 'N':
       *verify_flag = false;
@@ -185,7 +188,7 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
 
 static void output_params(const int nodes, const int degree, const int length, const int random_seed,
 			  const double max_temp, const double min_temp, const long long ncalcs,
-			  const int cooling_cycle, const double cooling_rate, const char *infname,
+			  const int cooling_cycle, const double weight, const double cooling_rate, const char *infname,
 			  const char *outfname, const bool outfnameflag, const double average_time,
 			  const bool hill_climbing_flag)
 			  
@@ -206,6 +209,7 @@ static void output_params(const int nodes, const int degree, const int length, c
     PRINT_R0("   MIN Temperature: %f\n", min_temp);
     PRINT_R0("   Cooling Cycle: %d\n", cooling_cycle);
     PRINT_R0("   Cooling Rate : %f\n", cooling_rate);
+    PRINT_R0("   Weight       : %f\n", weight);
   }
   else{
     PRINT_R0("Algorithm: Hill climbing Method\n");
@@ -254,6 +258,7 @@ int main(int argc, char *argv[])
   long long ncalcs = 10000, num_accepts = 0;
   double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
   double max_temp = 100.0, min_temp = 0.217147, max_diff_energy = 0;
+  double weight = 1.0;
   FILE *fp = NULL;
   
   MPI_Init(&argc, &argv);
@@ -266,7 +271,7 @@ int main(int argc, char *argv[])
 
   // Set arguments
   set_args(argc, argv, infname, &length, outfname, &outfnameflag, &random_seed,
-	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag, &cooling_cycle,
+	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag, &cooling_cycle, &weight,
 	   &hill_climbing_flag, &detect_temp_flag, &verify_flag);
 
   if(length == NOT_DEFINED)
@@ -314,7 +319,7 @@ int main(int argc, char *argv[])
       ERROR("Cannot open %s\n", outfname);
   }
 
-  output_params(nodes, degree, length, random_seed, max_temp, min_temp, ncalcs, cooling_cycle,
+  output_params(nodes, degree, length, random_seed, max_temp, min_temp, ncalcs, cooling_cycle, weight,
 		cooling_rate, infname, outfname, outfnameflag, average_time, hill_climbing_flag);
   
   // Optimization
@@ -322,7 +327,7 @@ int main(int argc, char *argv[])
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
 		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, max_temp, min_temp,
-		      edge, &diam, &ASPL, cooling_cycle, &num_accepts, height, length);
+		      edge, &diam, &ASPL, cooling_cycle, &num_accepts, height, length, weight);
   timer_stop(TIMER_SA);
   
   if(detect_temp_flag){
