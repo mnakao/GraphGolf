@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
     fclose(fp);
   }
 
-  check_length(lines, height, length, edge);
+  check_length(lines, height, low_length, edge);
   if(verify_flag)
     verfy_graph(nodes, lines, edge);
 
