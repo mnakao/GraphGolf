@@ -138,9 +138,10 @@ static void calc_length(const int lines, int edge[lines][2], const int height,
 
 long long sa(const int nodes, const int lines, double temp, const long long ncalcs,
 	     const double cooling_rate, const int low_diam,  const double low_ASPL, 
-	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
-	     const double max_temp, const double min_temp, int edge[lines][2], int *diam, double *ASPL,
-	     const int cooling_cycle, long long *total_accepts, const int height, const int low_length, double weight)
+	     const bool hill_climbing_flag, const bool detect_temp_flag,
+	     double *max_diff_energy, const double max_temp, const double min_temp, int edge[lines][2],
+	     int *diam, double *ASPL, const int cooling_cycle, long long *total_accepts,
+	     const int height, int *length, const int low_length, double weight)
 {
   int degree = 2 * lines / nodes;
   int best_edge[lines][2], tmp_edge[lines][2];
@@ -151,12 +152,12 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
   create_adjacency(nodes, lines, degree, edge, adjacency);
   evaluation(nodes, lines, degree, adjacency, diam, ASPL);
 
-  int length, total_over_length = 0;
-  calc_length(lines, edge, height, low_length, &length, &total_over_length);
+  int total_over_length = 0;
+  calc_length(lines, edge, height, low_length, length, &total_over_length);
   
-  double current_ASPL = *ASPL,  best_ASPL   = *ASPL;
-  int current_diam    = *diam,  best_diam   = *diam;
-  int current_length  = length, best_length = length;
+  double current_ASPL = *ASPL,   best_ASPL   = *ASPL;
+  int current_diam    = *diam,   best_diam   = *diam;
+  int current_length  = *length, best_length = *length;
   int current_total_over_length = total_over_length;
   int print_interval  = (ncalcs/NUM_OF_PROGRESS == 0)? 1 : ncalcs/NUM_OF_PROGRESS;
   edge_copy((int *)best_edge, (int *)edge, lines*2);
@@ -181,21 +182,21 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
       create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
       if(evaluation(nodes, lines, degree, adjacency, diam, ASPL)) break;
     }
-    calc_length(lines, tmp_edge, height, low_length, &length, &total_over_length);
+    calc_length(lines, tmp_edge, height, low_length, length, &total_over_length);
 
     if(accept(*ASPL, current_ASPL, temp, nodes, degree, hill_climbing_flag, detect_temp_flag,
 	      i, max_diff_energy, total_accepts, &accepts, &rejects,
 	      total_over_length, current_total_over_length, max_temp, min_temp, weight)){
       current_ASPL   = *ASPL;
       current_diam   = *diam;
-      current_length = length;
+      current_length = *length;
       current_total_over_length = total_over_length;
       edge_copy((int *)edge, (int *)tmp_edge, lines*2);
-      if((best_length > length) ||
-	 (best_length == length && best_diam > *diam) ||
-	 (best_length == length && best_diam == *diam && best_ASPL > *ASPL)){
+      if((best_length > *length) ||
+	 (best_length == *length && best_diam > *diam) ||
+	 (best_length == *length && best_diam == *diam && best_ASPL > *ASPL)){
 	edge_copy((int *)best_edge, (int *)edge, lines*2);
-	best_length = length;
+	best_length = *length;
 	best_diam   = *diam;
 	best_ASPL   = *ASPL;
       }
@@ -217,8 +218,9 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
       temp *= cooling_rate;
   }
 
-  *ASPL = best_ASPL;
-  *diam = best_diam;
+  *ASPL   = best_ASPL;
+  *diam   = best_diam;
+  *length = best_length;
   edge_copy((int *)edge, (int *)best_edge, lines*2);
   free(adjacency);
 
