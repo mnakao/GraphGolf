@@ -6,7 +6,7 @@ static void print_help(char *argv)
 [-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-W <weight>] [-N] [-d] [-y] [-h]\n", argv);
 }
 
-static void set_args(const int argc, char **argv, char *infname, int *length,
+static void set_args(const int argc, char **argv, char *infname, int *low_length,
 		     char *outfname, bool *outfnameflag, int *random_seed,
 		     long long *ncalcs, double *max_temp, bool *max_temp_flag,
 		     double *min_temp, bool *min_temp_flag, int *cooling_cycle, double *weight,
@@ -30,8 +30,8 @@ static void set_args(const int argc, char **argv, char *infname, int *length,
       *outfnameflag = true;
       break;
      case 'R':
-      *length = atoi(optarg);
-      if(*length <= 0)
+      *low_length = atoi(optarg);
+      if(*low_length <= 0)
         ERROR("-R value > 0\n");
       break;
     case 's':
@@ -186,7 +186,7 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
   *low_ASPL = aspl;
 }
 
-static void output_params(const int nodes, const int degree, const int length, const int random_seed,
+static void output_params(const int nodes, const int degree, const int low_length, const int random_seed,
 			  const double max_temp, const double min_temp, const long long ncalcs,
 			  const int cooling_cycle, const double weight, const double cooling_rate, const char *infname,
 			  const char *outfname, const bool outfnameflag, const double average_time,
@@ -221,7 +221,7 @@ static void output_params(const int nodes, const int degree, const int length, c
   PRINT_R0("Input filename: %s\n", infname);
   PRINT_R0("   Vertexes: %d\n", nodes);
   PRINT_R0("   Degree:   %d\n", degree);
-  PRINT_R0("   Length:   %d\n", length);
+  PRINT_R0("   Length:   %d\n", low_length);
   if(outfnameflag)
     PRINT_R0("Output filename: %s\n", outfname);
   PRINT_R0("---\n");
@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
   bool hill_climbing_flag = false, detect_temp_flag = false;
   char hostname[MPI_MAX_PROCESSOR_NAME], infname[MAX_FILENAME_LENGTH], outfname[MAX_FILENAME_LENGTH];
   int namelen, diam = 0, low_diam = 0, random_seed = 0, cooling_cycle = 1;
-  int width = 0, height = 0, length = NOT_DEFINED;
+  int width = 0, height = 0, length = -1, low_length = NOT_DEFINED;
   long long ncalcs = 10000, num_accepts = 0;
   double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
   double max_temp = 100.0, min_temp = 0.217147, max_diff_energy = 0;
@@ -270,11 +270,11 @@ int main(int argc, char *argv[])
   PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
-  set_args(argc, argv, infname, &length, outfname, &outfnameflag, &random_seed,
+  set_args(argc, argv, infname, &low_length, outfname, &outfnameflag, &random_seed,
 	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag, &cooling_cycle, &weight,
 	   &hill_climbing_flag, &detect_temp_flag, &verify_flag);
 
-  if(length == NOT_DEFINED)
+  if(low_length == NOT_DEFINED)
     ERROR("Must need -R.\n");
   else if(hill_climbing_flag){
     if(max_temp_flag)
@@ -319,7 +319,7 @@ int main(int argc, char *argv[])
       ERROR("Cannot open %s\n", outfname);
   }
 
-  output_params(nodes, degree, length, random_seed, max_temp, min_temp, ncalcs, cooling_cycle, weight,
+  output_params(nodes, degree, low_length, random_seed, max_temp, min_temp, ncalcs, cooling_cycle, weight,
 		cooling_rate, infname, outfname, outfnameflag, average_time, hill_climbing_flag);
   
   // Optimization
@@ -327,7 +327,7 @@ int main(int argc, char *argv[])
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
 		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, max_temp, min_temp,
-		      edge, &diam, &ASPL, cooling_cycle, &num_accepts, height, length, weight);
+		      edge, &diam, &ASPL, cooling_cycle, &num_accepts, height, &length, low_length, weight);
   timer_stop(TIMER_SA);
   
   if(detect_temp_flag){
@@ -339,8 +339,8 @@ int main(int argc, char *argv[])
 
   // Output results
   PRINT_R0("---\n");
-  PRINT_R0("Diam. k = %d  ASPL l = %f  Diam. gap = %d  ASPL gap = %f\n",
-	   diam, ASPL, diam-low_diam, ASPL-low_ASPL);
+  PRINT_R0("Diam. k = %d  ASPL l = %f  Diam. gap = %d  ASPL gap = %f Length Gap = %d\n",
+	   diam, ASPL, diam-low_diam, ASPL-low_ASPL, length-low_length);
 
   double time_sa    = timer_read(TIMER_SA);
   double time_bfs   = timer_read(TIMER_BFS);
