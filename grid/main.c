@@ -16,7 +16,7 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
     print_help(argv[0]);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:W:H:R:s:n:w:c:C:W:Ndyh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:R:s:n:w:c:C:W:Ndyh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
