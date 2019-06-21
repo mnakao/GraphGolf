@@ -108,9 +108,9 @@ static void read_file_lattice(int (*edge)[2], int *w, int *h, const char *fname)
   *h = 0;
   while(fscanf(fp, "%d,%d %d,%d", &n[0], &n[1], &n[2], &n[3]) != EOF){
     *w = MAX(*w, n[0]);
-    *h = MAX(*w, n[1]);
+    *h = MAX(*h, n[1]);
     *w = MAX(*w, n[2]);
-    *h = MAX(*w, n[3]);
+    *h = MAX(*h, n[3]);
   }
   *w += 1;
   *h += 1;
@@ -190,7 +190,7 @@ static void output_params(const int nodes, const int degree, const int low_lengt
 			  const double max_temp, const double min_temp, const long long ncalcs,
 			  const int cooling_cycle, const double weight, const double cooling_rate, const char *infname,
 			  const char *outfname, const bool outfnameflag, const double average_time,
-			  const bool hill_climbing_flag)
+			  const bool hill_climbing_flag, const int width, const int height)
 			  
 {
 #ifdef NDEBUG
@@ -222,6 +222,8 @@ static void output_params(const int nodes, const int degree, const int low_lengt
   PRINT_R0("   Vertexes: %d\n", nodes);
   PRINT_R0("   Degree:   %d\n", degree);
   PRINT_R0("   Length:   %d\n", low_length);
+  PRINT_R0("   Width :   %d\n", width);
+  PRINT_R0("   Height:   %d\n", height);
   if(outfnameflag)
     PRINT_R0("Output filename: %s\n", outfname);
   PRINT_R0("---\n");
@@ -289,6 +291,7 @@ int main(int argc, char *argv[])
   int lines      = count_lines(infname);
   int (*edge)[2] = malloc(sizeof(int)*lines*2); // int edge[lines][2];
   read_file_lattice(edge, &width, &height, infname);
+
   int nodes      = max_node_num(lines, (int *)edge) + 1;
   int degree     = 2 * lines / nodes;
   if(nodes <= degree)
@@ -320,7 +323,7 @@ int main(int argc, char *argv[])
   }
 
   output_params(nodes, degree, low_length, random_seed, max_temp, min_temp, ncalcs, cooling_cycle, weight,
-		cooling_rate, infname, outfname, outfnameflag, average_time, hill_climbing_flag);
+		cooling_rate, infname, outfname, outfnameflag, average_time, hill_climbing_flag, width, height);
   
   // Optimization
   timer_clear_all();
