@@ -247,7 +247,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	     const long long ncalcs, const double cooling_rate,  const int low_diam,  const double low_ASPL, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
 	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle,
-	     const int added_centers, const int based_nodes, long long *total_accepts)
+	     const int added_centers, const int based_nodes, long long *total_accepts, const int algo)
 {
   long long i, accepts = 0, rejects = 0;
   int best_edge[lines][2], tmp_edge[lines][2];
@@ -256,7 +256,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
   // Create adjacency matrix
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, edge, adjacency);
-  evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers);
+  evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers, algo);
   double current_ASPL = *ASPL;
   double best_ASPL    = *ASPL;
   int current_diam    = *diam;
@@ -278,7 +278,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       edge_exchange(nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, (int)i);
       create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
       assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, adjacency, (int)i));
-      if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers)) break;
+      if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers, algo)) break;
     }
 
     if(accept(*ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
@@ -316,7 +316,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 
 #define ESTIMATED_TIMES 5
 double estimated_elapse_time(const int nodes, const int based_nodes, const int lines, const int degree,
-			     const int groups, int edge[lines][2], const int added_centers)
+			     const int groups, int edge[lines][2], const int added_centers, const int algo)
 {
   int diam;    // Not use
   double ASPL; // Not use
@@ -329,7 +329,7 @@ double estimated_elapse_time(const int nodes, const int based_nodes, const int l
     edge_exchange(nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, (int)i);
     create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
     assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, adjacency, (int)i));
-    evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, added_centers);
+    evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, added_centers, algo);
   }  
   timer_stop(TIMER_ESTIMATED);
   
@@ -340,15 +340,15 @@ double estimated_elapse_time(const int nodes, const int based_nodes, const int l
 }
 
 // This function is mainly useful when groupe is 1.
-void check_current_edge(const int nodes, const int degree, const int lines, const int groups,
-			const int based_nodes, int edge[lines][2], const double low_ASPL, const int added_centers)
+void check_current_edge(const int nodes, const int degree, const int lines, const int groups, const int based_nodes,
+			int edge[lines][2], const double low_ASPL, const int added_centers, const int algo)
 {
   int diam;    // Not use
   double ASPL;
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
 
   create_adjacency(nodes, lines, degree, edge, adjacency);
-  if(! evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, added_centers))
+  if(! evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, added_centers, algo))
     ERROR("The input file has a node which is never reached by another node.\n");
 
   if(ASPL == low_ASPL)

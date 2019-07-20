@@ -1,5 +1,19 @@
 #include "common.h"
 
+void clear_buffer(int *buffer, const int n)
+{
+#pragma omp parallel for
+  for(int i=0;i<n;i++)
+    buffer[i] = 0;
+}
+
+void clear_buffers(uint64_t* restrict A, uint64_t* restrict B, const int s)
+{
+#pragma omp parallel for
+  for(int i=0;i<s;i++)
+    A[i] = B[i] = 0;
+}
+
 void edge_copy(int *restrict buf1, const int *restrict buf2, const int n)
 {
 #pragma omp parallel for
