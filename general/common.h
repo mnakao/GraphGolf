@@ -90,7 +90,7 @@ extern bool evaluation(const int nodes, const int based_nodes, const int groups,
 extern void edge_copy(int *restrict buf1, const int *restrict buf2, const int n);
 extern int distance(int nodes, const int a, const int b, const int added_centers);
 extern bool check(const int nodes, const int based_nodes, const int lines, const int degree, const int groups,
-		  int edge[lines][2], const int add_degree_to_center, const int adjacency[nodes][degree], const int ii);
+		  int edge[lines][2], const int add_degree_to_center, int* adjacency, const int ii);
 extern void clear_buffer(int *buffer, const int n);
 extern void clear_buffers(uint64_t* restrict A, uint64_t* restrict B, const int s);
 #endif
