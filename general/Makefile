@@ -1,8 +1,8 @@
 .PHONY: clean cygnus ofp K
-DEBUG=-DNDEBUG
+#DEBUG=-DNDEBUG
 #########################################################
 CC=mpicc
-CFLAGS=-std=gnu99 -O3 -Wall -mcmodel=medium $(DEBUG)
+CFLAGS=-std=gnu99 -O3 -Wall -mcmodel=medium -Wno-unknown-pragmas $(DEBUG)
 OPENMP=-fopenmp
 LFLAGS=-lm
 #########################################################
@@ -27,7 +27,7 @@ SRCS := main.c sa.c timer.c bfs.c common.c
 OBJS := $(SRCS:%.c=%.o)
 
 gg: $(OBJS)
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LFLAGS)
 
 %.o: %.c common.h
 	$(CC) $(CFLAGS) -c $<
@@ -47,10 +47,11 @@ main_omp.o: main.c common.h
 timer_omp.o: timer.c common.h
 	$(CC) $(CFLAGS) $(OPENMP) -c -o $@ $<
 
-gg_thread: common_omp.o sa_omp.o bfs_omp.o main_omp.o timer_omp.o
-	$(CC) $(CFLAGS) $(OPENMP) $(LFLAGS) -o $@ $^
+gg_openmp: common_omp.o sa_omp.o bfs_omp.o main_omp.o timer_omp.o
+	$(CC) $(CFLAGS) $(OPENMP) -o $@ $^ $(LFLAGS)
 
-all: gg gg_thread
+openmp: gg_openmp
+all: gg openmp
 #########################################################
 # make K DATA="..\/data\/n72d4.random.edges" N=10000 G=2 K=1 T=100 C=1
 K:
@@ -106,3 +107,5 @@ ofp:
 clean:
 	rm -rf *.o *~
 
+clean_all: clean
+	rm -f gg gg_openmp

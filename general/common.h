@@ -51,8 +51,7 @@ extern void check_current_edge(const int nodes, const int degree, const int line
 extern double estimated_elapse_time(const int nodes, const int based_nodes, const int lines, const int degree,
 				    const int groups, int edge[lines][2], const int add_degree_to_center);
 extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes, const int based_lines, const int groups,
-			const int start_line, const int add_centers, int adjacency[nodes][degree], int restore_edge[groups*2][2],
-			int restore_adjacency[groups*2][2][3], int restore_line[groups*2], int *restores);
+			const int start_line, const int add_centers);
 extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);
 extern bool check_loop(const int lines, int (*edge)[2]);
 extern bool check_duplicate_edge(const int lines, int (*edge)[2]);

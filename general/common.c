@@ -1,153 +1,8 @@
 #include "common.h"
 
-static void change_adjacency_1g_opt(const int nodes, const int degree, int adjacency[nodes][degree],
-				    const int groups, const int based_nodes, const int added_centers,
-				    int edge_prev[groups][2], int edge_after[groups][2], const int pattern,
-				    int restore_adjacency[groups*2][2][3])
-{
-  /* restore_adjacency[][][] only uses restore_adjacency[0:groups][:][:]. */
-  
-  int t0, t1;
-  if(abs(edge_prev[0][0]-edge_prev[0][1]) == (nodes-added_centers)/2 && groups%2 == 0){
-    for(int i=0;i<groups/2;i++){
-      t0 = edge_prev[i][0];
-      for(t1=0;t1<degree;t1++)
-	if(adjacency[t0][t1] == edge_prev[i][1])
-	  break;
-      restore_adjacency[i][0][0] = t0;
-      restore_adjacency[i][0][1] = t1;
-      restore_adjacency[i][0][2] = adjacency[t0][t1];
-      adjacency[t0][t1] = edge_after[i][1];
-      
-      t0 = edge_prev[i][1];
-      for(t1=0;t1<degree;t1++)
-	if(adjacency[t0][t1] == edge_prev[i][0])
-	  break;
-      restore_adjacency[i][1][0] = t0;
-      restore_adjacency[i][1][1] = t1;
-      restore_adjacency[i][1][2] = adjacency[t0][t1];
-      adjacency[t0][t1] = edge_after[i+groups/2][1];
-    }
-    
-    for(int i=groups/2;i<groups;i++){
-      t0 = edge_prev[i][0];
-      for(t1=0;t1<degree;t1++)
-	if(adjacency[t0][t1] == edge_prev[i][1])
-	  break;
-      int offset = i - pattern;
-      int r = (offset-groups/2 >= 0)? offset-groups/2 : offset+groups/2;
-      restore_adjacency[i][0][0] = t0;
-      restore_adjacency[i][0][1] = t1;
-      restore_adjacency[i][0][2] = adjacency[t0][t1];
-      adjacency[t0][t1] = edge_after[r][0];
-      
-      t0 = edge_prev[i][1];
-      for(t1=0;t1<degree;t1++)
-	if(adjacency[t0][t1] == edge_prev[i][0])
-	  break;
-      r = (offset >= 0)? offset : offset+groups;
-      restore_adjacency[i][1][0] = t0;
-      restore_adjacency[i][1][1] = t1;
-      restore_adjacency[i][1][2] = adjacency[t0][t1];
-      adjacency[t0][t1] = edge_after[r][0];
-    }
-  }
-  else if(pattern == groups){
-    for(int i=0;i<groups/2;i++){
-      edge_after[i][0]          = edge_prev[i][0];
-      edge_after[i+groups/2][0] = edge_prev[i][1];
-      edge_after[i][1]          = edge_prev[i+groups/2][0];
-      edge_after[i+groups/2][1] = edge_prev[i+groups/2][1];
-    }
-    
-    for(int i=0;i<groups;i++){
-      t0 = edge_prev[i][0];
-      for(t1=0;t1<degree;t1++)
-	if(adjacency[t0][t1] == edge_prev[i][1])
-	  break;
-      restore_adjacency[i][0][0] = t0;
-      restore_adjacency[i][0][1] = t1;
-      restore_adjacency[i][0][2] = adjacency[t0][t1];
-      if(i < groups/2)
-	adjacency[t0][t1] = edge_after[i][1];
-      else
-	adjacency[t0][t1] = edge_after[i-groups/2][0];
-      
-      t0 = edge_prev[i][1];
-      for(t1=0;t1<degree;t1++)
-	if(adjacency[t0][t1] == edge_prev[i][0])
-	  break;
-      restore_adjacency[i][1][0] = t0;
-      restore_adjacency[i][1][1] = t1;
-      restore_adjacency[i][1][2] = adjacency[t0][t1];
-      if(i < groups/2)
-	adjacency[t0][t1] = edge_after[i+groups/2][1];
-      else
-	adjacency[t0][t1] = edge_after[i][0];
-    }
-  }
-  else{
-    int tmp = edge_prev[0][0] / based_nodes;
-    for(int i=0;i<groups;i++){
-      for(int j=0;j<2;j++){
-	edge_prev[i][j] -= tmp * based_nodes;
-	if(edge_prev[i][j] < 0) edge_prev[i][j] += (nodes-added_centers);
-      }
-    }
-    
-    int diff = edge_after[0][1] - edge_after[0][0];
-    edge_after[0][0] %= based_nodes;
-    edge_after[0][1]  = edge_after[0][0] + diff;
-    if(edge_after[0][1] < 0) edge_after[0][1] += (nodes-added_centers);
-    for(int i=1;i<groups;i++){
-      edge_after[i][0] = edge_after[0][0] + based_nodes * i;
-      tmp = edge_after[i][0] + diff;
-      if(tmp < 0){
-	edge_after[i][1] = tmp + (nodes-added_centers);
-      }
-      else if(tmp >= nodes-added_centers){
-	edge_after[i][1] = tmp - (nodes-added_centers);
-      }
-      else{
-	edge_after[i][1] = tmp;
-      }
-    }
-
-    int p = 0;
-    for(int i=0;i<groups;i++)
-      if(edge_prev[0][1] == edge_after[i][1]){
-	p = i;
-	break;
-      }
-    
-    for(int i=0;i<groups;i++){
-      int offset = (i+p < groups)? i+p : i+p-groups;
-      t0 = edge_prev[i][0];
-      for(t1=0;t1<degree;t1++)
-	if(adjacency[t0][t1] == edge_prev[i][1])
-	  break;
-      restore_adjacency[i][0][0] = t0;
-      restore_adjacency[i][0][1] = t1;
-      restore_adjacency[i][0][2] = adjacency[t0][t1];
-      adjacency[t0][t1] = edge_after[i][1];
-      
-      t0 = edge_prev[i][1];
-      for(t1=0;t1<degree;t1++)
-	if(adjacency[t0][t1] == edge_prev[i][0])
-	  break;
-      restore_adjacency[i][1][0] = t0;
-      restore_adjacency[i][1][1] = t1;
-      restore_adjacency[i][1][2] = adjacency[t0][t1];
-      adjacency[t0][t1] = edge_after[offset][0];
-    }
-  }
-}
-
 void edge_copy(int *restrict buf1, const int *restrict buf2, const int n)
 {
-#ifdef _OPENMP
 #pragma omp parallel for
-#endif
   for(int i=0;i<n;i++)
     buf1[i] = buf2[i];
 }
@@ -202,9 +57,7 @@ bool check_loop(const int lines, int edge[lines][2])
   timer_start(TIMER_CHECK);
   bool flag = true;
 
-#ifdef _OPENMP
 #pragma omp parallel for
-#endif
   for(int i=0;i<lines;i++)
     if(edge[i][0] == edge[i][1])
       flag = false;
@@ -238,9 +91,8 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
 
   if(original_groups%2 == 1 && opt == 1){
     int tmp = line[0]%based_lines;
-#ifdef _OPENMP
+
 #pragma omp parallel for
-#endif
     for(int i=rank;i<based_lines;i+=size)
       if(i != tmp)
 	for(int j=0;j<groups;j++)
@@ -250,9 +102,8 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
   else if(opt == 2){
     int tmp0 = line[0]%based_lines;
     int tmp1 = line[1]%based_lines;
-#ifdef _OPENMP
+
 #pragma omp parallel for
-#endif
     for(int i=rank;i<based_lines;i+=size)
       if(i != tmp0 && i != tmp1)
 	for(int j=0;j<groups;j++)
@@ -263,9 +114,8 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
     assert(original_groups%2 == 0 && opt == 1);
     int tmp = line[0]%based_lines;
     if(distance(nodes, tmp_edge[0][0], tmp_edge[0][1], added_centers) != (nodes-added_centers)/2){
-#ifdef _OPENMP
+
 #pragma omp parallel for
-#endif
       for(int i=rank;i<based_lines;i+=size)
 	if(i != tmp)
 	  for(int j=0;j<groups;j++)
@@ -273,9 +123,8 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
 	      flag = false;
     }
     else{
-#ifdef _OPENMP
+
 #pragma omp parallel for
-#endif
       for(int i=rank;i<lines;i+=size)
         if(i%based_lines != tmp)
           for(int j=0;j<groups;j++)
@@ -290,8 +139,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
 }
 
 bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes, const int based_lines, 
-		 const int groups, const int start_line, const int added_centers, int adjacency[nodes][degree],
-		 int restore_edge[groups*2][2], int restore_adjacency[groups*2][2][3], int restore_line[groups*2], int *restores)
+		 const int groups, const int start_line, const int added_centers)
 {
   if(groups == 1) // assert ?
     return true;
@@ -299,8 +147,7 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
   if(edge[start_line][0] >= nodes-added_centers || edge[start_line][1] >= nodes-added_centers)
     return false;
 
-  int line[groups], tmp_edge[groups][2], edge_after[groups][2], edge_prev[groups][2];
-  int pattern;
+  int line[groups], tmp_edge[groups][2], pattern;
   for(int i=0;i<groups;i++)
     line[i] = start_line % based_lines + i * based_lines;
 
@@ -344,28 +191,15 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
   if(!check_duplicate_current_edge(lines, groups, line, edge, tmp_edge, groups, nodes, added_centers))
     return false;
 
-  for(int i=0;i<groups;i++){
-    edge_after[i][0] = tmp_edge[i][0];
-    edge_after[i][1] = tmp_edge[i][1];
-    edge_prev[i][0] = edge[line[i]][0];
-    edge_prev[i][1] = edge[line[i]][1];
-  }
-  
   for(int i=0;i<groups;i++)
     if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)
       swap(&tmp_edge[i][0], &tmp_edge[i][1]);  // RIGHT -> LEFT
   
   // Set vertexs
   for(int i=0;i<groups;i++){
-    restore_line[i]    = line[i];
-    restore_edge[i][0] = edge[line[i]][0];
-    restore_edge[i][1] = edge[line[i]][1];
     edge[line[i]][0] = tmp_edge[i][0];
     edge[line[i]][1] = tmp_edge[i][1];
   }
-
-  *restores = groups;
-  change_adjacency_1g_opt(nodes, degree, adjacency, groups, based_nodes,
-			  added_centers, edge_prev, edge_after, pattern, restore_adjacency);
+  
   return true;
 }

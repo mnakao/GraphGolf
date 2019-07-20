@@ -184,14 +184,12 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
 
   int diam;    // Not use
   double ASPL; // Not use
-  int restore_edge[groups*2][2], restore_adjacency[groups*2][2][3], restore_line[groups*2], restores = 0; // Not use
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-  create_adjacency(nodes, lines, degree, edge, adjacency);
-  
+
   while(1){
     int start_line = getRandom(lines);
-    edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, 0,
-		adjacency, restore_edge, restore_adjacency, restore_line, &restores);
+    edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, 0);
+    create_adjacency(nodes, lines, degree, edge, adjacency);
     if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, 0)) break;
   }
   free(adjacency);
@@ -402,7 +400,7 @@ int main(int argc, char *argv[])
   else{
     if(added_centers) nodes += added_centers;
   }
-  
+
   if(verify_flag)
     verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
 
