@@ -410,6 +410,7 @@ int main(int argc, char *argv[])
     double s = (double)nodes/groups * elements * sizeof(uint64_t);
     algo = (s <= (double)MATRIX_OP_THRESHOLD)? MATRIX_OP : MATRIX_OP_LOW_MEM;
   }
+  if(added_centers != 0) algo = BFS; // fix me
 
   if(!halfway_flag && !added_centers)
      create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes, lines, algo);
