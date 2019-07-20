@@ -14,6 +14,9 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <time.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 int rank, size, threads;
 #define VISITED     1

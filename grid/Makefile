@@ -47,10 +47,11 @@ main_omp.o: main.c common.h
 timer_omp.o: timer.c common.h
 	$(CC) $(CFLAGS) $(OPENMP) -c -o $@ $<
 
-gg_thread: common_omp.o sa_omp.o bfs_omp.o main_omp.o timer_omp.o
+gg_openmp: common_omp.o sa_omp.o bfs_omp.o main_omp.o timer_omp.o
 	$(CC) $(CFLAGS) $(OPENMP) $(LFLAGS) -o $@ $^
 
-all: gg gg_thread
+openmp: gg_openmp
+all: gg gg_openmp
 #########################################################
 # make K DATA="..\/data\/n72d4.random.edges" N=10000 G=2 K=1 T=100 C=1
 K:
@@ -105,4 +106,7 @@ ofp:
 
 clean:
 	rm -rf *.o *~
+
+clean_all: clean
+	rm -rf gg gg_openmp
 
