@@ -19,7 +19,8 @@ LFLAGS=
 else ifeq ($(ENV), K)
 CC=mpifccpx
 # With "-Kfast", a value of low_ASPL may be changed. 
-CFLAGS=-D_KCOMPUTER -O3 -Kopenmp,dalign,lib,mfunc,ns,omitfp,prefetch_conditional,rdconv -x- -noansi -Xg $(DEBUG)
+CFLAGS=-D_KCOMPUTER -O3 -Kdalign,lib,mfunc,ns,omitfp,prefetch_conditional,rdconv -x- -noansi -Xg $(DEBUG)
+OPENMP=-Kopenmp
 LFLAGS=
 endif
 #########################################################
