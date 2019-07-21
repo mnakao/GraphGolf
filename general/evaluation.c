@@ -217,7 +217,7 @@ static bool matrix_op_low_mem(const int nodes, const int degree, const int* rest
   uint64_t* B = malloc(s);  // uint64_t B[nodes][CHUNK];
   int parsize = (elements + CHUNK - 1)/CHUNK;
   double sum = 0.0;
-   printf("%d\n", parsize);
+
   *diameter = 1;
   for(int t=rank;t<parsize;t+=size){
     unsigned int kk, l;
