@@ -156,19 +156,18 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
   uint64_t* B = malloc(s);  // uint64_t B[nodes][chunk];
   int parsize = (elements+(chunk-1))/chunk;
   double sum = 0.0;
-  
+
   clear_buffers(A, B, nodes * chunk);
   *diameter = 1;
   for(int t=rank;t<parsize;t+=size){
     uint64_t kk, l;
-    memset(A, 0, s);
-    memset(B, 0, s);
+    clear_buffers(A, B, nodes * chunk);
     for(l=0; l<UINT64_BITS*chunk && UINT64_BITS*t*chunk+l<nodes/groups; l++){
-      uint64_t offset = ((uint64_t)UINT64_BITS*t*chunk+l)*chunk+l/UINT64_BITS;
+      unsigned int offset = (UINT64_BITS*t*chunk+l)*chunk+l/UINT64_BITS;
       A[offset] = B[offset] = (0x1ULL<<(l%UINT64_BITS));
     }
 
-    for(kk=1;kk<nodes;kk++){
+    for(kk=0;kk<nodes;kk++){
 #pragma omp parallel for
       for(int i=0;i<nodes;i++)
         for(int j=0;j<degree;j++){
@@ -190,8 +189,8 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
       B = tmp;
 
       sum += ((double)nodes * l - num) * groups;
-      *diameter = MAX(*diameter, kk+1);
     }
+    *diameter = MAX(*diameter, kk+1);
   }
   MPI_Allreduce(MPI_IN_PLACE, diameter, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -218,12 +217,11 @@ static bool matrix_op_low_mem(const int nodes, const int degree, const int* rest
   uint64_t* B = malloc(s);  // uint64_t B[nodes][CHUNK];
   int parsize = (elements + CHUNK - 1)/CHUNK;
   double sum = 0.0;
-  
+   printf("%d\n", parsize);
   *diameter = 1;
   for(int t=rank;t<parsize;t+=size){
     unsigned int kk, l;
-    memset(A, 0, s);
-    memset(B, 0, s);
+    clear_buffers(A, B, nodes * CHUNK);
     for(l=0; l<UINT64_BITS*CHUNK && UINT64_BITS*t*CHUNK+l<nodes/groups; l++){
       unsigned int offset = (UINT64_BITS*t*CHUNK+l)*CHUNK+l/UINT64_BITS;
       A[offset] = B[offset] = (0x1ULL<<(l%UINT64_BITS));
