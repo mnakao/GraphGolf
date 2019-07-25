@@ -98,8 +98,9 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
 
   // for add_centers
   int start_rank = based_nodes % size;
-  for(int s=based_nodes*groups+rank-start_rank;s<nodes;s+=size){
-    if(s < based_nodes*groups) continue;
+  int start_node = based_nodes*groups+rank-start_rank;
+  if(start_node < based_nodes*groups) start_node += size;
+  for(int s=start_node;s<nodes;s+=size){
     int num_frontier = 1, level = 0;
     for(int i=0;i<nodes;i++)
       bitmap[i] = NOT_VISITED;
