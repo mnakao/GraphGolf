@@ -7,8 +7,8 @@ static double uniform_rand()
 
 static void print_result_header()
 {
-  PRINT_R0("   Times\t    Temp\tCur. ASPL GAP\t\tBest ASPL GAP\t\t");
-  PRINT_R0("Cur. Dia. GAP\tBest Dia. GAP\tCur. Len. GAP\tBest Len. GAP\tAccept Rate\n");
+  PRINT_R0("   Times\tTemp\t\tCur. ASPL GAP\t\tBest ASPL GAP              ");
+  PRINT_R0("Cur. Dia. GAP    Best Dia. GAP    Cur. Len. GAP    Best Len. GAP    Accept Rate\n");
 }
 
 static void print_results(const long long num, const double temp, 
@@ -18,7 +18,7 @@ static void print_results(const long long num, const double temp,
 			  const long long accepts, const long long rejects)
 {
   PRINT_R0("%8lld\t%f\t", num, temp);
-  PRINT_R0("%f ( %f )\t%f ( %f )\t%d ( %d )\t\t%d ( %d )\t\t%d ( %d )\t\t%d ( %d )\t\t",
+  PRINT_R0("%f ( %f )   %f ( %f )     %2d ( %2d )        %2d ( %2d )        %2d ( %2d )        %2d ( %2d )         ",
 	   current_ASPL,   current_ASPL-low_ASPL,     best_ASPL,   best_ASPL-low_ASPL,
 	   current_diam,   current_diam-low_diam,     best_diam,   best_diam-low_diam,
 	   current_length, current_length-low_length, best_length, best_length-low_length);
@@ -194,9 +194,10 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
       current_length = *length;
       current_total_over_length = total_over_length;
       edge_copy((int *)edge, (int *)tmp_edge, lines*2);
-      if((best_length > *length) ||
-	 (best_length == *length && best_diam > *diam) ||
-	 (best_length == *length && best_diam == *diam && best_ASPL > *ASPL)){
+      if((low_diam <= *length) &&
+	 ((best_length > *length) ||
+	  (best_length == *length && best_diam > *diam) ||
+	  (best_length == *length && best_diam == *diam && best_ASPL > *ASPL))){
 	edge_copy((int *)best_edge, (int *)edge, lines*2);
 	best_length = *length;
 	best_diam   = *diam;

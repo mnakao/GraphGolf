@@ -162,28 +162,60 @@ static void verfy_graph(const int nodes, const int lines, int edge[lines][2])
   PRINT_R0("OK\n");
 }
 
-// This function is inherited from "http://research.nii.ac.jp/graphgolf/py/create-random.py".
-static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int nodes, const int degree)
+static int dist(const int x1, const int y1, const int x2, const int y2)
 {
-  int diam = -1, n = 1, r = 1;
-  double aspl = 0.0;
+  return(abs(x1 - x2) + abs(y1 - y2));
+}
 
-  while(1){
-    int tmp = n + degree * pow(degree-1, r-1);
-    if(tmp >= nodes)
-      break;
+// This function is inherited from "http://research.nii.ac.jp/graphgolf/pl/lower-lattice.pl".
+static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int m, const int n,
+				     const int degree, const int length)
+{
+  int mn = m * n;
+  int maxhop = MAX((m+n-2)/length,log(mn/degree)/log(degree-1)-1)+2;
+  double sum = 0, current = degree;
+  double moore[maxhop+1], hist[maxhop+1], mh[maxhop+1];
 
-    n = tmp;
-    aspl += r * degree * pow(degree-1, r-1);
-    diam = r++;
+  for(int i=0;i<=maxhop;i++)
+    moore[i] = hist[i] = 0;
+
+  moore[0] = 1;
+  moore[1] = degree + 1;
+  for(int i=2;i<=maxhop;i++){
+    current = current * (degree - 1);
+    moore[i] = moore[i-1] + current;
+    if(moore[i] > mn)
+      moore[i] = mn;
   }
 
-  diam++;
-  aspl += diam * (nodes - n);
-  aspl /= (nodes - 1);
+  for(int i=0;i<m;i++){
+    for(int j=0;j<n;j++){
+      for(int k=0;k<=maxhop;k++)
+        hist[k]=0;
 
-  *low_diam = diam;
-  *low_ASPL = aspl;
+      for (int i2=0;i2<m;i2++)
+        for(int j2=0;j2<n;j2++)
+          hist[(dist(i,j,i2,j2)+length-1)/length]++;
+
+      for(int k=1;k<=maxhop;k++)
+        hist[k] += hist[k-1];
+
+      for(int k=0;k<=maxhop;k++)
+        mh[k] = MIN(hist[k], moore[k]);
+
+      for(int k=1;k<=maxhop;k++){
+        sum += (double)(mh[k] - mh[k-1]) * k;
+      }
+    }
+  }
+
+  int dboth = 0;
+  for(dboth=0;;dboth++)
+    if(mh[dboth] == mn)
+      break;
+
+  *low_diam = dboth;
+  *low_ASPL = sum/((double)mn*(mn-1));
 }
 
 static void output_params(const int nodes, const int degree, const int low_length, const int random_seed,
@@ -302,7 +334,7 @@ int main(int argc, char *argv[])
   if(verify_flag)
     verfy_graph(nodes, lines, edge);
 
-  lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
+  lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
   check_current_edge(nodes, lines, edge, low_ASPL);
   double average_time = estimated_elapse_time(nodes, lines, edge);
   if(hill_climbing_flag){

@@ -58,9 +58,9 @@ bool evaluation(const int nodes, const int lines, const int degree,
   timer_start(TIMER_BFS);
 
   char *bitmap  = malloc(sizeof(char) * nodes);
-  int *frontier = malloc(sizeof(int));
-  int *distance = malloc(sizeof(int) * nodes);
-  int *next     = malloc(sizeof(int) * nodes);
+  int *frontier = malloc(sizeof(int)  * nodes);
+  int *distance = malloc(sizeof(int)  * nodes);
+  int *next     = malloc(sizeof(int)  * nodes);
   bool reached  = true;
   double sum    = 0.0;
   *diameter     = 0;
@@ -81,8 +81,7 @@ bool evaluation(const int nodes, const int lines, const int degree,
   
       int *tmp = frontier;
       frontier = next;
-      free(tmp);
-      next = malloc(sizeof(int) * nodes);
+      next     = tmp;
     }
 
     *diameter = MAX(*diameter, level-1);
