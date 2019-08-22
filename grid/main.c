@@ -2,21 +2,21 @@
 
 static void print_help(char *argv)
 {
-  END("%s -f <edge_file> [-R length] [-o <output_file>] [-s <random_seed>] [-n <calculations>] \
-[-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-W <weight>] [-N] [-d] [-y] [-h]\n", argv);
+  END("%s -f <edge_file> [-L length] [-o <output_file>] [-s <random_seed>] [-n <calculations>] \
+[-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-W <weight>] [-y] [-d] [-N] [-B] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, char *infname, int *low_length,
 		     char *outfname, bool *outfnameflag, int *random_seed,
 		     long long *ncalcs, double *max_temp, bool *max_temp_flag,
 		     double *min_temp, bool *min_temp_flag, int *cooling_cycle, double *weight,
-		     bool *hill_climbing_flag, bool *detect_temp_flag, bool *verify_flag)
+		     bool *hill_climbing_flag, bool *detect_temp_flag, bool *verify_flag, bool *enable_bfs)
 {
   if(argc < 3)
     print_help(argv[0]);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:R:s:n:w:c:C:W:Ndyh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:L:s:n:w:c:C:W:NdyBh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -29,7 +29,7 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
       strcpy(outfname, optarg);
       *outfnameflag = true;
       break;
-     case 'R':
+     case 'L':
       *low_length = atoi(optarg);
       if(*low_length <= 0)
         ERROR("-R value > 0\n");
@@ -72,6 +72,9 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
       break;
     case 'y':
       *hill_climbing_flag = true;
+      break;
+    case 'B':
+      *enable_bfs = true;
       break;
     case 'h':
     default:
@@ -222,7 +225,7 @@ static void output_params(const int nodes, const int degree, const int low_lengt
 			  const double max_temp, const double min_temp, const long long ncalcs,
 			  const int cooling_cycle, const double weight, const double cooling_rate, const char *infname,
 			  const char *outfname, const bool outfnameflag, const double average_time,
-			  const bool hill_climbing_flag, const int width, const int height)
+			  const bool hill_climbing_flag, const int width, const int height, const bool enable_bfs)
 			  
 {
 #ifdef NDEBUG
@@ -230,11 +233,14 @@ static void output_params(const int nodes, const int degree, const int low_lengt
 #else
   PRINT_R0("DEBUG MODE\n");
 #endif
-  PRINT_R0("Seed: %d\n", random_seed);
-  PRINT_R0("Num. of processes: %d\n", size);
+  PRINT_R0("Seed     : %d\n", random_seed);
+  PRINT_R0("Processes: %d\n", size);
 #ifdef _OPENMP
-  PRINT_R0("Num. of threads  : %d\n", omp_get_max_threads());
+  PRINT_R0("Threads  : %d\n", omp_get_max_threads());
 #endif
+  if(enable_bfs) PRINT_R0("APSP     : BFS\n");
+  else           PRINT_R0("APSP     : MATRIX Opetation\n");
+
   if(hill_climbing_flag == false){
     PRINT_R0("Algorithm: Simulated Annealing\n");
     PRINT_R0("   MAX Temperature: %f\n", max_temp);
@@ -248,7 +254,7 @@ static void output_params(const int nodes, const int degree, const int low_lengt
   }
 
   PRINT_R0("Num. of Calulations: %lld\n", ncalcs);
-  PRINT_R0("   Average BFS time: %f sec.\n", average_time);
+  PRINT_R0("   Average APSP time    : %f sec.\n", average_time);
   PRINT_R0("   Estimated elapse time: %f sec.\n", average_time * ncalcs);
   PRINT_R0("Input filename: %s\n", infname);
   PRINT_R0("   Vertexes: %d\n", nodes);
@@ -285,7 +291,7 @@ static void check_length(const int lines, const int height, const int length, in
 int main(int argc, char *argv[])
 {
   bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false, verify_flag = true;
-  bool hill_climbing_flag = false, detect_temp_flag = false;
+  bool hill_climbing_flag = false, detect_temp_flag = false, enable_bfs = false;
   char hostname[MPI_MAX_PROCESSOR_NAME], infname[MAX_FILENAME_LENGTH], outfname[MAX_FILENAME_LENGTH];
   int namelen, diam = 0, low_diam = 0, random_seed = 0, cooling_cycle = 1;
   int width = 0, height = 0, length = -1, low_length = NOT_DEFINED;
@@ -306,10 +312,10 @@ int main(int argc, char *argv[])
   // Set arguments
   set_args(argc, argv, infname, &low_length, outfname, &outfnameflag, &random_seed,
 	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag, &cooling_cycle, &weight,
-	   &hill_climbing_flag, &detect_temp_flag, &verify_flag);
+	   &hill_climbing_flag, &detect_temp_flag, &verify_flag, &enable_bfs);
 
   if(low_length == NOT_DEFINED)
-    ERROR("Must need -R.\n");
+    ERROR("Must need -L.\n");
   else if(hill_climbing_flag){
     if(max_temp_flag)
       ERROR("Both -y and -w cannot be used.\n");
@@ -335,8 +341,8 @@ int main(int argc, char *argv[])
     verfy_graph(nodes, lines, edge);
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
-  check_current_edge(nodes, lines, edge, low_ASPL);
-  double average_time = estimated_elapse_time(nodes, lines, edge);
+  check_current_edge(nodes, lines, edge, low_ASPL, enable_bfs);
+  double average_time = estimated_elapse_time(nodes, lines, edge, enable_bfs);
   if(hill_climbing_flag){
     max_temp = min_temp = 0.0;
     cooling_rate = 1.0;
@@ -355,12 +361,12 @@ int main(int argc, char *argv[])
   }
 
   output_params(nodes, degree, low_length, random_seed, max_temp, min_temp, ncalcs, cooling_cycle, weight,
-		cooling_rate, infname, outfname, outfnameflag, average_time, hill_climbing_flag, width, height);
+		cooling_rate, infname, outfname, outfnameflag, average_time, hill_climbing_flag, width, height, enable_bfs);
   
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
-  long long step = sa(nodes, lines, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
+  long long step = sa(nodes, lines, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL, enable_bfs, 
 		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, max_temp, min_temp,
 		      edge, &diam, &ASPL, cooling_cycle, &num_accepts, height, &length, low_length, weight);
   timer_stop(TIMER_SA);
@@ -378,10 +384,10 @@ int main(int argc, char *argv[])
 	   diam, ASPL, diam-low_diam, ASPL-low_ASPL, length-low_length);
 
   double time_sa    = timer_read(TIMER_SA);
-  double time_bfs   = timer_read(TIMER_BFS);
+  double time_apsp  = timer_read(TIMER_APSP);
   double time_check = timer_read(TIMER_CHECK);
-  PRINT_R0("Steps: %lld  Elapse time: %f sec. (BFS: %f sec. Check: %f sec. Other: %f sec.)\n",
-	   step, time_sa, time_bfs, time_check, time_sa-(time_bfs+time_check));
+  PRINT_R0("Steps: %lld  Elapse time: %f sec. (APSP: %f sec. Check: %f sec. Other: %f sec.)\n",
+	   step, time_sa, time_apsp, time_check, time_sa-(time_apsp+time_check));
   if(ncalcs > SKIP_ACCEPTS)
     PRINT_R0("Accept rate: %f (= %lld/%lld)\n",
 	     (double)num_accepts/(ncalcs-SKIP_ACCEPTS), num_accepts, ncalcs-SKIP_ACCEPTS);

@@ -139,7 +139,7 @@ static void calc_length(const int lines, int edge[lines][2], const int height,
 }
 
 long long sa(const int nodes, const int lines, double temp, const long long ncalcs,
-	     const double cooling_rate, const int low_diam,  const double low_ASPL, 
+	     const double cooling_rate, const int low_diam,  const double low_ASPL, const bool enable_bfs, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag,
 	     double *max_diff_energy, const double max_temp, const double min_temp, int edge[lines][2],
 	     int *diam, double *ASPL, const int cooling_cycle, long long *total_accepts,
@@ -152,7 +152,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
   // Create adjacency matrix
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, edge, adjacency);
-  evaluation(nodes, lines, degree, adjacency, diam, ASPL);
+  evaluation(nodes, lines, degree, (const int* restrict)adjacency, diam, ASPL, enable_bfs);
 
   int total_over_length = 0;
   calc_length(lines, edge, height, low_length, length, &total_over_length);
@@ -182,7 +182,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
       edge_copy((int *)tmp_edge, (int *)edge, lines*2);
       edge_exchange(nodes, lines, degree, tmp_edge, adjacency, (int)i);
       create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
-      if(evaluation(nodes, lines, degree, adjacency, diam, ASPL)) break;
+      if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, diam, ASPL, enable_bfs)) break;
     }
     calc_length(lines, tmp_edge, height, low_length, length, &total_over_length);
 
@@ -194,7 +194,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
       current_length = *length;
       current_total_over_length = total_over_length;
       edge_copy((int *)edge, (int *)tmp_edge, lines*2);
-      if((low_diam <= *length) &&
+      if((low_diam <= *diam) &&
 	 ((best_length > *length) ||
 	  (best_length == *length && best_diam > *diam) ||
 	  (best_length == *length && best_diam == *diam && best_ASPL > *ASPL))){
@@ -231,7 +231,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 }
 
 #define ESTIMATED_TIMES 5
-double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2])
+double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2], const bool enable_bfs)
 {
   int degree = 2 * lines / nodes;
   int diam;    // Not use
@@ -246,7 +246,7 @@ double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2
   for(int i=0;i<ESTIMATED_TIMES;i++){
     edge_copy((int *)tmp_edge, (int *)edge, lines*2);
     edge_exchange(nodes, lines, degree, tmp_edge, adjacency, (int)i);
-    evaluation(nodes, lines, degree, adjacency, &diam, &ASPL);
+    evaluation(nodes, lines, degree, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs);
   }
   timer_stop(TIMER_ESTIMATED);
   
@@ -257,7 +257,7 @@ double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2
 }
 
 // This function is mainly useful when groupe is 1.
-void check_current_edge(const int nodes, const int lines, int edge[lines][2], const double low_ASPL)
+void check_current_edge(const int nodes, const int lines, int edge[lines][2], const double low_ASPL, const bool enable_bfs)
 {
   int degree = 2 * lines / nodes;
   int diam;    // Not use
@@ -265,7 +265,7 @@ void check_current_edge(const int nodes, const int lines, int edge[lines][2], co
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
 
   create_adjacency(nodes, lines, degree, edge, adjacency);
-  if(! evaluation(nodes, lines, degree, adjacency, &diam, &ASPL))
+  if(! evaluation(nodes, lines, degree, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs))
     ERROR("The input file has a node which is never reached by another node.\n");
 
   if(ASPL == low_ASPL)

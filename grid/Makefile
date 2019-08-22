@@ -2,7 +2,7 @@
 DEBUG=-DNDEBUG
 #########################################################
 CC=mpicc
-CFLAGS=-std=gnu99 -O3 -Wall -mcmodel=medium $(DEBUG)
+CFLAGS=-std=gnu99 -O3 -Wall -Wno-unknown-pragmas -march=native $(DEBUG)
 OPENMP=-fopenmp
 LFLAGS=-lm
 #########################################################
@@ -23,7 +23,7 @@ CFLAGS=-D_ENV_K -O3 -Kopenmp,dalign,lib,mfunc,ns,omitfp,prefetch_conditional,rdc
 LFLAGS=
 endif
 #########################################################
-SRCS := main.c sa.c timer.c bfs.c common.c
+SRCS := main.c sa.c timer.c evaluation.c common.c
 OBJS := $(SRCS:%.c=%.o)
 
 gg: $(OBJS)
@@ -38,7 +38,7 @@ common_omp.o: common.c common.h
 sa_omp.o: sa.c common.h
 	$(CC) $(CFLAGS) $(OPENMP) -c -o $@ $<
 
-bfs_omp.o: bfs.c common.h
+evaluation_omp.o: evaluation.c common.h
 	$(CC) $(CFLAGS) $(OPENMP) -c -o $@ $<
 
 main_omp.o: main.c common.h
@@ -47,7 +47,7 @@ main_omp.o: main.c common.h
 timer_omp.o: timer.c common.h
 	$(CC) $(CFLAGS) $(OPENMP) -c -o $@ $<
 
-gg_openmp: common_omp.o sa_omp.o bfs_omp.o main_omp.o timer_omp.o
+gg_openmp: common_omp.o sa_omp.o evaluation_omp.o main_omp.o timer_omp.o
 	$(CC) $(CFLAGS) $(OPENMP) $(LFLAGS) -o $@ $^
 
 openmp: gg_openmp

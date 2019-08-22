@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <time.h>
+#include <nmmintrin.h>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -25,8 +26,16 @@ int rank, size, threads;
 #define NUM_TIMERS          4
 #define TIMER_SA            0
 #define TIMER_ESTIMATED     1
-#define TIMER_BFS           2
+#define TIMER_APSP          2
 #define TIMER_CHECK         3
+
+#ifdef _KCOMPUTER
+#define POPCNT(a) __builtin_popcountll(a)
+#else
+#define POPCNT(a) _mm_popcnt_u64(a)
+#endif
+#define UINT64_BITS         64
+#define CHUNK               64 /* (multiple of sizeof(uint64_t)*8 for AVX-512) */
 
 #define MAX_FILENAME_LENGTH 255
 #define NUM_OF_PROGRESS     100
@@ -41,13 +50,13 @@ int rank, size, threads;
 
 extern void swap(int *a, int *b);
 extern long long sa(const int nodes, const int lines, double temp, const long long ncalcs,
-		    const double cooling_rate, const int low_diam, const double low_ASPL,
+		    const double cooling_rate, const int low_diam, const double low_ASPL, const bool enable_bfs, 
 		    const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
 		    const double max_temp, const double min_temp, int edge[lines][2], int *diam, double *ASPL,
 		    const int cooling_cyclie, long long *num_accepts, const int height, int *length,
 		    const int low_length, const double weight);
-extern void check_current_edge(const int nodes, const int lines, int edge[lines][2], const double low_ASPL);
-extern double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2]);
+extern void check_current_edge(const int nodes, const int lines, int edge[lines][2], const double low_ASPL, const bool enable_bfs);
+extern double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2], const bool enable_bfs);
 extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);
 extern bool check_loop(const int lines, const int edge[lines][2]);
 extern bool check_duplicate_all_edge(const int lines, const int edge[lines][2]);
@@ -61,6 +70,6 @@ extern void timer_start(const int n);
 extern void timer_stop(const int n);
 extern double timer_read(const int n);
 extern bool evaluation(const int nodes, const int lines, const int degree, 
-		       int adjacency[nodes][degree], int *diameter, double *ASPL);
+		       const int* restrict adjacency, int *diameter, double *ASPL, const bool enable_bfs);
 extern void edge_copy(int *restrict buf1, const int *restrict buf2, const int n);
 #endif
