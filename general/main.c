@@ -426,7 +426,8 @@ int main(int argc, char *argv[])
     verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
-  check_current_edge(nodes, degree, lines, groups, based_nodes, edge, low_ASPL, added_centers, algo);
+  if(groups == 1)
+    check_current_edge(nodes, degree, lines, groups, based_nodes, edge, low_ASPL, added_centers, algo);
   double average_time = estimate_elapse_time(nodes, based_nodes, lines, degree,
 					     groups, edge, added_centers, algo);
   if(hill_climbing_flag){
