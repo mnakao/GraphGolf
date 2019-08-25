@@ -191,15 +191,22 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
 
   int diam;    // Not use
   double ASPL; // Not use
-  int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
+  int (*adj)[degree] = malloc(sizeof(int)*nodes*degree); // int adj[nodes][degree];
+  int kind_opt;
+  int restored_adj_value[groups*4], restored_adj_idx_y[groups*4], restored_adj_idx_x[groups*4];
+  int restored_edge[groups*4], restored_line[groups*2];
 
+  create_adj(nodes, lines, degree, (const int (*)[2])edge, adj);
   while(1){
     int start_line = getRandom(lines);
-    edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, 0);
-    create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
-    if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, 0, algo)) break;
+    edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, 0, (int *)adj,
+		&kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, NOT_USED);
+    if(evaluation(nodes, based_nodes, groups, lines, degree, adj, &diam, &ASPL, 0, algo))
+      break;
+    // NOT_RESTORE
   }
-  free(adjacency);
+
+  free(adj);
 }
 
 static void verfy_graph(const int nodes, const int based_nodes, const int degree, const int groups,
@@ -420,8 +427,8 @@ int main(int argc, char *argv[])
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
   check_current_edge(nodes, degree, lines, groups, based_nodes, edge, low_ASPL, added_centers, algo);
-  double average_time = estimated_elapse_time(nodes, based_nodes, lines, degree,
-					      groups, edge, added_centers, algo);
+  double average_time = estimate_elapse_time(nodes, based_nodes, lines, degree,
+					     groups, edge, added_centers, algo);
   if(hill_climbing_flag){
     max_temp = min_temp = 0.0;
     cooling_rate = 1.0;

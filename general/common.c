@@ -1,5 +1,21 @@
 #include "common.h"
 
+void print_adj(const int nodes, const int degree, const int adj[nodes][degree])
+{
+  for(int i=0;i<nodes;i++){
+    printf("%3d : ", i);
+    for(int j=0;j<degree;j++)
+      printf("%d ", adj[i][j]);
+    printf("\n");
+  }
+}
+
+void print_edge(const int nodes, const int degree, const int edge[nodes*degree/2][2])
+{
+  for(int i=0;i<nodes*degree/2;i++)
+    printf("%d %d\n", edge[i][0], edge[i][1]);
+}
+
 void clear_buffer(int *buffer, const int n)
 {
 #pragma omp parallel for
@@ -12,13 +28,6 @@ void clear_buffers(uint64_t* restrict A, uint64_t* restrict B, const int s)
 #pragma omp parallel for
   for(int i=0;i<s;i++)
     A[i] = B[i] = 0;
-}
-
-void edge_copy(int *restrict buf1, const int *restrict buf2, const int n)
-{
-#pragma omp parallel for
-  for(int i=0;i<n;i++)
-    buf1[i] = buf2[i];
 }
 
 int getRandom(const int max)
@@ -137,7 +146,6 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
 	      flag = false;
     }
     else{
-
 #pragma omp parallel for
       for(int i=rank;i<lines;i+=size)
         if(i%based_lines != tmp)
@@ -153,7 +161,9 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
 }
 
 bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes, const int based_lines, 
-		 const int groups, const int start_line, const int added_centers)
+		 const int groups, const int start_line, const int added_centers, int* restrict adj, int *kind_opt,
+		 int* restrict restored_edge, int* restrict restored_line, int* restrict restored_adj_value,
+		 int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const int ii)
 {
   if(groups == 1) // assert ?
     return true;
@@ -209,11 +219,58 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)
       swap(&tmp_edge[i][0], &tmp_edge[i][1]);  // RIGHT -> LEFT
   
-  // Set vertexs
+  // Change a part of adj.
+  int hash[nodes];
+#pragma omp parallel for
   for(int i=0;i<groups;i++){
+    int x0, x1;
+    int y0 = edge[line[i]][0];
+    int y1 = edge[line[i]][1];
+
+    for(x0=0;x0<degree;x0++)
+      if(adj[y0*degree+x0] == y1){
+	hash[y0] = x0;
+	break;
+      }
+
+    for(x1=0;x1<degree;x1++)
+      if(adj[y1*degree+x1] == y0){
+	hash[y1] = x1;
+	break;
+      }
+
+    if(x0 == degree || x1 == degree)
+      ERROR(":%d %d\n", x0, x1);
+  }
+
+#pragma omp parallel for
+  for(int i=0;i<groups;i++){
+    int tmp0 = tmp_edge[i][0];
+    int tmp1 = tmp_edge[i][1];
+    restored_adj_idx_y[i*2+0] = tmp0;
+    restored_adj_idx_x[i*2+0] = hash[tmp0];
+    restored_adj_idx_y[i*2+1] = tmp1;
+    restored_adj_idx_x[i*2+1] = hash[tmp1];
+    restored_adj_value[i*2+0] = adj[tmp0*degree+hash[tmp0]];
+    restored_adj_value[i*2+1] =	adj[tmp1*degree+hash[tmp1]];
+    //
+    restored_line[i]     = line[i];
+    restored_edge[i*2  ] = edge[line[i]][0];
+    restored_edge[i*2+1] = edge[line[i]][1];
+  }
+    
+  // Set vertexs
+#pragma omp parallel for
+  for(int i=0;i<groups;i++){
+    int tmp0 = tmp_edge[i][0];
+    int tmp1 = tmp_edge[i][1];
+    adj[tmp0*degree+hash[tmp0]] = tmp1;
+    adj[tmp1*degree+hash[tmp1]] = tmp0;
+    
     edge[line[i]][0] = tmp_edge[i][0];
     edge[line[i]][1] = tmp_edge[i][1];
   }
-  
+
+  *kind_opt = D_1G_OPT;
   return true;
 }

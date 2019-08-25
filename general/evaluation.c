@@ -2,7 +2,7 @@
 
 #ifdef _OPENMP
 static int top_down_step(const int level, const int nodes, const int num_frontier,
-                         const int degree, const int* restrict adjacency, int* restrict frontier,
+                         const int degree, const int* restrict adj, int* restrict frontier,
                          int* restrict next, int* restrict distance, char* restrict bitmap)
 {
   int count = 0;
@@ -14,7 +14,7 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
      for(int i=0;i<num_frontier;i++){
        int v = frontier[i];
        for(int j=0;j<degree;j++){
-         int n = *(adjacency + v * degree + j);  // adjacency[v][j];
+         int n = *(adj + v * degree + j);  // adj[v][j];
          if(bitmap[n] == NOT_VISITED){
            bitmap[n]   = VISITED;
 	   distance[n] = level;
@@ -32,14 +32,14 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
 }
 #else
 static int top_down_step(const int level, const int nodes, const int num_frontier,
-                         const int degree, const int* restrict adjacency, int* restrict frontier,
+                         const int degree, const int* restrict adj, int* restrict frontier,
                          int* restrict next, int* restrict distance, char* restrict bitmap)
 {
   int count = 0;
   for(int i=0;i<num_frontier;i++){
     int v = frontier[i];
     for(int j=0;j<degree;j++){
-      int n = *(adjacency + v * degree + j);  // int n = adjacency[v][j];
+      int n = *(adj + v * degree + j);  // int n = adj[v][j];
       if(bitmap[n] == NOT_VISITED){
 	bitmap[n]   = VISITED;
 	distance[n] = level;
@@ -53,7 +53,7 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
 #endif
 
 static bool bfs(const int nodes, int based_nodes, const int groups, const int lines, const int degree,
-		int adjacency[nodes][degree], int *diameter, double *ASPL, const int added_centers)
+		int adj[nodes][degree], int *diameter, double *ASPL, const int added_centers)
 {
   char *bitmap  = malloc(sizeof(char) * nodes);
   int *frontier = malloc(sizeof(int)  * nodes);
@@ -74,7 +74,7 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
 
     while(1){
       num_frontier = top_down_step(level++, nodes, num_frontier, degree,
-				   (int *)adjacency, frontier, next, distance, bitmap);
+				   (int *)adj, frontier, next, distance, bitmap);
       if(num_frontier == 0) break;
   
       int *tmp = frontier;
@@ -110,7 +110,7 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
     
     while(1){
       num_frontier = top_down_step(level++, nodes, num_frontier, degree,
-				   (int *)adjacency, frontier, next, distance, bitmap);
+				   (int *)adj, frontier, next, distance, bitmap);
       if(num_frontier == 0) break;
 	  
       int *tmp = frontier;
@@ -147,7 +147,7 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
 }
 
 
-static bool matrix_op(const int nodes, const int degree, const int* restrict adjacency,
+static bool matrix_op(const int nodes, const int degree, const int* restrict adj,
 		      const int groups, int *diameter, double *ASPL)
 {
   unsigned int elements = (nodes/groups+(UINT64_BITS-1))/UINT64_BITS;
@@ -172,7 +172,7 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
 #pragma omp parallel for
       for(int i=0;i<nodes;i++)
         for(int j=0;j<degree;j++){
-          int n = *(adjacency + i * degree + j);  // int n = adjacency[i][j];
+          int n = *(adj + i * degree + j);  // int n = adj[i][j];
           for(int k=0;k<chunk;k++)
             B[i*chunk+k] |= A[n*chunk+k];
         }
@@ -209,7 +209,7 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
   return true;
 }
 
-static bool matrix_op_low_mem(const int nodes, const int degree, const int* restrict adjacency,
+static bool matrix_op_low_mem(const int nodes, const int degree, const int* restrict adj,
                               const int groups, int *diameter, double *ASPL)
 {
   unsigned int elements = (nodes/groups+(UINT64_BITS-1))/UINT64_BITS;
@@ -232,7 +232,7 @@ static bool matrix_op_low_mem(const int nodes, const int degree, const int* rest
 #pragma omp parallel for
       for(int i=0;i<nodes;i++)
         for(int j=0;j<degree;j++){
-          int n = *(adjacency + i * degree + j);  // int n = adjacency[i][j];
+          int n = *(adj + i * degree + j);  // int n = adj[i][j];
           for(int k=0;k<CHUNK;k++)
             B[i*CHUNK+k] |= A[n*CHUNK+k];
         }
@@ -271,17 +271,17 @@ static bool matrix_op_low_mem(const int nodes, const int degree, const int* rest
 }
 
 bool evaluation(const int nodes, int based_nodes, const int groups, const int lines, const int degree,
-		int adjacency[nodes][degree], int *diameter, double *ASPL, const int added_centers, const int algo)
+		int adj[nodes][degree], int *diameter, double *ASPL, const int added_centers, const int algo)
 {
   timer_start(TIMER_APSP);
   
   bool ret;
   if(algo == BFS)
-    ret = bfs(nodes, based_nodes, groups, lines, degree, adjacency, diameter, ASPL, added_centers);
+    ret = bfs(nodes, based_nodes, groups, lines, degree, adj, diameter, ASPL, added_centers);
   else if(algo == MATRIX_OP)
-    ret = matrix_op(nodes, degree, (int *)adjacency, groups, diameter, ASPL);
+    ret = matrix_op(nodes, degree, (int *)adj, groups, diameter, ASPL);
   else // (algo == MATRIX_OP_LOW_MEM)
-    ret = matrix_op_low_mem(nodes, degree, (int *)adjacency, groups, diameter, ASPL);
+    ret = matrix_op_low_mem(nodes, degree, (int *)adj, groups, diameter, ASPL);
   
   timer_stop(TIMER_APSP);
   
