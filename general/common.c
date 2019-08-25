@@ -1,5 +1,21 @@
 #include "common.h"
 
+void print_adj(const int nodes, const int degree, const int adj[nodes][degree])
+{
+  for(int i=0;i<nodes;i++){
+    printf("%3d : ", i);
+    for(int j=0;j<degree;j++)
+      printf("%3d", adj[i][j]);
+    printf("\n");
+  }
+}
+
+void print_edge(const int nodes, const int degree, const int edge[nodes*degree/2][2])
+{
+  for(int i=0;i<nodes*degree/2;i++)
+    printf("%d %d\n", edge[i][0], edge[i][1]);
+}
+
 void clear_buffer(int *buffer, const int n)
 {
 #pragma omp parallel for
@@ -153,8 +169,9 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
 }
 
 bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes, const int based_lines, 
-		 const int groups, const int start_line, const int added_centers)
+		 const int groups, const int start_line, const int added_centers, int* restrict adjacency, const int ii)
 {
+  //  printf("1g-opt\n");
   if(groups == 1) // assert ?
     return true;
 
@@ -209,11 +226,82 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)
       swap(&tmp_edge[i][0], &tmp_edge[i][1]);  // RIGHT -> LEFT
   
+  //  if(ii==48){
+  /*
+  printf("patten = %d\n", pattern);
+  printf("nodes = %d, groups = %d\n", nodes, groups);
+  for(int i=0;i<groups;i++)
+    printf("line[%d] -> (%d, %d)\n", i, edge[line[i]][0], edge[line[i]][1]);
+  printf("s = %d, e = %d\n", start_edge, end_edge);
+  for(int i=0;i<groups;i++)
+    printf(" tmp_edge = %d %d\n", tmp_edge[i][0], tmp_edge[i][1]);
+  */
+  //  }
+
+  // Change a part of adj.
+  int hash[nodes];
+#pragma omp parallel for
+  for(int i=0;i<groups;i++){
+    int x0, x1;
+    int y0 = edge[line[i]][0];
+    int y1 = edge[line[i]][1];
+
+    for(x0=0;x0<degree;x0++)
+      if(adjacency[y0*degree+x0] == y1){
+	hash[y0] = x0;
+	break;
+      }
+
+    for(x1=0;x1<degree;x1++)
+      if(adjacency[y1*degree+x1] == y0){
+	hash[y1] = x1;
+	break;
+      }
+
+    if(x0 == degree || x1 == degree)
+      ERROR(":%d %d\n", x0, x1);
+  }
+
+  //  print_adj(nodes, degree, adjacency);
+  //  printf("--\n");
+  for(int i=0;i<groups;i++){
+    int tmp0 = tmp_edge[i][0];
+    int tmp1 = tmp_edge[i][1];
+    adjacency[tmp0*degree+hash[tmp0]] = tmp1;
+    adjacency[tmp1*degree+hash[tmp1]] = tmp0;
+    //    printf("adj[%d][%d] = %d\n", tmp0, hash[tmp0], tmp1);
+    //    printf("adj[%d][%d] = %d\n", tmp1, hash[tmp1], tmp0);
+  }
+
   // Set vertexs
+#pragma omp parallel for
   for(int i=0;i<groups;i++){
     edge[line[i]][0] = tmp_edge[i][0];
     edge[line[i]][1] = tmp_edge[i][1];
   }
-  
+
+  /*
+  if(pattern == 0){
+  printf("new:\n");
+  for(int i=0;i<nodes;i++){
+    printf("%2d:", i);
+    for(int j=0;j<degree;j++)
+      printf("%3d", adjacency[i*degree+j]);
+    printf("\n");
+  }
+
+  create_adjacency(nodes, lines, degree, (const int (*)[2])edge, (int *)adjacency);
+
+  printf("correct:\n");
+  for(int i=0;i<nodes;i++){
+    printf("%2d:", i);
+    for(int j=0;j<degree;j++)
+      printf("%3d", adjacency[i*degree+j]);
+    printf("\n");
+  }
+
+  EXIT(0);
+  }*/
+
   return true;
 }

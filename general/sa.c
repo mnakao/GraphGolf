@@ -140,10 +140,11 @@ bool has_duplicated_vertex(const int e00, const int e01, const int e10, const in
 }
 
 static void edge_exchange(const int nodes, const int lines, const int groups, const int degree, const int based_nodes,
-			  int edge[lines][2], const int added_centers, const int ii)
+			  int edge[lines][2], const int added_centers, int* restrict adjacency, const int ii)
 {
   int line[groups*2], tmp_edge[groups*2][2];
   int based_lines = lines / groups;
+  int r;
 
   while(1){
     while(1){
@@ -156,8 +157,9 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
         continue;
       }
       else if((line[0] - line[1]) % based_lines == 0){
-	if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, line[0], added_centers))
+	if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, line[0], added_centers, adjacency, ii)){
 	  return;
+	}
 	else continue;
       }
       else break;
@@ -168,11 +170,13 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
     bool diameter_flag = ((flag0 || flag1) && groups%2 == 0);
 
     if(diameter_flag){
-      if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, line[0], added_centers))
+      if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, line[0], added_centers, adjacency, ii)){
 	return;
+      }
       else continue;
     }
     else{ // 2g_opt
+      //      printf("2g-opt\n");
       for(int i=1;i<groups;i++){
 	int tmp0 = line[0] + based_lines * i;
 	int tmp1 = line[1] + based_lines * i;
@@ -183,31 +187,73 @@ static void edge_exchange(const int nodes, const int lines, const int groups, co
       for(int i=0;i<groups*2;i++)
         for(int j=0;j<2;j++)
 	  tmp_edge[i][j] = edge[line[i]][j];
-	    
-      if(getRandom(2) == 0){
-	for(int i=0;i<groups;i++){
+
+      r = getRandom(2);
+      if(r == 0){
+	for(int i=0;i<groups;i++)
 	  swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][1]);
-	}
       }
       else{
 	for(int i=0;i<groups;i++)
 	  swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][0]);
       }
-      
+
       assert(check_loop(groups*2, tmp_edge));
       if(!check_duplicate_edge(groups*2, tmp_edge)) continue;
       if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge, groups, nodes, added_centers))
 	continue;
+
       for(int i=0;i<groups*2;i++)
       	if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)
       	  swap(&tmp_edge[i][0], &tmp_edge[i][1]); // RIGHT -> LEFT
 
+      // Change a part of adj.
 #pragma omp parallel for
-      for(int i=0;i<groups*2;i++){
-	edge[line[i]][0] = tmp_edge[i][0];
-        edge[line[i]][1] = tmp_edge[i][1];
+      for(int i=0;i<groups*2;i+=2){
+	int x0, x1, x2, x3;
+	int y0 = edge[line[i  ]][0];
+	int y1 = edge[line[i  ]][1];
+	int y2 = edge[line[i+1]][0];
+	int y3 = edge[line[i+1]][1];
+	
+	for(x0=0;x0<degree;x0++)
+	  if(adjacency[y0*degree+x0] == y1)
+	    break;
+
+	for(x1=0;x1<degree;x1++)
+	  if(adjacency[y1*degree+x1] == y0)
+	    break;
+
+	for(x2=0;x2<degree;x2++)
+	  if(adjacency[y2*degree+x2] == y3)
+	    break;
+	
+	for(x3=0;x3<degree;x3++)
+	  if(adjacency[y3*degree+x3] == y2)
+	    break;
+
+	if(x0 == degree || x1 == degree || x2 == degree || x3 == degree)
+	  ERROR("%d : %d %d %d %d\n", ii, x0, x1, x2, x3);
+	
+	if(r==0){
+	  adjacency[y0*degree+x0] = y3;
+	  adjacency[y1*degree+x1] = y2;
+	  adjacency[y2*degree+x2] = y1;
+	  adjacency[y3*degree+x3] = y0;
+	}
+	else{
+	  adjacency[y0*degree+x0] = y2;
+	  adjacency[y1*degree+x1] = y3;
+	  adjacency[y2*degree+x2] = y0;
+	  adjacency[y3*degree+x3] = y1;
+	}
       }
 
+#pragma omp parallel for
+      for(int i=0;i<groups*2;i++){
+        edge[line[i]][0] = tmp_edge[i][0];
+        edge[line[i]][1] = tmp_edge[i][1];
+      }
       break;
     }
   }
@@ -275,10 +321,15 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 
     while(1){
       edge_copy((int *)tmp_edge, (int *)edge, lines*2);
-      edge_exchange(nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, (int)i);
-      create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
+      //      print_edge(nodes, degree, edge);
+      edge_exchange(nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, (int *)adjacency, (int)i);
+      //      print_adj(nodes, degree, adjacency);
+      //      create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
       assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, (int *)adjacency, (int)i));
-      if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers, algo)) break;
+      if(evaluation(nodes, based_nodes, groups, lines, degree, adjacency, diam, ASPL, added_centers, algo))
+	break;
+      else
+	create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
     }
 
     if(accept(*ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
@@ -300,6 +351,9 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	}
 	break;
       }
+    }
+    else{
+      create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
     }
 
     if((i+1)%cooling_cycle == 0)
@@ -323,11 +377,12 @@ double estimated_elapse_time(const int nodes, const int based_nodes, const int l
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   int (*tmp_edge)[2]       = malloc(sizeof(int)*lines*2);      // int tmp_edge[lines][2];
 
+  edge_copy((int *)tmp_edge, (int *)edge, lines*2);
+  create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
+  
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
-    edge_copy((int *)tmp_edge, (int *)edge, lines*2);
-    edge_exchange(nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, (int)i);
-    create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
+    edge_exchange(nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, (int *)adjacency, (int)i);
     assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, (int *)adjacency, (int)i));
     evaluation(nodes, based_nodes, groups, lines, degree, adjacency, &diam, &ASPL, added_centers, algo);
   }  
