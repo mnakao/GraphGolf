@@ -21,7 +21,7 @@
 #include <nmmintrin.h>
 #endif
 
-int rank, size, threads;
+int rank, procs, threads;
 #define VISITED     1
 #define NOT_VISITED 0
 
@@ -51,12 +51,12 @@ int rank, size, threads;
 #define POPCNT(a) _mm_popcnt_u64(a)
 #endif
 
-#define BFS                 0
-#define MATRIX_OP           1
-#define MATRIX_OP_LOW_MEM   2
-#define MATRIX_OP_THRESHOLD 2147483648
-#define UINT64_BITS         64
-#define CHUNK               64 /* (multiple of sizeof(uint64_t)*8 for AVX-512) */
+#define BFS                  0
+#define MATRIX_OP            1
+#define MATRIX_OP_MEM_SAVING 2
+#define MATRIX_OP_THRESHOLD  2147483648
+#define UINT64_BITS          64
+#define CHUNK                64 /* (multiple of sizeof(uint64_t)*8 for AVX-512) */
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))

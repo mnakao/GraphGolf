@@ -279,7 +279,7 @@ static void output_params(const int nodes, const int degree, const int groups, c
   PRINT_R0("DEBUG MODE\n");
 #endif
   PRINT_R0("Seed: %d\n", random_seed);
-  PRINT_R0("Num. of processes: %d\n", size);
+  PRINT_R0("Num. of processes: %d\n", procs);
 #ifdef _OPENMP
   PRINT_R0("Num. of threads  : %d\n", omp_get_max_threads());
 #endif
@@ -295,7 +295,7 @@ static void output_params(const int nodes, const int degree, const int groups, c
   }
   if(algo == BFS)            PRINT_R0("APSP: BFS\n");
   else if(algo == MATRIX_OP) PRINT_R0("APSP: MATRIX Opetation\n");
-  else                       PRINT_R0("APSP: MATRIX Operation (LOW MEMORY)\n");
+  else                       PRINT_R0("APSP: MATRIX Operation (MEMORY SAVING)\n");
 
   PRINT_R0("Num. of Calulations: %lld\n", ncalcs);
   PRINT_R0("   Average APSP time: %f sec.\n", average_time);
@@ -334,7 +334,7 @@ int main(int argc, char *argv[])
   
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Comm_size(MPI_COMM_WORLD, &procs);
   MPI_Get_processor_name(hostname, &namelen);
   PRINT_R0("Run on %s\n", hostname);
   time_t t = time(NULL);
@@ -411,11 +411,11 @@ int main(int argc, char *argv[])
   }
 
   if(enable_bfs) algo = BFS;
-  else if(enable_low_mem) algo = MATRIX_OP_LOW_MEM;
+  else if(enable_low_mem) algo = MATRIX_OP_MEM_SAVING;
   else{
-    unsigned int elements = (nodes+(UINT64_BITS-1))/UINT64_BITS;
-    double s = (double)nodes/groups * elements * sizeof(uint64_t);
-    algo = (s <= (double)MATRIX_OP_THRESHOLD)? MATRIX_OP : MATRIX_OP_LOW_MEM;
+    unsigned int elements = (based_nodes+(UINT64_BITS-1))/UINT64_BITS;
+    double s = (double)based_nodes*groups * elements * sizeof(uint64_t);
+    algo = (s <= (double)MATRIX_OP_THRESHOLD)? MATRIX_OP : MATRIX_OP_MEM_SAVING;
   }
 
   if(!halfway_flag && !added_centers)

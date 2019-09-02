@@ -127,7 +127,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
     int tmp = line[0]%based_lines;
 
 #pragma omp parallel for
-    for(int i=rank;i<based_lines;i+=size)
+    for(int i=rank;i<based_lines;i+=procs)
       if(i != tmp)
 	for(int j=0;j<groups;j++)
 	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
@@ -138,7 +138,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
     int tmp1 = line[1]%based_lines;
 
 #pragma omp parallel for
-    for(int i=rank;i<based_lines;i+=size)
+    for(int i=rank;i<based_lines;i+=procs)
       if(i != tmp0 && i != tmp1)
 	for(int j=0;j<groups;j++)
 	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
@@ -150,7 +150,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
     if(distance(nodes, tmp_edge[0][0], tmp_edge[0][1], added_centers) != (nodes-added_centers)/2){
 
 #pragma omp parallel for
-      for(int i=rank;i<based_lines;i+=size)
+      for(int i=rank;i<based_lines;i+=procs)
 	if(i != tmp)
 	  for(int j=0;j<groups;j++)
 	    if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
@@ -158,7 +158,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
     }
     else{
 #pragma omp parallel for
-      for(int i=rank;i<lines;i+=size)
+      for(int i=rank;i<lines;i+=procs)
         if(i%based_lines != tmp)
           for(int j=0;j<groups;j++)
             if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
