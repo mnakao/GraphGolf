@@ -66,6 +66,7 @@ int rank, size, threads;
 #define ERROR(...)      do{if(rank==0) printf(__VA_ARGS__); ABORT();}while(0)
 #define EXIT(r)         do{MPI_Finalize(); exit(r);}while(0)
 
+extern void printb(uint64_t v);
 extern void print_adj(const int nodes, const int degree, const int adj[nodes][degree]);
 extern void print_edge(const int nodes, const int degree, const int edge[nodes*degree/2][2]);
 extern void swap(int *a, int *b);

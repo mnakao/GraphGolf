@@ -1,5 +1,16 @@
 #include "common.h"
 
+void printb(uint64_t v)
+{
+  uint64_t mask = 0x1ULL << (sizeof(v) * CHAR_BIT - 1);
+  int sum = 0;
+  do{
+    putchar(mask & v ? '1' : '0');
+    sum++;
+    if(sum%8==0) putchar(',');
+  } while (mask >>= 1);
+}
+
 void print_adj(const int nodes, const int degree, const int adj[nodes][degree])
 {
   for(int i=0;i<nodes;i++){
