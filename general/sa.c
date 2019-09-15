@@ -363,33 +363,45 @@ static void exchange_edge(const int nodes, const int lines, const int groups, co
   }
 }
 
-static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, const int groups,
+static bool accept(const int new_diam, const int current_diam, const double new_ASPL, const double current_ASPL,
+		   const double temp, const int nodes, const int groups,
 		   const bool hill_climbing_flag, const bool detect_temp_flag, const long long i,
 		   double *max_diff_energy, long long *total_accepts, long long *accepts, long long *rejects)
 {
-  if(ASPL <= current_ASPL){
+  if(new_diam < current_diam){
     *accepts += 1;
     if(i > SKIP_ACCEPTS) *total_accepts +=1;
     return true;
   }
-  if(hill_climbing_flag){ // Only accept when ASPL <= current_ASPL.
+  else if(new_diam > current_diam){
     *rejects += 1;
     return false;
   }
-
-  double diff = ((current_ASPL-ASPL)*nodes*(nodes-1))/groups;
-
-  if(detect_temp_flag)
-    *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);
-
-  if(exp(diff/temp) > uniform_rand()){
-    *accepts += 1;
-    if(i > SKIP_ACCEPTS) *total_accepts +=1;
-    return true;
-  }
-  else{
-    *rejects += 1;
-    return false;
+  else{ //  new_diam == current_diam
+    if(new_ASPL <= current_ASPL){
+      *accepts += 1;
+      if(i > SKIP_ACCEPTS) *total_accepts +=1;
+      return true;
+    }
+    if(hill_climbing_flag){ // Only accept when ASPL <= current_ASPL.
+      *rejects += 1;
+      return false;
+    }
+    
+    double diff = ((current_ASPL-new_ASPL)*nodes*(nodes-1))/groups;
+    
+    if(detect_temp_flag)
+      *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);
+    
+    if(exp(diff/temp) > uniform_rand()){
+      *accepts += 1;
+      if(i > SKIP_ACCEPTS) *total_accepts +=1;
+      return true;
+    }
+    else{
+      *rejects += 1;
+      return false;
+    }
   }
 }
 
@@ -441,7 +453,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	restore_flag = true;
     }
 
-    if(!accept(*ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
+    if(!accept(*diam, current_diam, *ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
 	       detect_temp_flag, i, max_diff_energy, total_accepts, &accepts, &rejects)){
       restore_flag = true;
     }
