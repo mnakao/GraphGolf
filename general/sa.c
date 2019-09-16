@@ -412,16 +412,17 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	     const int added_centers, const int k_opt, const int based_nodes, long long *total_accepts, const int algo)
 {
   long long i, accepts = 0, rejects = 0;
-  int best_edge[lines][2], kind_opt;
+  int best_edge[lines][2], tmp_edge[lines][2], kind_opt;
   int restored_adj_value[groups*4], restored_adj_idx_y[groups*4], restored_adj_idx_x[groups*4];
   int restored_edge[groups*4], restored_line[groups*2];
   bool restore_flag = false;
   copy_edge((int *)best_edge, (int *)edge, lines*2);
+  copy_edge((int *)tmp_edge,  (int *)edge, lines*2);
 
   // Create adj matrix
-  int (*adj)[degree] = malloc(sizeof(int)*nodes*degree); // int adj[nodes][degree];
-  create_adj(nodes, lines, degree, (const int (*)[2])edge, adj);
-  evaluation(nodes, based_nodes, groups, lines, degree, (int *)adj, diam, ASPL, added_centers, algo);
+  int *adj = malloc(sizeof(int)*nodes*degree); // int adj[nodes][degree];
+  create_adj(nodes, lines, degree, tmp_edge, (int (*)[degree])adj);
+  evaluation(nodes, based_nodes, groups, lines, degree, adj, diam, ASPL, added_centers, algo);
   
   double current_ASPL = *ASPL;
   double best_ASPL    = *ASPL;
@@ -432,6 +433,8 @@ long long sa(const int nodes, const int lines, const int degree, const int group
     print_result_header();
 
   for(i=0;i<ncalcs;i++){
+    double tmp_ASPL;
+    int tmp_diam;
     if(i % print_interval == 0 && !detect_temp_flag){
       print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, 
 		    current_diam, best_diam, low_diam, accepts, rejects);
@@ -441,28 +444,28 @@ long long sa(const int nodes, const int lines, const int degree, const int group
     
     while(1){
       if(restore_flag){
-	restore_adj(degree, groups, (int *)adj, kind_opt, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x);
-	restore_edge(groups, kind_opt, (int *)edge, restored_line, restored_edge);
+	restore_adj(degree, groups, adj, kind_opt, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x);
+	restore_edge(groups, kind_opt, (int *)tmp_edge, restored_line, restored_edge);
       }
-      exchange_edge(nodes, lines, groups, degree, based_nodes, edge, added_centers, (int *)adj, &kind_opt,
+      exchange_edge(nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, adj, &kind_opt,
 		    restored_edge, restored_line, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, (int)i);
-      assert(check(nodes, based_nodes, lines, degree, groups, edge, added_centers, (int *)adj, (int)i));
-      if(evaluation(nodes, based_nodes, groups, lines, degree, (int *)adj, diam, ASPL, added_centers, algo))
+      assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, adj, (int)i));
+      if(evaluation(nodes, based_nodes, groups, lines, degree, adj, &tmp_diam, &tmp_ASPL, added_centers, algo))
 	break;
       else
 	restore_flag = true;
     }
 
-    if(!accept(*diam, current_diam, *ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
+    if(!accept(tmp_diam, current_diam, tmp_ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
 	       detect_temp_flag, i, max_diff_energy, total_accepts, &accepts, &rejects)){
       restore_flag = true;
     }
     else{
       restore_flag = false;
-      current_ASPL = *ASPL;
-      current_diam = *diam;
+      current_ASPL = tmp_ASPL;
+      current_diam = tmp_diam;
       if((best_diam > current_diam) || (best_diam == current_diam && best_ASPL > current_ASPL)){
-	copy_edge((int *)best_edge, (int *)edge, lines*2);
+	copy_edge((int *)best_edge, (int *)tmp_edge, lines*2);
 	best_ASPL = current_ASPL;
 	best_diam = current_diam;
       }
