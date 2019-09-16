@@ -74,11 +74,11 @@ extern int order(int nodes, const int a, const int b, const int added_centers);
 extern long long sa(const int nodes, const int lines, const int degree, const int groups,
 		    double temp, const long long ncalcs, const double cooling_rate, const int low_diam, const double low_ASPL,
 		    const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy, int edge[lines][2], int *diameter, double *ASPL,
-		    const int cooling_cyclie, const int added_centers, const int based_nodes, long long *num_accepts, const int algo);
+		    const int cooling_cyclie, const int added_centers, const int k_opt, const int based_nodes, long long *num_accepts, const int algo);
 extern void check_current_edge(const int nodes, const int degree, const int lines, const int groups,
 			       const int based_nodes, int edge[lines][2], const double low_ASPL, const int added_centers, const int algo);
 extern double estimate_elapse_time(const int nodes, const int based_nodes, const int lines, const int degree,
-				   const int groups, int edge[lines][2], const int add_degree_to_center, const int algo);
+				   const int groups, int edge[lines][2], const int add_degree_to_center, const int k_opt, const int algo);
 extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes, const int based_lines, const int groups,
 			const int start_line, const int add_centers, int* restrict adj,  int *kind_opt, int* restrict restored_adj_edge, int* restrict restored_adj_line,
 			int* restrict restored_adj_val, int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const int ii);
@@ -96,7 +96,7 @@ extern void timer_start(const int n);
 extern void timer_stop(const int n);
 extern double timer_read(const int n);
 extern bool evaluation(const int nodes, const int based_nodes, const int groups, const int lines, const int degree, 
-		       int adj[nodes][degree], int *diameter, double *ASPL, const int added_centers, const int algo);
+		       int* restrict adj, int* restrict diameter, double* restrict ASPL, const int added_centers, const int algo);
 extern int distance(int nodes, const int a, const int b, const int added_centers);
 extern bool check(const int nodes, const int based_nodes, const int lines, const int degree, const int groups,
 		  int edge[lines][2], const int add_degree_to_center, int* adj, const int ii);

@@ -409,7 +409,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	     const long long ncalcs, const double cooling_rate,  const int low_diam,  const double low_ASPL, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
 	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle,
-	     const int added_centers, const int based_nodes, long long *total_accepts, const int algo)
+	     const int added_centers, const int k_opt, const int based_nodes, long long *total_accepts, const int algo)
 {
   long long i, accepts = 0, rejects = 0;
   int best_edge[lines][2], kind_opt;
@@ -421,7 +421,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
   // Create adj matrix
   int (*adj)[degree] = malloc(sizeof(int)*nodes*degree); // int adj[nodes][degree];
   create_adj(nodes, lines, degree, (const int (*)[2])edge, adj);
-  evaluation(nodes, based_nodes, groups, lines, degree, adj, diam, ASPL, added_centers, algo);
+  evaluation(nodes, based_nodes, groups, lines, degree, (int *)adj, diam, ASPL, added_centers, algo);
   
   double current_ASPL = *ASPL;
   double best_ASPL    = *ASPL;
@@ -447,7 +447,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       exchange_edge(nodes, lines, groups, degree, based_nodes, edge, added_centers, (int *)adj, &kind_opt,
 		    restored_edge, restored_line, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, (int)i);
       assert(check(nodes, based_nodes, lines, degree, groups, edge, added_centers, (int *)adj, (int)i));
-      if(evaluation(nodes, based_nodes, groups, lines, degree, adj, diam, ASPL, added_centers, algo))
+      if(evaluation(nodes, based_nodes, groups, lines, degree, (int *)adj, diam, ASPL, added_centers, algo))
 	break;
       else
 	restore_flag = true;
@@ -491,7 +491,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 
 #define ESTIMATED_TIMES 5
 double estimate_elapse_time(const int nodes, const int based_nodes, const int lines, const int degree,
-			    const int groups, int edge[lines][2], const int added_centers, const int algo)
+			    const int groups, int edge[lines][2], const int added_centers, const int k_opt, const int algo)
 {
   int diam;    // Not use
   double ASPL; // Not use
@@ -509,7 +509,7 @@ double estimate_elapse_time(const int nodes, const int based_nodes, const int li
     exchange_edge(nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, (int *)adj,
 		  &kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, (int)i);
     assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, (int *)adj, (int)i));
-    evaluation(nodes, based_nodes, groups, lines, degree, adj, &diam, &ASPL, added_centers, algo);
+    evaluation(nodes, based_nodes, groups, lines, degree, (int *)adj, &diam, &ASPL, added_centers, algo);
   }  
   timer_stop(TIMER_ESTIMATED);
   
@@ -528,7 +528,7 @@ void check_current_edge(const int nodes, const int degree, const int lines, cons
   int (*adj)[degree] = malloc(sizeof(int)*nodes*degree); // int adj[nodes][degree];
 
   create_adj(nodes, lines, degree, (const int (*)[2])edge, adj);
-  if(! evaluation(nodes, based_nodes, groups, lines, degree, adj, &diam, &ASPL, added_centers, algo))
+  if(! evaluation(nodes, based_nodes, groups, lines, degree, (int *)adj, &diam, &ASPL, added_centers, algo))
     ERROR("The input file has a node which is never reached by another node.\n");
 
   if(ASPL == low_ASPL)

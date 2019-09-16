@@ -53,7 +53,7 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
 #endif
 
 static bool bfs(const int nodes, int based_nodes, const int groups, const int lines, const int degree,
-		int adj[nodes][degree], int *diameter, double *ASPL, const int added_centers)
+		const int* restrict adj, int* restrict diameter, double* restrict ASPL, const int added_centers)
 {
   char *bitmap  = malloc(sizeof(char) * nodes);
   int *frontier = malloc(sizeof(int)  * nodes);
@@ -74,7 +74,7 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
 
     while(1){
       num_frontier = top_down_step(level++, nodes, num_frontier, degree,
-				   (int *)adj, frontier, next, distance, bitmap);
+				   adj, frontier, next, distance, bitmap);
       if(num_frontier == 0) break;
   
       int *tmp = frontier;
@@ -110,7 +110,7 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
       
       while(1){
 	num_frontier = top_down_step(level++, nodes, num_frontier, degree,
-				     (int *)adj, frontier, next, distance, bitmap);
+				     adj, frontier, next, distance, bitmap);
 	if(num_frontier == 0) break;
 	
 	int *tmp = frontier;
@@ -149,8 +149,8 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
 
 
 static bool matrix_op(const int nodes, const int based_nodes, const int degree,
-		      const int* restrict adj, const int groups, int *diameter,
-		      double *ASPL, const int added_centers)
+		      const int* restrict adj, const int groups, int* restrict diameter,
+		      double* restrict ASPL, const int added_centers)
 {
   unsigned int elements = (based_nodes+(UINT64_BITS-1))/UINT64_BITS;
   unsigned int chunk    = (elements+(procs-1))/procs;
@@ -259,8 +259,8 @@ static bool matrix_op(const int nodes, const int based_nodes, const int degree,
 }
 
 static bool matrix_op_mem_saving(const int nodes, const int based_nodes, const int degree,
-				 const int* restrict adj, const int groups, int *diameter,
-				 double *ASPL, const int added_centers)
+				 const int* restrict adj, const int groups, int* restrict diameter,
+				 double* restrict ASPL, const int added_centers)
 {
   unsigned int elements = (based_nodes+(UINT64_BITS-1))/UINT64_BITS;
   size_t s    = nodes*CHUNK*sizeof(uint64_t);
@@ -368,7 +368,7 @@ static bool matrix_op_mem_saving(const int nodes, const int based_nodes, const i
 }
 
 bool evaluation(const int nodes, int based_nodes, const int groups, const int lines, const int degree,
-		int adj[nodes][degree], int *diameter, double *ASPL, const int added_centers, const int algo)
+		int* restrict adj, int* restrict diameter, double* restrict ASPL, const int added_centers, const int algo)
 {
   timer_start(TIMER_APSP);
   
@@ -376,9 +376,9 @@ bool evaluation(const int nodes, int based_nodes, const int groups, const int li
   if(algo == BFS)
     ret = bfs(nodes, based_nodes, groups, lines, degree, adj, diameter, ASPL, added_centers);
   else if(algo == MATRIX_OP)
-    ret = matrix_op(nodes, based_nodes, degree, (int *)adj, groups, diameter, ASPL, added_centers);
+    ret = matrix_op(nodes, based_nodes, degree, adj, groups, diameter, ASPL, added_centers);
   else // (algo == MATRIX_OP_MEM_SAVING)
-    ret = matrix_op_mem_saving(nodes, based_nodes, degree, (int *)adj, groups, diameter, ASPL, added_centers);
+    ret = matrix_op_mem_saving(nodes, based_nodes, degree, adj, groups, diameter, ASPL, added_centers);
   
   timer_stop(TIMER_APSP);
   
