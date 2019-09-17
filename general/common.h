@@ -31,6 +31,9 @@ int rank, procs, threads;
 #define D_1G_OPT 1
 #define D_2G_OPT 2
 #define NOT_USED -1
+#define R_DYNAMIC -1
+#define ENABLE_CHECK  true
+#define DISABLE_CHECK false
 
 #define NUM_TIMERS          4
 #define TIMER_SA            0
@@ -81,7 +84,7 @@ extern double estimate_elapse_time(const int nodes, const int based_nodes, const
 				   const int groups, int edge[lines][2], const int add_degree_to_center, const int k_opt, const int algo);
 extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes, const int based_lines, const int groups,
 			const int start_line, const int add_centers, int* restrict adj,  int *kind_opt, int* restrict restored_adj_edge, int* restrict restored_adj_line,
-			int* restrict restored_adj_val, int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const int ii);
+			int* restrict restored_adj_val, int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const bool enable_check, const int ii);
 extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);
 extern bool check_loop(const int lines, int (*edge)[2]);
 extern bool check_duplicate_edge(const int lines, int (*edge)[2]);

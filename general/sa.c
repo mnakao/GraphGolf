@@ -219,22 +219,24 @@ bool has_duplicated_vertex(const int e00, const int e01, const int e10, const in
   return (e00 == e10 || e01 == e11 || e00 == e11 || e01 == e10);
 }
 
-static bool exchange_edge_2opt(const int _line[2], const int nodes, const int lines, const int groups, const int degree,
-			       const int based_nodes, int edge[lines][2], const int added_centers, int* restrict adj, int *kind_opt,
-			       int* restrict restored_edge, int* restrict restored_line, int* restrict restored_adj_value,
-			       int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const int ii)
+static bool exchange_edge_2opt(const int _line0, const int _line1, const int nodes, const int lines, const int groups,
+			       const int degree, const int based_nodes, int edge[lines][2], const int added_centers,
+			       int* restrict adj, int *kind_opt, int* restrict restored_edge, int* restrict restored_line,
+			       int* restrict restored_adj_value, int* restrict restored_adj_idx_y,
+			       int* restrict restored_adj_idx_x, const int rr, const bool enable_check, const int ii)
 {
   int line[groups*2], tmp_edge[groups*2][2];
   int based_lines = lines / groups;
   
-  line[0] = _line[0];
-  line[1] = _line[1];
+  line[0] = _line0;
+  line[1] = _line1;
   if(has_duplicated_vertex(edge[line[0]][0], edge[line[0]][1], edge[line[1]][0], edge[line[1]][1])){
     return false;
   }
   else if((line[0] - line[1]) % based_lines == 0){
-    return edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, line[0], added_centers, adj, kind_opt,
-		       restored_edge, restored_line, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, ii);
+    return edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, line[0], added_centers,
+		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+		       restored_adj_idx_x, enable_check, ii);
   }
 
   bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1], added_centers) == (nodes-added_centers)/2);
@@ -242,8 +244,9 @@ static bool exchange_edge_2opt(const int _line[2], const int nodes, const int li
   bool diameter_flag = ((flag0 || flag1) && groups%2 == 0);
 
   if(diameter_flag)
-    return edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, line[0], added_centers, adj, kind_opt,
-		       restored_edge, restored_line, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, ii);
+    return edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, line[0], added_centers,
+		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+		       restored_adj_idx_x, enable_check, ii);
 
   // 2g-opt
   for(int i=1;i<groups;i++){
@@ -256,8 +259,8 @@ static bool exchange_edge_2opt(const int _line[2], const int nodes, const int li
   for(int i=0;i<groups*2;i++)
     for(int j=0;j<2;j++)
       tmp_edge[i][j] = edge[line[i]][j];
-  
-  int r = getRandom(2);
+
+  int r = (rr == R_DYNAMIC)? getRandom(2): rr;
   if(r == 0){
     for(int i=0;i<groups;i++)
       swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][1]);
@@ -266,11 +269,13 @@ static bool exchange_edge_2opt(const int _line[2], const int nodes, const int li
     for(int i=0;i<groups;i++)
       swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][0]);
   }
-  
-  assert(check_loop(groups*2, tmp_edge));
-  if(!check_duplicate_edge(groups*2, tmp_edge)) return false;
-  if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge, groups, nodes, added_centers))
-    return false;
+
+  if(enable_check){
+    assert(check_loop(groups*2, tmp_edge));
+    if(!check_duplicate_edge(groups*2, tmp_edge)) return false;
+    if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge, groups, nodes, added_centers))
+      return false;
+  }
   
   for(int i=0;i<groups*2;i++)
     if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)
@@ -348,10 +353,106 @@ static bool exchange_edge_2opt(const int _line[2], const int nodes, const int li
 }
 
 static bool exchange_edge_3opt(const int n, const int _line[3], const int nodes, const int lines, const int groups, const int degree,
-                               const int based_nodes, int edge[lines][2], const int added_centers, int* restrict adj, int *kind_opt,
+                               const int based_nodes, int tmp_edge[lines][2], const int added_centers, int* restrict adj, int *kind_opt,
                                int* restrict restored_edge, int* restrict restored_line, int* restrict restored_adj_value,
                                int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const int ii)
 {
+  bool flag;
+  if(n == 0){
+    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 1, DISABLE_CHECK, ii);
+  }
+  else if(n == 1){
+    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+                              adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+                              restored_adj_idx_x, 0, DISABLE_CHECK, ii);
+  }
+  else if(n == 2){
+    flag = exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 1, DISABLE_CHECK, ii);
+  }
+  else if(n == 3){
+    flag = exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 0, DISABLE_CHECK, ii);
+  }
+  else if(n == 4){
+    flag = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 1, DISABLE_CHECK, ii);
+  }
+  else if(n == 5){
+    flag = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 0, DISABLE_CHECK, ii);
+  }
+  else if(n == 6){
+    flag  = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 4
+    flag |= exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 3
+  }
+  else if(n == 7){
+    flag  = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
+    flag |= exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 4
+  }
+  else if(n == 8){
+    flag  = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
+    flag |= exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 5
+  }
+  else if(n == 9){
+    flag  = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 5
+    flag |= exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 2
+  }
+  else if(n == 10){
+    flag  = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 0
+    flag |= exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 2
+  }
+  else if(n == 11){
+    flag  = exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 2
+    flag |= exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
+  }
+  else if(n == 12){
+    flag  = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 5
+    flag |= exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
+  }
+  else if(n == 13){
+    flag  = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 0
+    flag |= exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 3
+  }
+  
   return true;
 }
 
@@ -447,8 +548,9 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	    _line[1] = getRandom(lines);
 	    if(_line[0] != _line[1]) break;
 	  } // end while inner
-	  if(exchange_edge_2opt(_line, nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, adj, &kind_opt,
-				restored_edge, restored_line, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, (int)i))
+	  if(exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+				adj,&kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+				restored_adj_idx_x, R_DYNAMIC, ENABLE_CHECK, (int)i))
 	    break;
 	} // end while outer
 	assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, adj, (int)i));
@@ -476,8 +578,8 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	    restore_flag = true;
 	}
 	else{
-	  _tmp_diam[n]=INT_MAX;
-	  _tmp_ASPL[n]=DBL_MAX;
+	  _tmp_diam[n] = INT_MAX;
+	  _tmp_ASPL[n] = DBL_MAX;
 	}
       }
 
@@ -538,14 +640,14 @@ double estimate_elapse_time(const int nodes, const int based_nodes, const int li
 {
   int diam;    // Not use
   double ASPL; // Not use
-  int (*adj)[degree] = malloc(sizeof(int)*nodes*degree); // int adj[nodes][degree];
+  int *adj = malloc(sizeof(int)*nodes*degree); // int adj[nodes][degree];
   int (*tmp_edge)[2] = malloc(sizeof(int)*lines*2);      // int tmp_edge[lines][2];
   int kind_opt;
   int restored_adj_value[groups*4], restored_adj_idx_y[groups*4], restored_adj_idx_x[groups*4];
   int restored_edge[groups*4], restored_line[groups*2];
 
   copy_edge((int *)tmp_edge, (int *)edge, lines*2);
-  create_adj(nodes, lines, degree, (const int (*)[2])tmp_edge, adj);
+  create_adj(nodes, lines, degree, (const int (*)[2])tmp_edge, (int (*)[degree])adj);
   
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
@@ -556,12 +658,13 @@ double estimate_elapse_time(const int nodes, const int based_nodes, const int li
 	_line[1] = getRandom(lines);
 	if(_line[0] != _line[1]) break;
       }
-      if(exchange_edge_2opt(_line, nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, (int *)adj,
-			    &kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, (int)i))
+      if(exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			    adj, &kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			    restored_adj_idx_x, R_DYNAMIC, ENABLE_CHECK, (int)i))
 	break;
     }
-    assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, (int *)adj, (int)i));
-    evaluation(nodes, based_nodes, groups, lines, degree, (int *)adj, &diam, &ASPL, added_centers, algo);
+    assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, adj, (int)i));
+    evaluation(nodes, based_nodes, groups, lines, degree, adj, &diam, &ASPL, added_centers, algo);
   }  
   timer_stop(TIMER_ESTIMATED);
   

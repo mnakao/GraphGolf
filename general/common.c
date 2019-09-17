@@ -174,7 +174,7 @@ bool check_duplicate_current_edge(const int lines, const int groups, const int l
 bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes, const int based_lines, 
 		 const int groups, const int start_line, const int added_centers, int* restrict adj, int *kind_opt,
 		 int* restrict restored_edge, int* restrict restored_line, int* restrict restored_adj_value,
-		 int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const int ii)
+		 int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const bool enable_check, const int ii)
 {
   if(groups == 1) // assert ?
     return true;
@@ -221,10 +221,12 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     if(diff != (tmp_edge[0][0] - tmp_edge[0][1])) break;
   }
 
-  assert(check_loop(groups, tmp_edge));
-  assert(check_duplicate_edge(groups, tmp_edge));
-  if(!check_duplicate_current_edge(lines, groups, line, edge, tmp_edge, groups, nodes, added_centers))
-    return false;
+  if(enable_check){
+    assert(check_loop(groups, tmp_edge));
+    assert(check_duplicate_edge(groups, tmp_edge));
+    if(!check_duplicate_current_edge(lines, groups, line, edge, tmp_edge, groups, nodes, added_centers))
+      return false;
+  }
 
   for(int i=0;i<groups;i++)
     if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)

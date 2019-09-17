@@ -191,7 +191,7 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   while(1){
     int start_line = getRandom(lines);
     edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, 0, (int *)adj,
-		&kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, NOT_USED);
+		&kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, ENABLE_CHECK, NOT_USED);
     if(evaluation(nodes, based_nodes, groups, lines, degree, (int *)adj, &diam, &ASPL, 0, algo))
       break;
     // NOT_RESTORE
