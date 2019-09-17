@@ -53,7 +53,7 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
 #endif
 
 static bool bfs(const int nodes, int based_nodes, const int groups, const int lines, const int degree,
-		const int* restrict adj, int* restrict diameter, double* restrict ASPL, const int added_centers)
+		const int* restrict adj, int* restrict diam, double* restrict ASPL, const int added_centers)
 {
   char *bitmap  = malloc(sizeof(char) * nodes);
   int *frontier = malloc(sizeof(int)  * nodes);
@@ -61,7 +61,7 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
   int *next     = malloc(sizeof(int)  * nodes);
   bool reached  = true;
   double sum    = 0.0;
-  *diameter     = 0;
+  *diam         = 0;
 
   for(int s=rank;s<based_nodes;s+=procs){
     int num_frontier = 1, level = 0;
@@ -82,7 +82,7 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
       next     = tmp;
     }
 
-    *diameter = MAX(*diameter, level-1);
+    *diam = MAX(*diam, level-1);
        
     for(int i=s+1;i<nodes;i++){
       if(bitmap[i] == NOT_VISITED)
@@ -118,7 +118,7 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
 	next     = tmp;
       }
     
-      *diameter = MAX(*diameter, level-1);
+      *diam = MAX(*diam, level-1);
       
       for(int i=s+1;i<nodes;i++){
 	if(bitmap[i] == NOT_VISITED)
@@ -135,21 +135,23 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
   free(next);
 
   MPI_Allreduce(MPI_IN_PLACE, &reached, 1, MPI_C_BOOL, MPI_LAND, MPI_COMM_WORLD);
-  if(!reached){
+  if(reached){
+    MPI_Allreduce(MPI_IN_PLACE, diam, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    *ASPL = sum / ((((double)nodes-1)*nodes)/2);
+  }
+  else{
+    *diam = INT_MAX;
+    *ASPL = DBL_MAX;
     timer_stop(TIMER_APSP);
-    return false;
   }
 
-  MPI_Allreduce(MPI_IN_PLACE, diameter, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-  MPI_Allreduce(MPI_IN_PLACE, &sum,  1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  *ASPL = sum / ((((double)nodes-1)*nodes)/2);
-
-  return true;
+  return reached;
 }
 
 
 static bool matrix_op(const int nodes, const int based_nodes, const int degree,
-		      const int* restrict adj, const int groups, int* restrict diameter,
+		      const int* restrict adj, const int groups, int* restrict diam,
 		      double* restrict ASPL, const int added_centers)
 {
   unsigned int elements = (based_nodes+(UINT64_BITS-1))/UINT64_BITS;
@@ -160,7 +162,7 @@ static bool matrix_op(const int nodes, const int based_nodes, const int degree,
   int parsize = (elements+(chunk-1))/chunk;
   double sum  = 0.0;
 
-  *diameter = 1;
+  *diam = 1;
   for(int t=rank;t<parsize;t+=procs){
     uint64_t kk, l;
     clear_buffers(A, B, nodes*chunk);
@@ -197,7 +199,7 @@ static bool matrix_op(const int nodes, const int based_nodes, const int degree,
       sum += ((double)based_nodes*groups * l - num1) * groups;
       sum += ((double)added_centers      * l - num2) * groups * 2;
     }
-    *diameter = MAX(*diameter, kk+1);
+    *diam = MAX(*diam, kk+1);
   }
 
   if(added_centers){
@@ -238,28 +240,30 @@ static bool matrix_op(const int nodes, const int based_nodes, const int degree,
 	
 	sum += ((double)added_centers * l - num);
       }
-      *diameter = MAX(*diameter, kk+1);
+      *diam = MAX(*diam, kk+1);
     }
   }
 
-  MPI_Allreduce(MPI_IN_PLACE, diameter, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, diam, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   sum += (double)nodes * (nodes - 1);
 
-  if(*diameter > nodes){
-    //     PRINT_R0("This graph is not connected graph.\n");
-    return false;
-  }
-
-  *ASPL = sum / (((double)nodes-1)*nodes);
   free(A);
   free(B);
 
-  return true;
+  if(*diam < nodes){
+    *ASPL = sum / (((double)nodes-1)*nodes);
+    return true;
+  }
+  else{
+    *diam = INT_MAX;
+    *ASPL = DBL_MAX;
+    return false;
+  }
 }
 
 static bool matrix_op_mem_saving(const int nodes, const int based_nodes, const int degree,
-				 const int* restrict adj, const int groups, int* restrict diameter,
+				 const int* restrict adj, const int groups, int* restrict diam,
 				 double* restrict ASPL, const int added_centers)
 {
   unsigned int elements = (based_nodes+(UINT64_BITS-1))/UINT64_BITS;
@@ -269,7 +273,7 @@ static bool matrix_op_mem_saving(const int nodes, const int based_nodes, const i
   int parsize = (elements+(CHUNK-1))/CHUNK;
   double sum  = 0.0;
 
-  *diameter = 1;
+  *diam = 1;
   for(int t=rank;t<parsize;t+=procs){
     unsigned int kk, l;
     clear_buffers(A, B, nodes*CHUNK);
@@ -306,7 +310,7 @@ static bool matrix_op_mem_saving(const int nodes, const int based_nodes, const i
       sum += ((double)based_nodes*groups * l - num1) * groups;
       sum += ((double)added_centers      * l - num2) * groups * 2;
     }
-    *diameter = MAX(*diameter, kk+1);
+    *diam = MAX(*diam, kk+1);
   }
 
   if(added_centers){
@@ -346,39 +350,40 @@ static bool matrix_op_mem_saving(const int nodes, const int based_nodes, const i
 	
 	sum += ((double)added_centers * l - num);
       }
-      *diameter = MAX(*diameter, kk+1);
+      *diam = MAX(*diam, kk+1);
     }
   }
 
-  MPI_Allreduce(MPI_IN_PLACE, diameter, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, diam, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   sum += (double)nodes * (nodes - 1);
 
-  if(*diameter > nodes){
-    //     PRINT_R0("This graph is not connected graph.\n");
-    return false;
-  }
-
-  *ASPL = sum / (((double)nodes-1)*nodes);
-
   free(A);
   free(B);
-
-  return true;
+  
+  if(*diam < nodes){
+    *ASPL = sum / (((double)nodes-1)*nodes);
+    return true;
+  }
+  else{
+    *diam = INT_MAX;
+    *ASPL = DBL_MAX;
+    return false;
+  }
 }
 
 bool evaluation(const int nodes, int based_nodes, const int groups, const int lines, const int degree,
-		int* restrict adj, int* restrict diameter, double* restrict ASPL, const int added_centers, const int algo)
+		int* restrict adj, int* restrict diam, double* restrict ASPL, const int added_centers, const int algo)
 {
   timer_start(TIMER_APSP);
   
   bool ret;
   if(algo == BFS)
-    ret = bfs(nodes, based_nodes, groups, lines, degree, adj, diameter, ASPL, added_centers);
+    ret = bfs(nodes, based_nodes, groups, lines, degree, adj, diam, ASPL, added_centers);
   else if(algo == MATRIX_OP)
-    ret = matrix_op(nodes, based_nodes, degree, adj, groups, diameter, ASPL, added_centers);
+    ret = matrix_op(nodes, based_nodes, degree, adj, groups, diam, ASPL, added_centers);
   else // (algo == MATRIX_OP_MEM_SAVING)
-    ret = matrix_op_mem_saving(nodes, based_nodes, degree, adj, groups, diameter, ASPL, added_centers);
+    ret = matrix_op_mem_saving(nodes, based_nodes, degree, adj, groups, diam, ASPL, added_centers);
   
   timer_stop(TIMER_APSP);
   

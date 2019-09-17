@@ -70,6 +70,7 @@ test: gg
           ./gg -f data/n32d4.random.edges   -s $$s -n 1000 -g 16;\
           ./gg -f data/n16d4.random.edges   -s $$s -n 1000 -g 32;\
           ./gg -f data/n8d4.random.edges    -s $$s -n 1000 -g 64;\
-          ./gg -f data/n114d29.random.edges -s $$s -n 1000 -v 16 -g 15;\
+          ./gg -f data/n114d29.random.edges -s $$s -n 100 -v 16 -g 15;\
 	done >> result.txt
-	diff result.txt data/result.org | grep -v sec | sort | uniq
+	diff result.txt data/result.txt | grep -v sec | grep -v 2019 | grep -Ev "[0-9]c" | sort | uniq
+
