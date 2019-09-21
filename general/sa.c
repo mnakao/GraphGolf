@@ -115,11 +115,6 @@ bool check(const int nodes, const int based_nodes, const int lines, const int de
     }
   }
 
-  if(!check_duplicate_edge(lines, edge)){
-    PRINT_R0("check 3\n");
-    return false;
-  }
-
 #pragma omp parallel for
   for(int i=0;i<based_lines;i++){
     if(order(nodes, edge[i][0], edge[i][1], added_centers) != MIDDLE)
@@ -272,8 +267,7 @@ static bool exchange_edge_2opt(const int _line0, const int _line1, const int nod
 
   if(enable_check){
     assert(check_loop(groups*2, tmp_edge));
-    if(!check_duplicate_edge(groups*2, tmp_edge)) return false;
-    if(!check_duplicate_current_edge(lines, groups*2, line, edge, tmp_edge, groups, nodes, added_centers))
+    if(!check_duplicate_tmp_edge(2, groups, tmp_edge))
       return false;
   }
   
@@ -451,6 +445,9 @@ static bool exchange_edge_3opt(const int n, const int _line[3], const int nodes,
     flag |= exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 3
+  }
+  else{
+    ERROR("Unexpected Error !!\n");
   }
   
   return true;

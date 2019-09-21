@@ -225,9 +225,6 @@ static void verfy_graph(const int nodes, const int based_nodes, const int degree
   if(!check_loop(lines, edge))
     ERROR("NG\nThe same node in the edge.\n");
 
-  if(!check_duplicate_edge(lines, edge))
-    ERROR("NG\nThe same node conbination in the edge.\n");
-
   if(!check(nodes, based_nodes, lines, degree, groups, edge, added_centers, NULL, 0))
     ERROR("NG\nNot symmetric graph.\n");
   

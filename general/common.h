@@ -87,9 +87,9 @@ extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const 
 			int* restrict restored_adj_val, int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const bool enable_check, const int ii);
 extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);
 extern bool check_loop(const int lines, int (*edge)[2]);
-extern bool check_duplicate_edge(const int lines, int (*edge)[2]);
-extern bool check_duplicate_current_edge(const int lines, const int groups, const int line[groups], int (*edge)[2],
-					 int tmp_edge[groups][2], const int original_groups, int nodes, const int add_centers);
+extern bool check_duplicate_tmp_edge(const int k_opt, const int lines, int (*edge)[2]);
+//extern bool check_duplicate_current_edge(const int lines, const int groups, const int line[groups], int (*edge)[2],
+//					 int tmp_edge[groups][2], const int original_groups, int nodes, const int add_centers, const int k_opt);
 extern void create_adj(const int nodes, const int lines, const int degree,
                              const int edge[lines][2], int adj[nodes][degree]);
 extern int getRandom(const int max);

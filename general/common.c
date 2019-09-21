@@ -93,83 +93,72 @@ bool check_loop(const int lines, int edge[lines][2])
 
 #pragma omp parallel for
   for(int i=0;i<lines;i++)
-    if(edge[i][0] == edge[i][1])
+    if(edge[i][0] == edge[i][1]){
       flag = false;
+      break;
+    }
 
   timer_stop(TIMER_CHECK);
   return flag;
 }
 
-bool check_duplicate_edge(const int lines, int edge[lines][2])
+bool check_duplicate_tmp_edge(const int k_opt, const int groups, int tmp_edge[groups*k_opt][2])
 {
   timer_start(TIMER_CHECK);
   bool flag = true;
 
-  for(int i=0;i<2;i++)
-    for(int j=2;j<lines;j++)
-      if(has_duplicated_edge(edge[i][0], edge[i][1], edge[j][0], edge[j][1]))
+  for(int i=0;i<k_opt;i++){
+    int tmp[2] = {tmp_edge[i][0], tmp_edge[i][1]};
+    for(int j=k_opt;j<groups*k_opt;j++)
+      if(has_duplicated_edge(tmp[0], tmp[1], tmp_edge[j][0], tmp_edge[j][1])){
         flag = false;
-  
+	goto end;
+      }
+  }
+
+ end:
   timer_stop(TIMER_CHECK);
   return flag;
 }
 
-bool check_duplicate_current_edge(const int lines, const int groups, const int line[groups],
-                                  int (*edge)[2], int tmp_edge[groups][2], const int original_groups,
-				  const int nodes, const int added_centers)
+#if 0
+bool check_duplicate_current_edge(const int lines, const int tmp_lines, const int line[tmp_lines],
+                                  int (*edge)[2], int tmp_edge[tmp_lines][2], const int groups,
+				  const int nodes, const int added_centers, const int g_opt)
 {
   timer_start(TIMER_CHECK);
-  int based_lines = lines/original_groups;
-  int opt = (groups == original_groups)? 1 : 2;  // 1g-opt : 2g-opt
   bool flag = true;
 
-  if(original_groups%2 == 1 && opt == 1){
-    int tmp = line[0]%based_lines;
-
+  if(g_opt == 1){
+    int tmp = line[0];
 #pragma omp parallel for
-    for(int i=rank;i<based_lines;i+=procs)
+    for(int i=rank;i<lines;i+=procs)
       if(i != tmp)
-	for(int j=0;j<groups;j++)
-	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+	for(int j=0;j<tmp_lines;j++)
+	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
 	    flag = false;
+	    goto end;
+	  }
   }
-  else if(opt == 2){
-    int tmp0 = line[0]%based_lines;
-    int tmp1 = line[1]%based_lines;
-
+  else{
+    int tmp0 = line[0];
+    int tmp1 = line[1];
 #pragma omp parallel for
-    for(int i=rank;i<based_lines;i+=procs)
+    for(int i=rank;i<lines;i+=procs)
       if(i != tmp0 && i != tmp1)
-	for(int j=0;j<groups;j++)
-	  if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
-	    flag = false;
+	for(int j=0;j<tmp_lines;j++)
+          if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
+            flag = false;
+	    goto end;
+	  }
   }
-  else{ 
-    assert(original_groups%2 == 0 && opt == 1);
-    int tmp = line[0]%based_lines;
-    if(distance(nodes, tmp_edge[0][0], tmp_edge[0][1], added_centers) != (nodes-added_centers)/2){
 
-#pragma omp parallel for
-      for(int i=rank;i<based_lines;i+=procs)
-	if(i != tmp)
-	  for(int j=0;j<groups;j++)
-	    if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
-	      flag = false;
-    }
-    else{
-#pragma omp parallel for
-      for(int i=rank;i<lines;i+=procs)
-        if(i%based_lines != tmp)
-          for(int j=0;j<groups;j++)
-            if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
-	      flag = false;
-    }
-  }
-  
+ end:
   MPI_Allreduce(MPI_IN_PLACE, &flag, 1,  MPI_C_BOOL, MPI_LAND, MPI_COMM_WORLD);
   timer_stop(TIMER_CHECK);
   return flag;
 }
+#endif
 
 bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes, const int based_lines, 
 		 const int groups, const int start_line, const int added_centers, int* restrict adj, int *kind_opt,
@@ -224,8 +213,6 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
   if(enable_check){
     assert(check_loop(groups, tmp_edge));
     assert(check_duplicate_edge(groups, tmp_edge));
-    if(!check_duplicate_current_edge(lines, groups, line, edge, tmp_edge, groups, nodes, added_centers))
-      return false;
   }
 
   for(int i=0;i<groups;i++)
