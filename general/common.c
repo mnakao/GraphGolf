@@ -102,14 +102,14 @@ bool check_loop(const int lines, int edge[lines][2])
   return flag;
 }
 
-bool check_duplicate_tmp_edge(const int k_opt, const int groups, int tmp_edge[groups*k_opt][2])
+bool check_duplicate_tmp_edge(const int g_opt, const int groups, int tmp_edge[groups*g_opt][2])
 {
   timer_start(TIMER_CHECK);
   bool flag = true;
 
-  for(int i=0;i<k_opt;i++){
+  for(int i=0;i<g_opt;i++){
     int tmp[2] = {tmp_edge[i][0], tmp_edge[i][1]};
-    for(int j=k_opt;j<groups*k_opt;j++)
+    for(int j=g_opt;j<groups*g_opt;j++)
       if(has_duplicated_edge(tmp[0], tmp[1], tmp_edge[j][0], tmp_edge[j][1])){
         flag = false;
 	goto end;
