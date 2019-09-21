@@ -255,11 +255,6 @@ static bool exchange_edge_2opt(const int _line0, const int _line1, const int nod
     for(int j=0;j<2;j++)
       tmp_edge[i][j] = edge[line[i]][j];
 
-  printf("--\n");
-  for(int i=0;i<groups*2;i++)
-    printf(":%d %d\n", tmp_edge[i][0], tmp_edge[i][1]);
-  printf("--\n");
-  
   int r = (rr == R_DYNAMIC)? getRandom(2): rr;
   if(r == 0){
     for(int i=0;i<groups;i++)
