@@ -214,46 +214,46 @@ bool has_duplicated_vertex(const int e00, const int e01, const int e10, const in
   return (e00 == e10 || e01 == e11 || e00 == e11 || e01 == e10);
 }
 
-static bool exchange_edge_2opt(const int _line0, const int _line1, const int nodes, const int lines, const int groups,
+static bool exchange_edge_2opt(const int tmp_line0, const int tmp_line1, const int nodes, const int lines, const int groups,
 			       const int degree, const int based_nodes, int edge[lines][2], const int added_centers,
 			       int* restrict adj, int *kind_opt, int* restrict restored_edge, int* restrict restored_line,
 			       int* restrict restored_adj_value, int* restrict restored_adj_idx_y,
 			       int* restrict restored_adj_idx_x, const int rr, const bool enable_check, const int ii)
 {
-  int line[groups*2], tmp_edge[groups*2][2];
+  int tmp_line[groups*2], tmp_edge[groups*2][2];
   int based_lines = lines / groups;
   
-  line[0] = _line0;
-  line[1] = _line1;
-  if(has_duplicated_vertex(edge[line[0]][0], edge[line[0]][1], edge[line[1]][0], edge[line[1]][1])){
+  tmp_line[0] = tmp_line0;
+  tmp_line[1] = tmp_line1;
+  if(has_duplicated_vertex(edge[tmp_line[0]][0], edge[tmp_line[0]][1], edge[tmp_line[1]][0], edge[tmp_line[1]][1])){
     return false;
   }
-  else if((line[0] - line[1]) % based_lines == 0){
-    return edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, line[0], added_centers,
+  else if((tmp_line[0] - tmp_line[1]) % based_lines == 0){
+    return edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, tmp_line[0], added_centers,
 		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 		       restored_adj_idx_x, enable_check, ii);
   }
 
-  bool flag0 = (distance(nodes, edge[line[0]][0], edge[line[0]][1], added_centers) == (nodes-added_centers)/2);
-  bool flag1 = (distance(nodes, edge[line[1]][0], edge[line[1]][1], added_centers) == (nodes-added_centers)/2);
+  bool flag0 = (distance(nodes, edge[tmp_line[0]][0], edge[tmp_line[0]][1], added_centers) == (nodes-added_centers)/2);
+  bool flag1 = (distance(nodes, edge[tmp_line[1]][0], edge[tmp_line[1]][1], added_centers) == (nodes-added_centers)/2);
   bool diameter_flag = ((flag0 || flag1) && groups%2 == 0);
 
   if(diameter_flag)
-    return edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, line[0], added_centers,
+    return edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, tmp_line[0], added_centers,
 		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 		       restored_adj_idx_x, enable_check, ii);
 
   // 2g-opt
   for(int i=1;i<groups;i++){
-    int tmp0 = line[0] + based_lines * i;
-    int tmp1 = line[1] + based_lines * i;
-    line[0+2*i] = (tmp0 >= lines)? tmp0 - lines : tmp0;
-    line[1+2*i] = (tmp1 >= lines)? tmp1 - lines : tmp1;
+    int tmp0 = tmp_line[0] + based_lines * i;
+    int tmp1 = tmp_line[1] + based_lines * i;
+    tmp_line[0+2*i] = (tmp0 >= lines)? tmp0 - lines : tmp0;
+    tmp_line[1+2*i] = (tmp1 >= lines)? tmp1 - lines : tmp1;
   }
     
   for(int i=0;i<groups*2;i++)
     for(int j=0;j<2;j++)
-      tmp_edge[i][j] = edge[line[i]][j];
+      tmp_edge[i][j] = edge[tmp_line[i]][j];
 
   int r = (rr == R_DYNAMIC)? getRandom(2): rr;
   if(r == 0){
@@ -269,6 +269,8 @@ static bool exchange_edge_2opt(const int _line0, const int _line1, const int nod
     assert(check_loop(groups*2, tmp_edge));
     if(!check_duplicate_tmp_edge(2, groups, tmp_edge))
       return false;
+    if(!check_duplicate_current_edge(lines, groups*2, tmp_line, edge, tmp_edge, groups, 2, false))
+      return false;
   }
   
   for(int i=0;i<groups*2;i++)
@@ -280,10 +282,10 @@ static bool exchange_edge_2opt(const int _line0, const int _line1, const int nod
   int x0[groups], x1[groups], x2[groups], x3[groups];
 #pragma omp parallel for
   for(int i=0;i<groups;i++){
-    y0[i] = edge[line[i*2  ]][0];
-    y1[i] = edge[line[i*2  ]][1];
-    y2[i] = edge[line[i*2+1]][0];
-    y3[i] = edge[line[i*2+1]][1];
+    y0[i] = edge[tmp_line[i*2  ]][0];
+    y1[i] = edge[tmp_line[i*2  ]][1];
+    y2[i] = edge[tmp_line[i*2+1]][0];
+    y3[i] = edge[tmp_line[i*2+1]][1];
     
     for(x0[i]=0;x0[i]<degree;x0[i]++)
       if(adj[y0[i]*degree+x0[i]] == y1[i])
@@ -317,12 +319,12 @@ static bool exchange_edge_2opt(const int _line0, const int _line1, const int nod
     restored_adj_value[i*4+2] = adj[y2[i]*degree+x2[i]];
     restored_adj_value[i*4+3] = adj[y3[i]*degree+x3[i]];
     //
-    restored_line[i*2  ] = line[i*2  ];
-    restored_line[i*2+1] = line[i*2+1];
-    restored_edge[i*4  ] = edge[line[i*2  ]][0];
-    restored_edge[i*4+1] = edge[line[i*2  ]][1];
-    restored_edge[i*4+2] = edge[line[i*2+1]][0];
-    restored_edge[i*4+3] = edge[line[i*2+1]][1];
+    restored_line[i*2  ] = tmp_line[i*2  ];
+    restored_line[i*2+1] = tmp_line[i*2+1];
+    restored_edge[i*4  ] = edge[tmp_line[i*2  ]][0];
+    restored_edge[i*4+1] = edge[tmp_line[i*2  ]][1];
+    restored_edge[i*4+2] = edge[tmp_line[i*2+1]][0];
+    restored_edge[i*4+3] = edge[tmp_line[i*2+1]][1];
   }
 
 #pragma omp parallel for
@@ -336,10 +338,10 @@ static bool exchange_edge_2opt(const int _line0, const int _line1, const int nod
       adj[y2[i]*degree+x2[i]] = y0[i]; adj[y3[i]*degree+x3[i]] = y1[i];
     }
     
-    edge[line[i*2  ]][0] = tmp_edge[i*2  ][0];
-    edge[line[i*2+1]][0] = tmp_edge[i*2+1][0];
-    edge[line[i*2  ]][1] = tmp_edge[i*2  ][1];
-    edge[line[i*2+1]][1] = tmp_edge[i*2+1][1];
+    edge[tmp_line[i*2  ]][0] = tmp_edge[i*2  ][0];
+    edge[tmp_line[i*2+1]][0] = tmp_edge[i*2+1][0];
+    edge[tmp_line[i*2  ]][1] = tmp_edge[i*2  ][1];
+    edge[tmp_line[i*2+1]][1] = tmp_edge[i*2+1][1];
   }
   
   *kind_opt = D_2G_OPT;
