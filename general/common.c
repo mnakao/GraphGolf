@@ -144,6 +144,7 @@ bool check_duplicate_current_edge(const int lines, const int tmp_lines, const in
   else if(g_opt == 1){
     int tmp_line0 = tmp_line[0]%based_lines;
     if(! is_center){
+      // ! is_center is equal to (distance(nodes, tmp_edge[0][0], tmp_edge[0][1], added_centers) != (nodes-added_centers)/2)
 #pragma omp parallel for
       for(int i=rank;i<based_lines;i+=procs)
 	if(i != tmp_line0)
