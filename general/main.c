@@ -335,13 +335,13 @@ int main(int argc, char *argv[])
 	   &added_centers, &k_opt, &halfway_flag, &verify_flag, &enable_bfs, &enable_low_mem);
 
   if(hill_climbing_flag && max_temp_flag)
-    ERROR("Both -y and -w cannot be used.\n");
+    ERROR("Both -H and -w cannot be used.\n");
   else if(hill_climbing_flag && min_temp_flag)
-    ERROR("Both -y and -c cannot be used.\n");
+    ERROR("Both -H and -c cannot be used.\n");
   else if(hill_climbing_flag && detect_temp_flag)
-    ERROR("Both -y and -d cannot be used.\n");
+    ERROR("Both -H and -D cannot be used.\n");
   else if(detect_temp_flag && groups != 1)
-    ERROR("When using -d option, -g must be 1.\n");
+    ERROR("When using -D option, -g must be 1.\n");
   
   srandom(random_seed);
   int based_lines = count_lines(infname);
