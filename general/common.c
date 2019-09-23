@@ -222,12 +222,10 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     if(diff != (tmp_edge[0][0] - tmp_edge[0][1])) break;
   }
 
-  if(enable_check){
-    assert(check_loop(groups, tmp_edge));
-    assert(check_duplicate_edge(groups, tmp_edge));
-    if(!check_duplicate_current_edge(lines, groups, tmp_line, edge, tmp_edge, groups, 1, (pattern == groups)))
-      return false;
-  }
+  assert(check_loop(groups, tmp_edge));
+  assert(check_duplicate_edge(groups, tmp_edge));
+  if(!check_duplicate_current_edge(lines, groups, tmp_line, edge, tmp_edge, groups, 1, (pattern == groups)))
+    return false;
 
   for(int i=0;i<groups;i++)
     if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)

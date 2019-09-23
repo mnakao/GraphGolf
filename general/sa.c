@@ -265,13 +265,11 @@ static bool exchange_edge_2opt(const int tmp_line0, const int tmp_line1, const i
       swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][0]);
   }
 
-  if(enable_check){
-    assert(check_loop(groups*2, tmp_edge));
-    if(!check_duplicate_tmp_edge(2, groups, tmp_edge))
-      return false;
-    if(!check_duplicate_current_edge(lines, groups*2, tmp_line, edge, tmp_edge, groups, 2, false))
-      return false;
-  }
+  assert(check_loop(groups*2, tmp_edge));
+  if(!check_duplicate_tmp_edge(2, groups, tmp_edge))
+    return false;
+  if(!check_duplicate_current_edge(lines, groups*2, tmp_line, edge, tmp_edge, groups, 2, false))
+    return false;
   
   for(int i=0;i<groups*2;i++)
     if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)
@@ -504,8 +502,8 @@ static bool accept(const int new_diam, const int current_diam, const double new_
 long long sa(const int nodes, const int lines, const int degree, const int groups, double temp, 
 	     const long long ncalcs, const double cooling_rate,  const int low_diam,  const double low_ASPL, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
-	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle,
-	     const int added_centers, const int k_opt, const int based_nodes, long long *total_accepts, const int algo)
+	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle, const int added_centers,
+	     const int k_opt, const int based_nodes, long long *total_accepts, const int algo, long long* evas)
 {
   long long ii, accepts = 0, rejects = 0;
   int best_edge[lines][2], tmp_edge[lines][2], kind_opt, tmp_n = 0, _tmp_edge[14][lines][2];
@@ -557,6 +555,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	    break;
 	} // end while
 	assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, adj, (int)ii));
+	*evas += 1;
 	if(evaluation(nodes, based_nodes, groups, lines, degree, adj, &tmp_diam, &tmp_ASPL, added_centers, algo))
 	  break;
 	else
@@ -580,6 +579,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 			      added_centers, adj, &kind_opt, restored_edge, restored_line,
 			      restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, (int)ii)){
 	  create_adj(nodes, lines, degree, (int (*)[2])&_tmp_edge[n][0][0], (int (*)[degree])adj);
+	  *evas += 1;
 	  if(evaluation(nodes, based_nodes, groups, lines, degree, adj, &_tmp_diam, &_tmp_ASPL, added_centers, algo)){
 	    if((min_diam > _tmp_diam) || (min_diam == _tmp_diam && min_ASPL > _tmp_ASPL)){
 	      min_diam = _tmp_diam;

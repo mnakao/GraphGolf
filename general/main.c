@@ -314,7 +314,7 @@ int main(int argc, char *argv[])
   char hostname[MPI_MAX_PROCESSOR_NAME], infname[MAX_FILENAME_LENGTH], outfname[MAX_FILENAME_LENGTH];
   int namelen, diam = 0, low_diam = 0, random_seed = 0, algo;
   int groups = 1, cooling_cycle = 1, added_centers = 0, k_opt = 2;
-  long long ncalcs = 10000, num_accepts = 0;
+  long long ncalcs = 10000, num_accepts = 0, evas = 0;
   double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
   double max_temp = 100.0, min_temp = 0.217147, max_diff_energy = 0;
   FILE *fp = NULL;
@@ -438,7 +438,7 @@ int main(int argc, char *argv[])
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, degree, groups, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
 		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, 
-		      cooling_cycle, added_centers, k_opt, based_nodes, &num_accepts, algo);
+		      cooling_cycle, added_centers, k_opt, based_nodes, &num_accepts, algo, &evas);
   timer_stop(TIMER_SA);
   
   if(detect_temp_flag){
@@ -456,8 +456,8 @@ int main(int argc, char *argv[])
   double time_sa    = timer_read(TIMER_SA);
   double time_apsp  = timer_read(TIMER_APSP);
   double time_check = timer_read(TIMER_CHECK);
-  PRINT_R0("Steps: %lld  Elapse time: %f sec. (APSP: %f sec. Check: %f sec. Other: %f sec.)\n",
-	   step, time_sa, time_apsp, time_check, time_sa-(time_apsp+time_check));
+  PRINT_R0("Steps: %lld, Evaluations: %lld, Elapse time: %f sec. (APSP: %f sec. Check: %f sec. Other: %f sec.)\n",
+	   step, evas, time_sa, time_apsp, time_check, time_sa-(time_apsp+time_check));
   if(ncalcs > SKIP_ACCEPTS)
     PRINT_R0("Accept rate: %f (= %lld/%lld)\n",
 	     (double)num_accepts/(ncalcs-SKIP_ACCEPTS), num_accepts, ncalcs-SKIP_ACCEPTS);
