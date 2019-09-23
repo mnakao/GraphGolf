@@ -279,7 +279,7 @@ static void output_params(const int nodes, const int degree, const int groups, c
     PRINT_R0("   Cooling Rate : %f\n", cooling_rate);
   }
   else{
-    PRINT_R0("Algorithm: Hill climbing Method (%d^opt)\n", k_opt);
+    PRINT_R0("Algorithm: Hill climbing Method (%d-opt)\n", k_opt);
   }
   if(algo == BFS)            PRINT_R0("APSP: BFS\n");
   else if(algo == MATRIX_OP) PRINT_R0("APSP: MATRIX Opetation\n");
