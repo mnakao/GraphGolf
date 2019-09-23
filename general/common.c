@@ -235,51 +235,55 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
   
   // Change a part of adj.
   int hash[nodes];
+  if(enable_check){
 #pragma omp parallel for
-  for(int i=0;i<groups;i++){
-    int x0, x1;
-    int y0 = edge[tmp_line[i]][0];
-    int y1 = edge[tmp_line[i]][1];
-
-    for(x0=0;x0<degree;x0++)
-      if(adj[y0*degree+x0] == y1){
-	hash[y0] = x0;
-	break;
-      }
-
-    for(x1=0;x1<degree;x1++)
-      if(adj[y1*degree+x1] == y0){
-	hash[y1] = x1;
-	break;
-      }
-
-    if(x0 == degree || x1 == degree)
-      ERROR(":%d %d\n", x0, x1);
-  }
-
-#pragma omp parallel for
-  for(int i=0;i<groups;i++){
-    int tmp0 = tmp_edge[i][0];
-    int tmp1 = tmp_edge[i][1];
-    restored_adj_idx_y[i*2+0] = tmp0;
-    restored_adj_idx_x[i*2+0] = hash[tmp0];
-    restored_adj_idx_y[i*2+1] = tmp1;
-    restored_adj_idx_x[i*2+1] = hash[tmp1];
-    restored_adj_value[i*2+0] = adj[tmp0*degree+hash[tmp0]];
-    restored_adj_value[i*2+1] =	adj[tmp1*degree+hash[tmp1]];
-    //
-    restored_line[i]     = tmp_line[i];
-    restored_edge[i*2  ] = edge[tmp_line[i]][0];
-    restored_edge[i*2+1] = edge[tmp_line[i]][1];
-  }
+    for(int i=0;i<groups;i++){
+      int x0, x1;
+      int y0 = edge[tmp_line[i]][0];
+      int y1 = edge[tmp_line[i]][1];
     
+      for(x0=0;x0<degree;x0++)
+	if(adj[y0*degree+x0] == y1){
+	  hash[y0] = x0;
+	  break;
+	}
+      
+      for(x1=0;x1<degree;x1++)
+	if(adj[y1*degree+x1] == y0){
+	  hash[y1] = x1;
+	  break;
+	}
+      
+      if(x0 == degree || x1 == degree)
+	ERROR(":%d %d\n", x0, x1);
+    }
+
+#pragma omp parallel for
+    for(int i=0;i<groups;i++){
+      int tmp0 = tmp_edge[i][0];
+      int tmp1 = tmp_edge[i][1];
+      restored_adj_idx_y[i*2+0] = tmp0;
+      restored_adj_idx_x[i*2+0] = hash[tmp0];
+      restored_adj_idx_y[i*2+1] = tmp1;
+      restored_adj_idx_x[i*2+1] = hash[tmp1];
+      restored_adj_value[i*2+0] = adj[tmp0*degree+hash[tmp0]];
+      restored_adj_value[i*2+1] = adj[tmp1*degree+hash[tmp1]];
+      //
+      restored_line[i]     = tmp_line[i];
+      restored_edge[i*2  ] = edge[tmp_line[i]][0];
+      restored_edge[i*2+1] = edge[tmp_line[i]][1];
+  }
+  }
+  
   // Set vertexs
 #pragma omp parallel for
   for(int i=0;i<groups;i++){
-    int tmp0 = tmp_edge[i][0];
-    int tmp1 = tmp_edge[i][1];
-    adj[tmp0*degree+hash[tmp0]] = tmp1;
-    adj[tmp1*degree+hash[tmp1]] = tmp0;
+    if(enable_check){
+      int tmp0 = tmp_edge[i][0];
+      int tmp1 = tmp_edge[i][1];
+      adj[tmp0*degree+hash[tmp0]] = tmp1;
+      adj[tmp1*degree+hash[tmp1]] = tmp0;
+    }
     
     edge[tmp_line[i]][0] = tmp_edge[i][0];
     edge[tmp_line[i]][1] = tmp_edge[i][1];

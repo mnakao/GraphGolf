@@ -34,6 +34,7 @@ int rank, procs, threads;
 #define R_DYNAMIC -1
 #define ENABLE_CHECK  true
 #define DISABLE_CHECK false
+#define NO_CHANGE     -1
 
 #define NUM_TIMERS          4
 #define TIMER_SA            0

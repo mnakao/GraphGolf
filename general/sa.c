@@ -26,11 +26,11 @@ static void restore_adj(const int degree, const int groups, int* restrict adj, c
   }
 }
 
-static void copy_edge(int *restrict buf1, const int *restrict buf2, const int n)
+static void copy_edge(int *restrict dst, const int *restrict src, const int n)
 {
 #pragma omp parallel for
   for(int i=0;i<n;i++)
-    buf1[i] = buf2[i];
+    dst[i] = src[i];
 }
 
 static double uniform_rand()
@@ -276,66 +276,70 @@ static bool exchange_edge_2opt(const int tmp_line0, const int tmp_line1, const i
   for(int i=0;i<groups*2;i++)
     if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)
       swap(&tmp_edge[i][0], &tmp_edge[i][1]); // RIGHT -> LEFT
-  
+
   // Change a part of adj.
   int y0[groups], y1[groups], y2[groups], y3[groups];
   int x0[groups], x1[groups], x2[groups], x3[groups];
+  if(enable_check){
 #pragma omp parallel for
-  for(int i=0;i<groups;i++){
-    y0[i] = edge[tmp_line[i*2  ]][0];
-    y1[i] = edge[tmp_line[i*2  ]][1];
-    y2[i] = edge[tmp_line[i*2+1]][0];
-    y3[i] = edge[tmp_line[i*2+1]][1];
-    
-    for(x0[i]=0;x0[i]<degree;x0[i]++)
-      if(adj[y0[i]*degree+x0[i]] == y1[i])
-	break;
-    
-    for(x1[i]=0;x1[i]<degree;x1[i]++)
-      if(adj[y1[i]*degree+x1[i]] == y0[i])
-	break;
-    
-    for(x2[i]=0;x2[i]<degree;x2[i]++)
-      if(adj[y2[i]*degree+x2[i]] == y3[i])
-	break;
-    
-    for(x3[i]=0;x3[i]<degree;x3[i]++)
-      if(adj[y3[i]*degree+x3[i]] == y2[i])
-	break;
-    
-    if(x0[i] == degree || x1[i] == degree || x2[i] == degree || x3[i] == degree)
-      ERROR("%d : %d %d %d %d\n", ii, x0[i], x1[i], x2[i], x3[i]);
-    
-    restored_adj_idx_y[i*4  ] = y0[i];
-    restored_adj_idx_x[i*4  ] = x0[i];
-    restored_adj_idx_y[i*4+1] = y1[i];
-    restored_adj_idx_x[i*4+1] = x1[i];
-    restored_adj_idx_y[i*4+2] = y2[i];
-    restored_adj_idx_x[i*4+2] = x2[i];
-    restored_adj_idx_y[i*4+3] = y3[i];
-    restored_adj_idx_x[i*4+3] = x3[i];
-    restored_adj_value[i*4  ] = adj[y0[i]*degree+x0[i]];
-    restored_adj_value[i*4+1] = adj[y1[i]*degree+x1[i]];
-    restored_adj_value[i*4+2] = adj[y2[i]*degree+x2[i]];
-    restored_adj_value[i*4+3] = adj[y3[i]*degree+x3[i]];
-    //
-    restored_line[i*2  ] = tmp_line[i*2  ];
-    restored_line[i*2+1] = tmp_line[i*2+1];
-    restored_edge[i*4  ] = edge[tmp_line[i*2  ]][0];
-    restored_edge[i*4+1] = edge[tmp_line[i*2  ]][1];
-    restored_edge[i*4+2] = edge[tmp_line[i*2+1]][0];
-    restored_edge[i*4+3] = edge[tmp_line[i*2+1]][1];
+    for(int i=0;i<groups;i++){
+      y0[i] = edge[tmp_line[i*2  ]][0];
+      y1[i] = edge[tmp_line[i*2  ]][1];
+      y2[i] = edge[tmp_line[i*2+1]][0];
+      y3[i] = edge[tmp_line[i*2+1]][1];
+
+      for(x0[i]=0;x0[i]<degree;x0[i]++)
+	if(adj[y0[i]*degree+x0[i]] == y1[i])
+	  break;
+      
+      for(x1[i]=0;x1[i]<degree;x1[i]++)
+	if(adj[y1[i]*degree+x1[i]] == y0[i])
+	  break;
+      
+      for(x2[i]=0;x2[i]<degree;x2[i]++)
+	if(adj[y2[i]*degree+x2[i]] == y3[i])
+	  break;
+      
+      for(x3[i]=0;x3[i]<degree;x3[i]++)
+	if(adj[y3[i]*degree+x3[i]] == y2[i])
+	  break;
+      
+      if(x0[i] == degree || x1[i] == degree || x2[i] == degree || x3[i] == degree)
+	ERROR("%d : %d %d %d %d\n", ii, x0[i], x1[i], x2[i], x3[i]);
+
+      restored_adj_idx_y[i*4  ] = y0[i];
+      restored_adj_idx_x[i*4  ] = x0[i];
+      restored_adj_idx_y[i*4+1] = y1[i];
+      restored_adj_idx_x[i*4+1] = x1[i];
+      restored_adj_idx_y[i*4+2] = y2[i];
+      restored_adj_idx_x[i*4+2] = x2[i];
+      restored_adj_idx_y[i*4+3] = y3[i];
+      restored_adj_idx_x[i*4+3] = x3[i];
+      restored_adj_value[i*4  ] = adj[y0[i]*degree+x0[i]];
+      restored_adj_value[i*4+1] = adj[y1[i]*degree+x1[i]];
+      restored_adj_value[i*4+2] = adj[y2[i]*degree+x2[i]];
+      restored_adj_value[i*4+3] = adj[y3[i]*degree+x3[i]];
+      //
+      restored_line[i*2  ] = tmp_line[i*2  ];
+      restored_line[i*2+1] = tmp_line[i*2+1];
+      restored_edge[i*4  ] = edge[tmp_line[i*2  ]][0];
+      restored_edge[i*4+1] = edge[tmp_line[i*2  ]][1];
+      restored_edge[i*4+2] = edge[tmp_line[i*2+1]][0];
+      restored_edge[i*4+3] = edge[tmp_line[i*2+1]][1];
+    }
   }
 
 #pragma omp parallel for
   for(int i=0;i<groups;i++){
-    if(r==0){
-      adj[y0[i]*degree+x0[i]] = y3[i]; adj[y1[i]*degree+x1[i]] = y2[i];
-      adj[y2[i]*degree+x2[i]] = y1[i]; adj[y3[i]*degree+x3[i]] = y0[i];
-    }
-    else{
-      adj[y0[i]*degree+x0[i]] = y2[i]; adj[y1[i]*degree+x1[i]] = y3[i];
-      adj[y2[i]*degree+x2[i]] = y0[i]; adj[y3[i]*degree+x3[i]] = y1[i];
+    if(enable_check){
+      if(r==0){
+	adj[y0[i]*degree+x0[i]] = y3[i]; adj[y1[i]*degree+x1[i]] = y2[i];
+	adj[y2[i]*degree+x2[i]] = y1[i]; adj[y3[i]*degree+x3[i]] = y0[i];
+      }
+      else{
+	adj[y0[i]*degree+x0[i]] = y2[i]; adj[y1[i]*degree+x1[i]] = y3[i];
+	adj[y2[i]*degree+x2[i]] = y0[i]; adj[y3[i]*degree+x3[i]] = y1[i];
+      }
     }
     
     edge[tmp_line[i*2  ]][0] = tmp_edge[i*2  ][0];
@@ -361,8 +365,8 @@ static bool exchange_edge_3opt(const int n, const int _line[3], const int nodes,
   }
   else if(n == 1){
     flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-                              adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-                              restored_adj_idx_x, 0, DISABLE_CHECK, ii);
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 0, DISABLE_CHECK, ii);
   }
   else if(n == 2){
     flag = exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
@@ -385,74 +389,74 @@ static bool exchange_edge_3opt(const int n, const int _line[3], const int nodes,
 			      restored_adj_idx_x, 0, DISABLE_CHECK, ii);
   }
   else if(n == 6){
-    flag  = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 4
-    flag |= exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 3
+    exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+		       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 4
+    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 0
   }
   else if(n == 7){
-    flag  = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+     exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 4
+     flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
-    flag |= exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 4
   }
   else if(n == 8){
-    flag  = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
-    flag |= exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 5
+    exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+		       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 5
+    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
   }
   else if(n == 9){
-    flag  = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 5
-    flag |= exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 2
+    exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+		       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 5
+    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 0
   }
   else if(n == 10){
-    flag  = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 0
-    flag |= exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 2
+    exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+		       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 2
+    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
   }
   else if(n == 11){
-    flag  = exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 2
-    flag |= exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
+    exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+		       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 2
+    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 0
   }
   else if(n == 12){
-    flag  = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 5
-    flag |= exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
+    exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+		       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 3
+    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
   }
   else if(n == 13){
-    flag  = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 0
-    flag |= exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 3
+    exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+		       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 3
+    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 0
   }
   else{
     ERROR("Unexpected Error !!\n");
   }
   
-  return true;
+  return flag;
 }
 
 static bool accept(const int new_diam, const int current_diam, const double new_ASPL, const double current_ASPL,
@@ -503,8 +507,8 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle,
 	     const int added_centers, const int k_opt, const int based_nodes, long long *total_accepts, const int algo)
 {
-  long long i, accepts = 0, rejects = 0;
-  int best_edge[lines][2], tmp_edge[lines][2], kind_opt;
+  long long ii, accepts = 0, rejects = 0;
+  int best_edge[lines][2], tmp_edge[lines][2], kind_opt, tmp_n = 0, _tmp_edge[14][lines][2];
   int restored_adj_value[groups*4], restored_adj_idx_y[groups*4], restored_adj_idx_x[groups*4];
   int restored_edge[groups*4], restored_line[groups*2];
   bool restore_flag = false;
@@ -524,11 +528,11 @@ long long sa(const int nodes, const int lines, const int degree, const int group
   if(rank == 0 && !detect_temp_flag)
     print_result_header();
 
-  for(i=0;i<ncalcs;i++){
+  for(ii=0;ii<ncalcs;ii++){
     double tmp_ASPL;
     int tmp_diam;
-    if(i % print_interval == 0 && !detect_temp_flag){
-      print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, 
+    if(ii % print_interval == 0 && !detect_temp_flag){
+      print_results(ii, temp, current_ASPL, best_ASPL, low_ASPL, 
 		    current_diam, best_diam, low_diam, accepts, rejects);
       accepts = 0;
       rejects = 0;
@@ -546,13 +550,13 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	    _line[0] = getRandom(lines);
 	    _line[1] = getRandom(lines);
 	    if(_line[0] != _line[1]) break;
-	  } // end while inner
+	  }
 	  if(exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-				adj,&kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-				restored_adj_idx_x, R_DYNAMIC, ENABLE_CHECK, (int)i))
+				adj, &kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+				restored_adj_idx_x, R_DYNAMIC, ENABLE_CHECK, (int)ii))
 	    break;
-	} // end while outer
-	assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, adj, (int)i));
+	} // end while
+	assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, adj, (int)ii));
 	if(evaluation(nodes, based_nodes, groups, lines, degree, adj, &tmp_diam, &tmp_ASPL, added_centers, algo))
 	  break;
 	else
@@ -560,48 +564,43 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       }
     }
     else if(k_opt == 3){
-      int    _tmp_diam[14];
-      double _tmp_ASPL[14];
-      int _tmp_edge[14][lines][2];
+      int    _tmp_diam, min_diam = INT_MAX;
+      double _tmp_ASPL, min_ASPL = DBL_MAX;
+      
+      tmp_n = NO_CHANGE;
+      while(1){
+	_line[0] = getRandom(lines);
+	_line[1] = getRandom(lines);
+	_line[2] = getRandom(lines);
+	if(_line[0] != _line[1] && _line[0] != _line[2] && _line[1] != _line[2]) break;
+      }
       for(int n=0;n<14;n++){
-	copy_edge(&_tmp_edge[i][0][0],  (int *)edge, lines*2);
-	while(1){
-	  _line[0] = getRandom(lines);
-	  _line[1] = getRandom(lines);
-	  _line[2] = getRandom(lines);
-	  if(_line[0] != _line[1] && _line[0] != _line[2] && _line[1] != _line[2]) break;
-	}
-	if(exchange_edge_3opt(n, _line, nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, adj, &kind_opt,
-			      restored_edge, restored_line, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, (int)i)){
-	  if(! evaluation(nodes, based_nodes, groups, lines, degree, adj, &_tmp_diam[n], &_tmp_ASPL[n], added_centers, algo))
-	    restore_flag = true;
-	}
-	else{
-	  _tmp_diam[n] = INT_MAX;
-	  _tmp_ASPL[n] = DBL_MAX;
+	copy_edge(&_tmp_edge[n][0][0],  (int *)tmp_edge, lines*2);
+	if(exchange_edge_3opt(n, _line, nodes, lines, groups, degree, based_nodes, (int (*)[2])&_tmp_edge[n][0][0],
+			      added_centers, adj, &kind_opt, restored_edge, restored_line,
+			      restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, (int)ii)){
+	  create_adj(nodes, lines, degree, (int (*)[2])&_tmp_edge[n][0][0], (int (*)[degree])adj);
+	  if(evaluation(nodes, based_nodes, groups, lines, degree, adj, &_tmp_diam, &_tmp_ASPL, added_centers, algo)){
+	    if((min_diam > _tmp_diam) || (min_diam == _tmp_diam && min_ASPL > _tmp_ASPL)){
+	      min_diam = _tmp_diam;
+	      min_ASPL = _tmp_ASPL;
+	      tmp_n    = n;
+	    }
+	  }
 	}
       }
 
-      int tmp_n       = 0;
-      int min_diam    = _tmp_diam[tmp_n];
-      double min_ASPL = _tmp_ASPL[tmp_n];
-      for(int n=1;n<14;n++){
-	if((min_diam > _tmp_diam[n]) || (min_diam == _tmp_diam[n] && min_ASPL > _tmp_ASPL[n])){
-	  min_diam = _tmp_diam[n];
-	  min_ASPL = _tmp_ASPL[n];
-	  tmp_n    = n;
-	}
-      }
       tmp_diam = min_diam;
       tmp_ASPL = min_ASPL;
-      copy_edge((int *)tmp_edge, &_tmp_edge[tmp_n][0][0], lines*2);
     }
 
     if(!accept(tmp_diam, current_diam, tmp_ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
-	       detect_temp_flag, i, max_diff_energy, total_accepts, &accepts, &rejects)){
+	       detect_temp_flag, ii, max_diff_energy, total_accepts, &accepts, &rejects)){
       restore_flag = true;
     }
     else{
+      if(k_opt == 3 && tmp_n != NO_CHANGE)
+	copy_edge((int *)tmp_edge, (int *)&_tmp_edge[tmp_n][0][0], lines*2);
       restore_flag = false;
       current_ASPL = tmp_ASPL;
       current_diam = tmp_diam;
@@ -613,7 +612,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 
       if(best_diam == current_diam && best_ASPL == low_ASPL){
 	if(!detect_temp_flag){
-	  print_results(i, temp, current_ASPL, best_ASPL, low_ASPL, 
+	  print_results(ii, temp, current_ASPL, best_ASPL, low_ASPL, 
 			current_diam, best_diam, low_diam, accepts, rejects);
 	  PRINT_R0("---\nFound optimum solution.\n");
 	}
@@ -621,7 +620,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
       }
     }
 
-    if((i+1)%cooling_cycle == 0)
+    if((ii+1)%cooling_cycle == 0)
       temp *= cooling_rate;
   }
 
@@ -630,7 +629,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
   copy_edge((int *)edge, (int *)best_edge, lines*2);
   free(adj);
 
-  return i;
+  return ii;
 }
 
 #define ESTIMATED_TIMES 5
