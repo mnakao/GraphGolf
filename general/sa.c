@@ -475,7 +475,7 @@ static bool accept(const int new_diam, const int current_diam, const double new_
       if(i > SKIP_ACCEPTS) *total_accepts +=1;
       return true;
     }
-    if(hill_climbing_flag){ // Only accept when ASPL <= current_ASPL.
+    else if(hill_climbing_flag){ // Only accept when ASPL <= current_ASPL.
       *rejects += 1;
       return false;
     }
