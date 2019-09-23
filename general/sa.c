@@ -355,106 +355,108 @@ static bool exchange_edge_3opt(const int n, const int _line[3], const int nodes,
                                int* restrict restored_edge, int* restrict restored_line, int* restrict restored_adj_value,
                                int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const int ii)
 {
-  bool flag;
   if(n == 0){
-    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+    return exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			      restored_adj_idx_x, 1, DISABLE_CHECK, ii);
   }
   else if(n == 1){
-    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+    return exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			      restored_adj_idx_x, 0, DISABLE_CHECK, ii);
   }
   else if(n == 2){
-    flag = exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+    return exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			      restored_adj_idx_x, 1, DISABLE_CHECK, ii);
   }
   else if(n == 3){
-    flag = exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+    return exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			      restored_adj_idx_x, 0, DISABLE_CHECK, ii);
   }
   else if(n == 4){
-    flag = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+    return exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			      restored_adj_idx_x, 1, DISABLE_CHECK, ii);
   }
   else if(n == 5){
-    flag = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+    return exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			      restored_adj_idx_x, 0, DISABLE_CHECK, ii);
   }
   else if(n == 6){
-    exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-		       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 4
-    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+    bool flag = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+				   adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+				   restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 4
+    if(!flag) return false;
+    return exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			      restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 0
   }
   else if(n == 7){
-     exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 4
-     flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
+    bool flag = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+				   adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+				   restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 4
+    if(!flag) return false;
+    return exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+			      restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
   }
   else if(n == 8){
-    exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-		       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 5
-    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+    bool flag = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+				   adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+				   restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 5
+    if(!flag) return false;
+    return exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			      restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
   }
   else if(n == 9){
-    exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-		       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 5
-    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+    bool flag = exchange_edge_2opt(_line[0], _line[1], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+				   adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+				   restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 5
+    if(!flag) return false;
+    return exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			      restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 0
   }
   else if(n == 10){
-    exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-		       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 2
-    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+    bool flag = exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+				   adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+				   restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 2
+    if(!flag) return false;
+    return exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			      restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
   }
   else if(n == 11){
-    exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-		       restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 2
-    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+    bool flag = exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+				   adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+				   restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 2
+    if(!flag) return false;
+    return exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+	 		      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			      restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 0
   }
   else if(n == 12){
-    exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-		       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 3
-    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+    bool flag = exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+				   adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+				   restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 3
+    if(!flag) return false;
+    return exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			      restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 1
   }
-  else if(n == 13){
-    exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-		       restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 3
-    flag = exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+  else{ //if(n == 13)
+    bool flag = exchange_edge_2opt(_line[0], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
+				   adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
+				   restored_adj_idx_x, 0, DISABLE_CHECK, ii); // 3
+    if(!flag) return false;
+    return exchange_edge_2opt(_line[1], _line[2], nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
 			      adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
 			      restored_adj_idx_x, 1, DISABLE_CHECK, ii); // 0
   }
-  else{
-    ERROR("Unexpected Error !!\n");
-  }
-  
-  return flag;
 }
 
 static bool accept(const int new_diam, const int current_diam, const double new_ASPL, const double current_ASPL,
