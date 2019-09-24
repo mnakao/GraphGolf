@@ -4,8 +4,8 @@
 python create_random.py 4 2
 
 2. n512d2g128を2つ作る
-gg -f n4d2.random.edges-1 -g 128 -s 1 -o n512d2g128-1
-gg -f n4d2.random.edges-2 -g 128 -s 2 -o n512d2g128-2
+gg -f n4d2.random.edges -g 128 -s 1 -o n512d2g128-1
+gg -f n4d2.random.edges -g 128 -s 2 -o n512d2g128-2
 
 3. 2.で作った2つを合体する
 sh combine.sh n512d2g128-1 n512d2g128-2 4 > n512d2g128.random.edges

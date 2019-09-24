@@ -110,13 +110,10 @@ bool check_duplicate_tmp_edge(const int g_opt, const int groups, int tmp_edge[gr
   for(int i=0;i<g_opt;i++){
     int tmp[2] = {tmp_edge[i][0], tmp_edge[i][1]};
     for(int j=g_opt;j<groups*g_opt;j++)
-      if(has_duplicated_edge(tmp[0], tmp[1], tmp_edge[j][0], tmp_edge[j][1])){
+      if(has_duplicated_edge(tmp[0], tmp[1], tmp_edge[j][0], tmp_edge[j][1]))
         flag = false;
-	goto end;
-      }
   }
 
- end:
   timer_stop(TIMER_CHECK);
   return flag;
 }
@@ -131,15 +128,12 @@ bool check_duplicate_current_edge(const int lines, const int tmp_lines, const in
   if(g_opt == 2){
     int tmp_line0 = tmp_line[0]%based_lines;
     int tmp_line1 = tmp_line[1]%based_lines;
-    
 #pragma omp parallel for
     for(int i=rank;i<based_lines;i+=procs)
       if(i != tmp_line0 && i != tmp_line1)
         for(int j=0;j<tmp_lines;j++)
-          if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
+          if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
             flag = false;
-	    goto end;
-	  }
   }
   else if(g_opt == 1){
     int tmp_line0 = tmp_line[0]%based_lines;
@@ -149,24 +143,19 @@ bool check_duplicate_current_edge(const int lines, const int tmp_lines, const in
       for(int i=rank;i<based_lines;i+=procs)
 	if(i != tmp_line0)
 	  for(int j=0;j<tmp_lines;j++)
-	    if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
+	    if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
 	      flag = false;
-	      goto end;
-	    }
     }
     else{
 #pragma omp parallel for
       for(int i=rank;i<lines;i+=procs)
       	if(i%based_lines != tmp_line0)
           for(int j=0;j<tmp_lines;j++)
-            if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1])){
+            if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
               flag = false;
-              goto end;
-            }
     }
   }
   
- end:
   MPI_Allreduce(MPI_IN_PLACE, &flag, 1,  MPI_C_BOOL, MPI_LAND, MPI_COMM_WORLD);
   timer_stop(TIMER_CHECK);
   return flag;
