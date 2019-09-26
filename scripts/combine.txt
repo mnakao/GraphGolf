@@ -8,7 +8,15 @@ gg -f n4d2.random.edges -g 128 -s 1 -o n512d2g128-1
 gg -f n4d2.random.edges -g 128 -s 2 -o n512d2g128-2
 
 3. 2.で作った2つを合体する
-sh combine.sh n512d2g128-1 n512d2g128-2 4 > n512d2g128.random.edges
+sh combine.sh n512d2g128-1 n512d2g128-2 4 > n512d4g128.random.edges
 
-4. 3で作ったのが、単純グラフかどうかをチェックする
-./apsp -f n512d2g128.random.edges -P
+4. 二重辺のチェック
+./apsp -f n512d4g128.random.edges -P
+
+GraphGolfのプログラムは、二重辺があると、正常に動作しないことがある。
+しかし、正常に動作することもあるので、適当に-sの値を変えて、
+動作するまで、適当に最適化をする。
+
+./gg -g n512d4g128.random.edges -M -s 3 -o n512d4g128-2.random.edges
+
+こうすると、二重辺のないn512d4g128-2.random.edgesができあがる。

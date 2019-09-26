@@ -210,7 +210,7 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
   }
 
   assert(check_loop(groups, tmp_edge));
-  assert(check_duplicate_edge(groups, tmp_edge));
+  assert(check_duplicate_tmp_edge(1, groups, tmp_edge));
   if(!check_duplicate_current_edge(lines, groups, tmp_line, edge, tmp_edge, groups, 1, (pattern == groups)))
     return false;
 
