@@ -421,7 +421,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 
   // Create adj matrix
   int *adj = malloc(sizeof(int)*nodes*degree); // int adj[nodes][degree];
-  create_adj(nodes, lines, degree, tmp_edge, (int (*)[degree])adj);
+  create_adj(nodes, lines, degree, (const int (*)[2])tmp_edge, (int (*)[degree])adj);
   evaluation(nodes, based_nodes, groups, lines, degree, adj, diam, ASPL, added_centers, algo);
   
   double current_ASPL = *ASPL;
