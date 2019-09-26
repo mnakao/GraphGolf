@@ -31,10 +31,6 @@ int rank, procs, threads;
 #define D_1G_OPT 1
 #define D_2G_OPT 2
 #define NOT_USED -1
-#define R_DYNAMIC -1
-#define ENABLE_CHECK  true
-#define DISABLE_CHECK false
-#define NO_CHANGE     -1
 
 #define NUM_TIMERS          4
 #define TIMER_SA            0
@@ -78,18 +74,17 @@ extern int order(int nodes, const int a, const int b, const int added_centers);
 extern long long sa(const int nodes, const int lines, const int degree, const int groups,
 		    double temp, const long long ncalcs, const double cooling_rate, const int low_diam, const double low_ASPL,
 		    const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy, int edge[lines][2], int *diameter, double *ASPL,
-		    const int cooling_cyclie, const int added_centers, const int k_opt, const int based_nodes, long long *num_accepts, const int algo,
-		    long long *evas);
+		    const int cooling_cyclie, const int added_centers, const int based_nodes, long long *num_accepts, const int algo);
 extern void check_current_edge(const int nodes, const int degree, const int lines, const int groups,
 			       const int based_nodes, int edge[lines][2], const double low_ASPL, const int added_centers, const int algo);
 extern double estimate_elapse_time(const int nodes, const int based_nodes, const int lines, const int degree,
-				   const int groups, int edge[lines][2], const int add_degree_to_center, const int k_opt, const int algo);
+				   const int groups, int edge[lines][2], const int add_degree_to_center, const int algo);
 extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes, const int based_lines, const int groups,
 			const int start_line, const int add_centers, int* restrict adj,  int *kind_opt, int* restrict restored_adj_edge, int* restrict restored_adj_line,
-			int* restrict restored_adj_val, int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const bool enable_check, const int ii);
+			int* restrict restored_adj_val, int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const int ii);
 extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);
 extern bool check_loop(const int lines, int (*edge)[2]);
-extern bool check_duplicate_tmp_edge(const int k_opt, const int lines, int (*edge)[2]);
+extern bool check_duplicate_tmp_edge(const int, const int lines, int (*edge)[2]);
 extern bool check_duplicate_current_edge(const int lines, const int tmp_lines, const int new_line[tmp_lines], int (*edge)[2],
 					 int tmp_edge[tmp_lines][2], const int original_groups, const int g_opt, const bool is_center);
 extern void create_adj(const int nodes, const int lines, const int degree,
