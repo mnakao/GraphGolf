@@ -93,10 +93,8 @@ bool check_loop(const int lines, int edge[lines][2])
 
 #pragma omp parallel for
   for(int i=0;i<lines;i++)
-    if(edge[i][0] == edge[i][1]){
+    if(edge[i][0] == edge[i][1])
       flag = false;
-      break;
-    }
 
   timer_stop(TIMER_CHECK);
   return flag;
