@@ -58,8 +58,8 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
       break;
     case 'g':
       *groups = atoi(optarg);
-      if(*groups < 1)
-        ERROR("-g value >= 1\n");
+      if(*groups != 2 && *groups != 4)
+        ERROR("-g value == 2 or 4\n");
       break;
     case 'C':
       *cooling_cycle = atoi(optarg);
