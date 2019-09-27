@@ -58,8 +58,8 @@ static void set_args(const int argc, char **argv, char *infname, char *outfname,
       break;
     case 'v':
       *added_centers = atoi(optarg);
-      if(*added_centers < 0)
-	ERROR("-v value >= 0\n");
+      if(*added_centers <= 0)
+	ERROR("-v value > 0\n");
       break;
     case 'B':
       *enable_bfs = true;
