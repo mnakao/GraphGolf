@@ -30,4 +30,5 @@
 * Also, since the degree is increased by 1, the degree of the output graph is 30
 
 To deal with the graph output above as an input graph, add the "-M" option.
+
     $ mpirun -np 1 ./gg -f n3019d30.edges -g 15 -v 19 -M -o n3019d30-2.edges
