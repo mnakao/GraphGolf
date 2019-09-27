@@ -2,21 +2,21 @@
 
 static void print_help(char *argv)
 {
-  END("%s -f <edge_file> [-L length] [-o <output_file>] [-s <random_seed>] [-n <calculations>] \
-[-w <max_temperature>] [-c <min_temperature>] [-C <cooling_cycle>] [-W <weight>] [-y] [-d] [-N] [-B] [-h]\n", argv);
+  END("%s -f <edge_file> [-r length] [-o <output_file>] [-s <random_seed>] [-n <calculations>] \
+[-w <max_temperature>] [-c <min_temperature>] [-g <gruops>] [-C <cooling_cycle>] [-W <weight>] [-y] [-d] [-N] [-B] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, char *infname, int *low_length,
 		     char *outfname, bool *outfnameflag, int *random_seed,
 		     long long *ncalcs, double *max_temp, bool *max_temp_flag,
-		     double *min_temp, bool *min_temp_flag, int *cooling_cycle, double *weight,
+		     double *min_temp, bool *min_temp_flag, int *groups, int *cooling_cycle, double *weight,
 		     bool *hill_climbing_flag, bool *detect_temp_flag, bool *verify_flag, bool *enable_bfs)
 {
   if(argc < 3)
     print_help(argv[0]);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:L:s:n:w:c:C:W:NdyBh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:r:s:n:w:c:g:C:W:NdyBh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -29,10 +29,10 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
       strcpy(outfname, optarg);
       *outfnameflag = true;
       break;
-     case 'L':
+     case 'r':
       *low_length = atoi(optarg);
       if(*low_length <= 0)
-        ERROR("-R value > 0\n");
+        ERROR("-r value > 0\n");
       break;
     case 's':
       *random_seed = atoi(optarg);
@@ -55,6 +55,11 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
       if(*min_temp <= 0)
         ERROR("MIN value > 0\n");
       *min_temp_flag = true;
+      break;
+    case 'g':
+      *groups = atoi(optarg);
+      if(*groups < 1)
+        ERROR("-g value >= 1\n");
       break;
     case 'C':
       *cooling_cycle = atoi(optarg);
@@ -221,7 +226,7 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
   *low_ASPL = sum/((double)mn*(mn-1));
 }
 
-static void output_params(const int nodes, const int degree, const int low_length, const int random_seed,
+static void output_params(const int nodes, const int degree, const int groups, const int low_length, const int random_seed,
 			  const double max_temp, const double min_temp, const long long ncalcs,
 			  const int cooling_cycle, const double weight, const double cooling_rate, const char *infname,
 			  const char *outfname, const bool outfnameflag, const double average_time,
@@ -259,6 +264,7 @@ static void output_params(const int nodes, const int degree, const int low_lengt
   PRINT_R0("Input filename: %s\n", infname);
   PRINT_R0("   Vertexes: %d\n", nodes);
   PRINT_R0("   Degree:   %d\n", degree);
+  PRINT_R0("   Groups:   %d\n", groups);
   PRINT_R0("   Length:   %d\n", low_length);
   PRINT_R0("   Width :   %d\n", width);
   PRINT_R0("   Height:   %d\n", height);
@@ -294,7 +300,7 @@ int main(int argc, char *argv[])
   bool hill_climbing_flag = false, detect_temp_flag = false, enable_bfs = false;
   char hostname[MPI_MAX_PROCESSOR_NAME], infname[MAX_FILENAME_LENGTH], outfname[MAX_FILENAME_LENGTH];
   int namelen, diam = 0, low_diam = 0, random_seed = 0, cooling_cycle = 1;
-  int width = 0, height = 0, length = -1, low_length = NOT_DEFINED;
+  int width = 0, height = 0, length = -1, low_length = NOT_DEFINED, groups = 1;
   long long ncalcs = 10000, num_accepts = 0;
   double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
   double max_temp = 100.0, min_temp = 0.217147, max_diff_energy = 0;
@@ -311,8 +317,8 @@ int main(int argc, char *argv[])
 
   // Set arguments
   set_args(argc, argv, infname, &low_length, outfname, &outfnameflag, &random_seed,
-	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag, &cooling_cycle, &weight,
-	   &hill_climbing_flag, &detect_temp_flag, &verify_flag, &enable_bfs);
+	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag, &groups, &cooling_cycle,
+	   &weight, &hill_climbing_flag, &detect_temp_flag, &verify_flag, &enable_bfs);
 
   if(low_length == NOT_DEFINED)
     ERROR("Must need -L.\n");
@@ -360,7 +366,7 @@ int main(int argc, char *argv[])
       ERROR("Cannot open %s\n", outfname);
   }
 
-  output_params(nodes, degree, low_length, random_seed, max_temp, min_temp, ncalcs, cooling_cycle, weight,
+  output_params(nodes, degree, groups, low_length, random_seed, max_temp, min_temp, ncalcs, cooling_cycle, weight,
 		cooling_rate, infname, outfname, outfnameflag, average_time, hill_climbing_flag, width, height, enable_bfs);
   
   // Optimization

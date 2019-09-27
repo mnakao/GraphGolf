@@ -107,8 +107,8 @@ static bool bfs(const int nodes, const int lines, const int degree,
   if(!reached)
     return false;
 
-  MPI_Allreduce(MPI_IN_PLACE, diameter, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-  MPI_Allreduce(MPI_IN_PLACE, &sum,  1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, diameter, 1, MPI_INT,    MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, &sum,     1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   *ASPL = sum / ((((double)nodes-1)*nodes)/2);
 
   return true;
@@ -125,7 +125,6 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
   int parsize = (elements+(chunk-1))/chunk;
   double sum = 0.0;
 
-  clear_buffers(A, B, nodes * chunk);
   *diameter = 1;
   for(int t=rank;t<parsize;t+=size){
     uint64_t kk, l;
@@ -160,8 +159,8 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
     }
     *diameter = MAX(*diameter, kk+1);
   }
-  MPI_Allreduce(MPI_IN_PLACE, diameter, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-  MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, diameter, 1, MPI_INT,    MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, &sum,     1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   sum += (double)nodes * (nodes - 1);
 
   if(*diameter > nodes){
@@ -180,9 +179,12 @@ bool evaluation(const int nodes, const int lines, const int degree,
 		const int* restrict adjacency, int *diameter, double *ASPL, const bool enable_bfs)
 {
   timer_start(TIMER_APSP);
-  
-  bool flag = (enable_bfs)?
-    bfs(nodes, lines, degree, adjacency, diameter, ASPL) : matrix_op(nodes, degree, adjacency, diameter, ASPL);
+
+  bool flag;
+  if(enable_bfs)
+    flag = bfs(nodes, lines, degree, (int (*)[degree])adjacency, diameter, ASPL);
+  else
+    flag = matrix_op(nodes, degree, adjacency, diameter, ASPL);
 
   timer_stop(TIMER_APSP);
   return flag;
