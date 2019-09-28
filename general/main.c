@@ -4,13 +4,14 @@ static void print_help(char *argv)
 {
   END("%s -f <edge_file> [-o <output_file>] [-s <random_seed>] \
 [-n <num_calculations>] [-w <max_temperature>] [-c <min_temperature>] \
-[-g <gruops>] [-v <add vertexes>] [-B] [-D] [-H] [-L] [-M] [-N] [-h]\n", argv);
+[-g <gruops>] [-v <add vertexes>] [-B] [-D] [-H] [-L] [-M] [-N] [-O] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, char *infname, char *outfname, bool *outfnameflag,
-		     int *random_seed, long long *ncalcs, double *max_temp, bool *max_temp_flag, double *min_temp,
-		     bool *min_temp_flag, bool *hill_climbing_flag, bool *detect_temp_flag, int *groups,
-		     int *added_centers, bool *halfway_flag, bool *verify_flag, bool *enable_bfs, bool *enable_low_mem)
+		     int *random_seed, long long *ncalcs, double *max_temp, bool *max_temp_flag,
+		     double *min_temp, bool *min_temp_flag, bool *hill_climbing_flag,
+		     bool *detect_temp_flag, int *groups, int *added_centers, bool *halfway_flag,
+		     bool *verify_flag, bool *enable_bfs, bool *enable_low_mem, bool *is_simple_graph)
 {
   if(argc < 3)
     print_help(argv[0]);
@@ -77,6 +78,9 @@ static void set_args(const int argc, char **argv, char *infname, char *outfname,
       *halfway_flag = true;
       break;
     case 'N':
+      *is_simple_graph = false;
+      break;
+    case 'O':
       *verify_flag = false;
       break;
     case 'h':
@@ -164,8 +168,9 @@ static void create_symmetric_edge_with_vertexes(int (*edge)[2], const int based_
   }
 }
 
-static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines, const int groups,
-				  const int degree, const int nodes, const int lines, const int algo)
+static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines,
+				  const int groups, const int degree, const int nodes,
+				  const int lines, const bool is_simple_graph, const int algo)
 {
   for(int j=1;j<groups;j++)
     for(int i=0;i<based_lines;i++){
@@ -183,8 +188,11 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   create_adj(nodes, lines, degree, (const int (*)[2])edge, adj);
   while(1){
     int start_line = getRandom(lines);
-    edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, 0, (int *)adj,
-		&kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, NOT_USED);
+    edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, 0,
+		(int *)adj, &kind_opt, restored_edge, restored_line, restored_adj_value,
+		restored_adj_idx_y, restored_adj_idx_x, is_simple_graph, NOT_USED);
+    if(!is_simple_graph)
+      create_adj(nodes, lines, degree, (const int (*)[2])edge, adj);
     if(evaluation(nodes, based_nodes, groups, lines, degree, (int *)adj, &diam, &ASPL, 0, algo))
       break;
     // NOT_RESTORE
@@ -302,7 +310,7 @@ int main(int argc, char *argv[])
 {
   bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false, verify_flag = true;
   bool hill_climbing_flag = false, detect_temp_flag = false, halfway_flag = false;
-  bool enable_bfs = false, enable_low_mem = false;
+  bool enable_bfs = false, enable_low_mem = false, is_simple_graph = true;
   char hostname[MPI_MAX_PROCESSOR_NAME], infname[MAX_FILENAME_LENGTH], outfname[MAX_FILENAME_LENGTH];
   int namelen, diam = 0, low_diam = 0, random_seed = 0, algo;
   int groups = 1, cooling_cycle = 1, added_centers = 0;
@@ -320,11 +328,11 @@ int main(int argc, char *argv[])
   PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
-  set_args(argc, argv, infname, outfname, &outfnameflag,
-	   &random_seed, &ncalcs, &max_temp,
-	   &max_temp_flag, &min_temp, &min_temp_flag,
+  set_args(argc, argv, infname, outfname, &outfnameflag, &random_seed, &ncalcs,
+	   &max_temp, &max_temp_flag, &min_temp, &min_temp_flag,
 	   &hill_climbing_flag, &detect_temp_flag, &groups,
-	   &added_centers, &halfway_flag, &verify_flag, &enable_bfs, &enable_low_mem);
+	   &added_centers, &halfway_flag, &verify_flag, &enable_bfs,
+	   &enable_low_mem, &is_simple_graph);
 
   if(hill_climbing_flag && max_temp_flag)
     ERROR("Both -H and -w cannot be used.\n");
@@ -395,7 +403,7 @@ int main(int argc, char *argv[])
   }
 
   if(!halfway_flag && !added_centers)
-     create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes, lines, algo);
+    create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes, lines, is_simple_graph, algo);
     
   if(verify_flag)
     verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
@@ -404,7 +412,8 @@ int main(int argc, char *argv[])
   if(groups == 1)
     check_current_edge(nodes, degree, lines, groups, based_nodes, edge, low_ASPL, added_centers, algo);
 
-  double average_time = estimate_elapse_time(nodes, based_nodes, lines, degree, groups, edge, added_centers, algo);
+  double average_time = estimate_elapse_time(nodes, based_nodes, lines, degree, groups,
+					     edge, added_centers, is_simple_graph, algo);
 
   if(hill_climbing_flag){
     max_temp = min_temp = 0.0;
@@ -431,7 +440,7 @@ int main(int argc, char *argv[])
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, degree, groups, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL,
 		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, edge, &diam, &ASPL, 
-		      cooling_cycle, added_centers, based_nodes, &num_accepts, algo);
+		      cooling_cycle, added_centers, based_nodes, &num_accepts, is_simple_graph, algo);
   timer_stop(TIMER_SA);
   
   if(detect_temp_flag){

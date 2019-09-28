@@ -214,12 +214,12 @@ bool has_duplicated_vertex(const int e00, const int e01, const int e10, const in
   return (e00 == e10 || e01 == e11 || e00 == e11 || e01 == e10);
 }
 
-static void exchange_edge_2opt(const int nodes, const int lines, const int groups, const int degree, const int based_nodes,
-			       int edge[lines][2], const int added_centers, int* restrict adj, int *kind_opt,
-			       int* restrict restored_edge, int* restrict restored_line, int* restrict restored_adj_value,
-			       int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const int ii)
+static void exchange_edge_2opt(const int nodes, const int lines, const int groups, const int degree,
+			       const int based_nodes, int edge[lines][2], const int added_centers,
+			       int* restrict adj, int *kind_opt, int* restrict restored_edge, int* restrict restored_line,
+			       int* restrict restored_adj_value, int* restrict restored_adj_idx_y,
+			       int* restrict restored_adj_idx_x, const bool is_simple_graph, const int ii)
 {
-
   int tmp_line[groups*2], tmp_edge[groups*2][2], r;
   int based_lines = lines / groups;
 
@@ -236,7 +236,7 @@ static void exchange_edge_2opt(const int nodes, const int lines, const int group
       else if((tmp_line[0] - tmp_line[1]) % based_lines == 0){
 	if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, tmp_line[0], added_centers,
 		       adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-		       restored_adj_idx_x, ii))
+		       restored_adj_idx_x, is_simple_graph, ii))
 	  return;
 	else
 	  continue;
@@ -251,7 +251,7 @@ static void exchange_edge_2opt(const int nodes, const int lines, const int group
     if(diameter_flag){
       if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, tmp_line[0], added_centers,
 		     adj, kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-		     restored_adj_idx_x, ii))
+		     restored_adj_idx_x, is_simple_graph, ii))
 	return;
       else
 	continue;
@@ -292,68 +292,73 @@ static void exchange_edge_2opt(const int nodes, const int lines, const int group
     if(order(nodes, tmp_edge[i][0], tmp_edge[i][1], added_centers) == RIGHT)
       swap(&tmp_edge[i][0], &tmp_edge[i][1]); // RIGHT -> LEFT
   
-  // Change a part of adj.
-  int y0[groups], y1[groups], y2[groups], y3[groups];
-  int x0[groups], x1[groups], x2[groups], x3[groups];
+  if(is_simple_graph){
+    // Change a part of adj.
+    int y0[groups], y1[groups], y2[groups], y3[groups];
+    int x0[groups], x1[groups], x2[groups], x3[groups];
+    
+#pragma omp parallel for
+    for(int i=0;i<groups;i++){
+      y0[i] = edge[tmp_line[i*2  ]][0];
+      y1[i] = edge[tmp_line[i*2  ]][1];
+      y2[i] = edge[tmp_line[i*2+1]][0];
+      y3[i] = edge[tmp_line[i*2+1]][1];
+
+      for(x0[i]=0;x0[i]<degree;x0[i]++)
+	if(adj[y0[i]*degree+x0[i]] == y1[i])
+	  break;
+      
+      for(x1[i]=0;x1[i]<degree;x1[i]++)
+	if(adj[y1[i]*degree+x1[i]] == y0[i])
+	  break;
+      
+      for(x2[i]=0;x2[i]<degree;x2[i]++)
+	if(adj[y2[i]*degree+x2[i]] == y3[i])
+	  break;
+      
+      for(x3[i]=0;x3[i]<degree;x3[i]++)
+	if(adj[y3[i]*degree+x3[i]] == y2[i])
+	  break;
+      
+      if(x0[i] == degree || x1[i] == degree || x2[i] == degree || x3[i] == degree)
+	ERROR("%d : %d %d %d %d\n", ii, x0[i], x1[i], x2[i], x3[i]);
+    
+      restored_adj_idx_y[i*4  ] = y0[i];
+      restored_adj_idx_x[i*4  ] = x0[i];
+      restored_adj_idx_y[i*4+1] = y1[i];
+      restored_adj_idx_x[i*4+1] = x1[i];
+      restored_adj_idx_y[i*4+2] = y2[i];
+      restored_adj_idx_x[i*4+2] = x2[i];
+      restored_adj_idx_y[i*4+3] = y3[i];
+      restored_adj_idx_x[i*4+3] = x3[i];
+      restored_adj_value[i*4  ] = adj[y0[i]*degree+x0[i]];
+      restored_adj_value[i*4+1] = adj[y1[i]*degree+x1[i]];
+      restored_adj_value[i*4+2] = adj[y2[i]*degree+x2[i]];
+      restored_adj_value[i*4+3] = adj[y3[i]*degree+x3[i]];
+      //
+      restored_line[i*2  ] = tmp_line[i*2  ];
+      restored_line[i*2+1] = tmp_line[i*2+1];
+      restored_edge[i*4  ] = edge[tmp_line[i*2  ]][0];
+      restored_edge[i*4+1] = edge[tmp_line[i*2  ]][1];
+      restored_edge[i*4+2] = edge[tmp_line[i*2+1]][0];
+      restored_edge[i*4+3] = edge[tmp_line[i*2+1]][1];
+    }
+    
+#pragma omp parallel for
+    for(int i=0;i<groups;i++){
+      if(r==0){
+	adj[y0[i]*degree+x0[i]] = y3[i]; adj[y1[i]*degree+x1[i]] = y2[i];
+	adj[y2[i]*degree+x2[i]] = y1[i]; adj[y3[i]*degree+x3[i]] = y0[i];
+      }
+      else{
+	adj[y0[i]*degree+x0[i]] = y2[i]; adj[y1[i]*degree+x1[i]] = y3[i];
+	adj[y2[i]*degree+x2[i]] = y0[i]; adj[y3[i]*degree+x3[i]] = y1[i];
+      }
+    }
+  }
   
 #pragma omp parallel for
   for(int i=0;i<groups;i++){
-    y0[i] = edge[tmp_line[i*2  ]][0];
-    y1[i] = edge[tmp_line[i*2  ]][1];
-    y2[i] = edge[tmp_line[i*2+1]][0];
-    y3[i] = edge[tmp_line[i*2+1]][1];
-
-    for(x0[i]=0;x0[i]<degree;x0[i]++)
-      if(adj[y0[i]*degree+x0[i]] == y1[i])
-	break;
-    
-    for(x1[i]=0;x1[i]<degree;x1[i]++)
-      if(adj[y1[i]*degree+x1[i]] == y0[i])
-	break;
-    
-    for(x2[i]=0;x2[i]<degree;x2[i]++)
-      if(adj[y2[i]*degree+x2[i]] == y3[i])
-	break;
-      
-    for(x3[i]=0;x3[i]<degree;x3[i]++)
-      if(adj[y3[i]*degree+x3[i]] == y2[i])
-	break;
-      
-    if(x0[i] == degree || x1[i] == degree || x2[i] == degree || x3[i] == degree)
-      ERROR("%d : %d %d %d %d\n", ii, x0[i], x1[i], x2[i], x3[i]);
-    
-    restored_adj_idx_y[i*4  ] = y0[i];
-    restored_adj_idx_x[i*4  ] = x0[i];
-    restored_adj_idx_y[i*4+1] = y1[i];
-    restored_adj_idx_x[i*4+1] = x1[i];
-    restored_adj_idx_y[i*4+2] = y2[i];
-    restored_adj_idx_x[i*4+2] = x2[i];
-    restored_adj_idx_y[i*4+3] = y3[i];
-    restored_adj_idx_x[i*4+3] = x3[i];
-    restored_adj_value[i*4  ] = adj[y0[i]*degree+x0[i]];
-    restored_adj_value[i*4+1] = adj[y1[i]*degree+x1[i]];
-    restored_adj_value[i*4+2] = adj[y2[i]*degree+x2[i]];
-    restored_adj_value[i*4+3] = adj[y3[i]*degree+x3[i]];
-    //
-    restored_line[i*2  ] = tmp_line[i*2  ];
-    restored_line[i*2+1] = tmp_line[i*2+1];
-    restored_edge[i*4  ] = edge[tmp_line[i*2  ]][0];
-    restored_edge[i*4+1] = edge[tmp_line[i*2  ]][1];
-    restored_edge[i*4+2] = edge[tmp_line[i*2+1]][0];
-    restored_edge[i*4+3] = edge[tmp_line[i*2+1]][1];
-  }
-
-#pragma omp parallel for
-  for(int i=0;i<groups;i++){
-    if(r==0){
-      adj[y0[i]*degree+x0[i]] = y3[i]; adj[y1[i]*degree+x1[i]] = y2[i];
-      adj[y2[i]*degree+x2[i]] = y1[i]; adj[y3[i]*degree+x3[i]] = y0[i];
-    }
-    else{
-      adj[y0[i]*degree+x0[i]] = y2[i]; adj[y1[i]*degree+x1[i]] = y3[i];
-      adj[y2[i]*degree+x2[i]] = y0[i]; adj[y3[i]*degree+x3[i]] = y1[i];
-    }
-    
     edge[tmp_line[i*2  ]][0] = tmp_edge[i*2  ][0];
     edge[tmp_line[i*2+1]][0] = tmp_edge[i*2+1][0];
     edge[tmp_line[i*2  ]][1] = tmp_edge[i*2  ][1];
@@ -409,10 +414,10 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	     const long long ncalcs, const double cooling_rate,  const int low_diam,  const double low_ASPL, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
 	     int edge[lines][2], int *diam, double *ASPL, const int cooling_cycle, const int added_centers,
-	     const int based_nodes, long long *total_accepts, const int algo)
+	     const int based_nodes, long long *total_accepts, const bool is_simple_graph, const int algo)
 {
   long long ii, accepts = 0, rejects = 0;
-  int best_edge[lines][2], tmp_edge[lines][2], kind_opt;
+  int best_edge[lines][2], tmp_edge[lines][2], tmp_edge_nsg[lines][2] /* nsg = not simple graph */, kind_opt;
   int restored_adj_value[groups*4], restored_adj_idx_y[groups*4], restored_adj_idx_x[groups*4];
   int restored_edge[groups*4], restored_line[groups*2];
   bool restore_flag = false;
@@ -423,7 +428,7 @@ long long sa(const int nodes, const int lines, const int degree, const int group
   int *adj = malloc(sizeof(int)*nodes*degree); // int adj[nodes][degree];
   create_adj(nodes, lines, degree, (const int (*)[2])tmp_edge, (int (*)[degree])adj);
   evaluation(nodes, based_nodes, groups, lines, degree, adj, diam, ASPL, added_centers, algo);
-  
+
   double current_ASPL = *ASPL;
   double best_ASPL    = *ASPL;
   int current_diam    = *diam;
@@ -443,26 +448,43 @@ long long sa(const int nodes, const int lines, const int degree, const int group
     }
 
     while(1){
-      if(restore_flag){
-	restore_adj(degree, groups, adj, kind_opt, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x);
-	restore_edge(groups, kind_opt, (int *)tmp_edge, restored_line, restored_edge);
+      if(is_simple_graph){
+	if(restore_flag){
+	  restore_adj(degree, groups, adj, kind_opt, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x);
+	  restore_edge(groups, kind_opt, (int *)tmp_edge, restored_line, restored_edge);
+	}
       }
+      else{
+	copy_edge((int *)tmp_edge_nsg, (int *)tmp_edge, lines*2);
+      }
+
       exchange_edge_2opt(nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers,
-			 adj, &kind_opt, restored_edge, restored_line, restored_adj_value, restored_adj_idx_y,
-			 restored_adj_idx_x, (int)ii);
+			 adj, &kind_opt, restored_edge, restored_line, restored_adj_value,
+      			 restored_adj_idx_y, restored_adj_idx_x, is_simple_graph, (int)ii);
+
+      if(!is_simple_graph)
+      	create_adj(nodes, lines, degree, (const int (*)[2])tmp_edge, (int (*)[degree])adj);
+
       assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, adj, (int)ii));
       if(evaluation(nodes, based_nodes, groups, lines, degree, adj, &tmp_diam, &tmp_ASPL, added_centers, algo))
 	break;
-      else
-	restore_flag = true;
+      else{
+	if(is_simple_graph)
+	  restore_flag = true;
+	else
+	  copy_edge((int *)tmp_edge, (int *)tmp_edge_nsg, lines*2);
+      }
     }
 
     if(!accept(tmp_diam, current_diam, tmp_ASPL, current_ASPL, temp, nodes, groups, hill_climbing_flag,
 	       detect_temp_flag, ii, max_diff_energy, total_accepts, &accepts, &rejects)){
-      restore_flag = true;
+      if(is_simple_graph)
+	restore_flag = true;
+      else
+	copy_edge((int *)tmp_edge, (int *)tmp_edge_nsg, lines*2);
     }
     else{
-      restore_flag = false;
+      if(is_simple_graph) restore_flag = false;
       current_ASPL = tmp_ASPL;
       current_diam = tmp_diam;
       if((best_diam > current_diam) || (best_diam == current_diam && best_ASPL > current_ASPL)){
@@ -495,7 +517,8 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 
 #define ESTIMATED_TIMES 5
 double estimate_elapse_time(const int nodes, const int based_nodes, const int lines, const int degree,
-			    const int groups, int edge[lines][2], const int added_centers, const int algo)
+			    const int groups, int edge[lines][2], const int added_centers,
+			    const bool is_simple_graph, const int algo)
 {
   int diam;    // Not use
   double ASPL; // Not use
@@ -510,8 +533,11 @@ double estimate_elapse_time(const int nodes, const int based_nodes, const int li
   
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
-    exchange_edge_2opt(nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, adj, &kind_opt,
-		       restored_edge, restored_line, restored_adj_value, restored_adj_idx_y, restored_adj_idx_x, (int)i);
+    exchange_edge_2opt(nodes, lines, groups, degree, based_nodes, tmp_edge, added_centers, adj,
+		       &kind_opt, restored_edge, restored_line, restored_adj_value,
+		       restored_adj_idx_y, restored_adj_idx_x, is_simple_graph, (int)i);
+    if(!is_simple_graph)
+      create_adj(nodes, lines, degree, (const int (*)[2])tmp_edge, (int (*)[degree])adj);
     assert(check(nodes, based_nodes, lines, degree, groups, tmp_edge, added_centers, adj, (int)i));
     evaluation(nodes, based_nodes, groups, lines, degree, adj, &diam, &ASPL, added_centers, algo);
   }  

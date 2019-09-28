@@ -1,19 +1,19 @@
 Run on Ripuka.local
-Mon Sep 16 18:14:54 2019
+Sat Sep 28 21:15:51 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 1
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000315 sec.
-   Estimated elapse time: 0.315189 sec.
+   Average APSP time: 0.000158 sec.
+   Estimated elapse time: 0.158405 sec.
 Input filename: data/n512d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -122,24 +122,24 @@ Input filename: data/n512d4.random.edges
      990	0.230880	4.911395 ( 0.312569 )	4.911395 ( 0.312569 )	7 ( 1 )			7 ( 1 )		0.1000 ( 1 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.911211  Diam. gap = 1  ASPL gap = 0.312385
-Steps: 1000  Elapse time: 0.138829 sec. (APSP: 0.134387 sec. Check: 0.003586 sec. Other: 0.000855 sec.)
+Steps: 1000, Elapse time: 0.132450 sec. (APSP: 0.127881 sec. Check: 0.003734 sec. Other: 0.000835 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:54 2019
+Sat Sep 28 21:15:51 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 1
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000148 sec.
-   Estimated elapse time: 0.148392 sec.
+   Average APSP time: 0.000119 sec.
+   Estimated elapse time: 0.118589 sec.
 Input filename: data/n256d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -248,24 +248,24 @@ Input filename: data/n256d4.random.edges
      990	0.230880	4.889043 ( 0.290217 )	4.889043 ( 0.290217 )	7 ( 1 )			7 ( 1 )		0.1000 ( 1 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.889043  Diam. gap = 1  ASPL gap = 0.290217
-Steps: 1000  Elapse time: 0.085284 sec. (APSP: 0.080648 sec. Check: 0.003591 sec. Other: 0.001045 sec.)
+Steps: 1000, Elapse time: 0.071936 sec. (APSP: 0.067734 sec. Check: 0.003290 sec. Other: 0.000911 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:54 2019
+Sat Sep 28 21:15:51 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 1
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000115 sec.
-   Estimated elapse time: 0.115395 sec.
+   Average APSP time: 0.000088 sec.
+   Estimated elapse time: 0.088024 sec.
 Input filename: data/n128d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -374,24 +374,24 @@ Input filename: data/n128d4.random.edges
      990	0.230880	4.878807 ( 0.279981 )	4.878807 ( 0.279981 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.878807  Diam. gap = 1  ASPL gap = 0.279981
-Steps: 1000  Elapse time: 0.113850 sec. (APSP: 0.102097 sec. Check: 0.007886 sec. Other: 0.003867 sec.)
+Steps: 1000, Elapse time: 0.040199 sec. (APSP: 0.036316 sec. Check: 0.003044 sec. Other: 0.000839 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:55 2019
+Sat Sep 28 21:15:51 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 1
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000052 sec.
-   Estimated elapse time: 0.052214 sec.
+   Average APSP time: 0.000040 sec.
+   Estimated elapse time: 0.039816 sec.
 Input filename: data/n64d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -500,24 +500,24 @@ Input filename: data/n64d4.random.edges
      990	0.230880	4.862953 ( 0.264127 )	4.862953 ( 0.264127 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.862953  Diam. gap = 1  ASPL gap = 0.264127
-Steps: 1000  Elapse time: 0.034876 sec. (APSP: 0.029552 sec. Check: 0.003814 sec. Other: 0.001510 sec.)
+Steps: 1000, Elapse time: 0.025411 sec. (APSP: 0.021529 sec. Check: 0.002898 sec. Other: 0.000984 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:55 2019
+Sat Sep 28 21:15:51 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 1
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000055 sec.
-   Estimated elapse time: 0.054836 sec.
+   Average APSP time: 0.000041 sec.
+   Estimated elapse time: 0.040579 sec.
 Input filename: data/n32d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -626,24 +626,24 @@ Input filename: data/n32d4.random.edges
      990	0.230880	4.850844 ( 0.252018 )	4.850844 ( 0.252018 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.850844  Diam. gap = 1  ASPL gap = 0.252018
-Steps: 1000  Elapse time: 0.047497 sec. (APSP: 0.040072 sec. Check: 0.004869 sec. Other: 0.002556 sec.)
+Steps: 1000, Elapse time: 0.025825 sec. (APSP: 0.021552 sec. Check: 0.002881 sec. Other: 0.001392 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:55 2019
+Sat Sep 28 21:15:52 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 1
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000220 sec.
-   Estimated elapse time: 0.219631 sec.
+   Average APSP time: 0.000086 sec.
+   Estimated elapse time: 0.085783 sec.
 Input filename: data/n16d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -752,24 +752,24 @@ Input filename: data/n16d4.random.edges
      990	0.230880	4.846991 ( 0.248165 )	4.846991 ( 0.248165 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.846991  Diam. gap = 1  ASPL gap = 0.248165
-Steps: 1000  Elapse time: 0.039150 sec. (APSP: 0.032261 sec. Check: 0.003816 sec. Other: 0.003073 sec.)
+Steps: 1000, Elapse time: 0.027836 sec. (APSP: 0.022678 sec. Check: 0.003039 sec. Other: 0.002119 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:55 2019
+Sat Sep 28 21:15:52 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 1
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000060 sec.
-   Estimated elapse time: 0.060177 sec.
+   Average APSP time: 0.000047 sec.
+   Estimated elapse time: 0.047016 sec.
 Input filename: data/n8d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -878,24 +878,24 @@ Input filename: data/n8d4.random.edges
      990	0.230880	4.837573 ( 0.238748 )	4.837573 ( 0.238748 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.837573  Diam. gap = 1  ASPL gap = 0.238748
-Steps: 1000  Elapse time: 0.044846 sec. (APSP: 0.036294 sec. Check: 0.004165 sec. Other: 0.004387 sec.)
+Steps: 1000, Elapse time: 0.033516 sec. (APSP: 0.026965 sec. Check: 0.003351 sec. Other: 0.003200 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:55 2019
+Sat Sep 28 21:15:52 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 1
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.940519
 APSP: MATRIX Opetation
 Num. of Calulations: 100
-   Average APSP time: 0.001153 sec.
-   Estimated elapse time: 0.115342 sec.
+   Average APSP time: 0.000906 sec.
+   Estimated elapse time: 0.090556 sec.
 Input filename: data/n114d29.random.edges
    Vertexes: 1726
    Degree:   30
@@ -1005,24 +1005,24 @@ Input filename: data/n114d29.random.edges
       99	0.230880	2.884839 ( 0.423969 )	2.884839 ( 0.423969 )	4 ( 1 )			4 ( 1 )		1.0000 ( 1 / 1 )
 ---
 Diam. k = 4  ASPL l = 2.883378  Diam. gap = 1  ASPL gap = 0.422508
-Steps: 100  Elapse time: 0.098511 sec. (APSP: 0.088072 sec. Check: 0.008363 sec. Other: 0.002076 sec.)
+Steps: 100, Elapse time: 0.088909 sec. (APSP: 0.079772 sec. Check: 0.007575 sec. Other: 0.001562 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:55 2019
+Sat Sep 28 21:15:52 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 2
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000225 sec.
-   Estimated elapse time: 0.225401 sec.
+   Average APSP time: 0.000148 sec.
+   Estimated elapse time: 0.148392 sec.
 Input filename: data/n512d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -1131,24 +1131,24 @@ Input filename: data/n512d4.random.edges
      990	0.230880	4.903697 ( 0.304871 )	4.903697 ( 0.304871 )	7 ( 1 )			7 ( 1 )		0.1000 ( 1 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.903651  Diam. gap = 1  ASPL gap = 0.304825
-Steps: 1000  Elapse time: 0.136804 sec. (APSP: 0.132257 sec. Check: 0.003696 sec. Other: 0.000850 sec.)
+Steps: 1000, Elapse time: 0.123137 sec. (APSP: 0.119040 sec. Check: 0.003451 sec. Other: 0.000645 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:56 2019
+Sat Sep 28 21:15:52 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 2
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000150 sec.
-   Estimated elapse time: 0.149822 sec.
+   Average APSP time: 0.000117 sec.
+   Estimated elapse time: 0.116968 sec.
 Input filename: data/n256d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -1257,24 +1257,24 @@ Input filename: data/n256d4.random.edges
      990	0.230880	4.886933 ( 0.288107 )	4.886933 ( 0.288107 )	7 ( 1 )			7 ( 1 )		0.1000 ( 1 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.886933  Diam. gap = 1  ASPL gap = 0.288107
-Steps: 1000  Elapse time: 0.081321 sec. (APSP: 0.076724 sec. Check: 0.003540 sec. Other: 0.001058 sec.)
+Steps: 1000, Elapse time: 0.067682 sec. (APSP: 0.063779 sec. Check: 0.003139 sec. Other: 0.000764 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:56 2019
+Sat Sep 28 21:15:52 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 2
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000088 sec.
-   Estimated elapse time: 0.088024 sec.
+   Average APSP time: 0.000087 sec.
+   Estimated elapse time: 0.086594 sec.
 Input filename: data/n128d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -1383,24 +1383,24 @@ Input filename: data/n128d4.random.edges
      990	0.230880	4.881207 ( 0.282381 )	4.881207 ( 0.282381 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.881207  Diam. gap = 1  ASPL gap = 0.282381
-Steps: 1000  Elapse time: 0.051889 sec. (APSP: 0.047794 sec. Check: 0.003185 sec. Other: 0.000910 sec.)
+Steps: 1000, Elapse time: 0.045881 sec. (APSP: 0.041894 sec. Check: 0.003015 sec. Other: 0.000972 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:56 2019
+Sat Sep 28 21:15:52 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 2
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000065 sec.
-   Estimated elapse time: 0.065041 sec.
+   Average APSP time: 0.000055 sec.
+   Estimated elapse time: 0.054979 sec.
 Input filename: data/n64d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -1509,24 +1509,24 @@ Input filename: data/n64d4.random.edges
      990	0.230880	4.874358 ( 0.275532 )	4.874358 ( 0.275532 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.873655  Diam. gap = 1  ASPL gap = 0.274829
-Steps: 1000  Elapse time: 0.031536 sec. (APSP: 0.026770 sec. Check: 0.003414 sec. Other: 0.001352 sec.)
+Steps: 1000, Elapse time: 0.026056 sec. (APSP: 0.022092 sec. Check: 0.002938 sec. Other: 0.001026 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:56 2019
+Sat Sep 28 21:15:52 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 2
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000060 sec.
-   Estimated elapse time: 0.060415 sec.
+   Average APSP time: 0.000042 sec.
+   Estimated elapse time: 0.042439 sec.
 Input filename: data/n32d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -1635,24 +1635,24 @@ Input filename: data/n32d4.random.edges
      990	0.230880	4.857816 ( 0.258990 )	4.857816 ( 0.258990 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.857816  Diam. gap = 1  ASPL gap = 0.258990
-Steps: 1000  Elapse time: 0.033230 sec. (APSP: 0.027900 sec. Check: 0.003519 sec. Other: 0.001811 sec.)
+Steps: 1000, Elapse time: 0.026598 sec. (APSP: 0.022222 sec. Check: 0.002977 sec. Other: 0.001399 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:56 2019
+Sat Sep 28 21:15:52 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 2
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000038 sec.
-   Estimated elapse time: 0.038195 sec.
+   Average APSP time: 0.000219 sec.
+   Estimated elapse time: 0.219011 sec.
 Input filename: data/n16d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -1761,24 +1761,24 @@ Input filename: data/n16d4.random.edges
      990	0.230880	4.865338 ( 0.266512 )	4.863503 ( 0.264677 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.863503  Diam. gap = 1  ASPL gap = 0.264677
-Steps: 1000  Elapse time: 0.041900 sec. (APSP: 0.034692 sec. Check: 0.004160 sec. Other: 0.003048 sec.)
+Steps: 1000, Elapse time: 0.042704 sec. (APSP: 0.035127 sec. Check: 0.004171 sec. Other: 0.003407 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:56 2019
+Sat Sep 28 21:15:53 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 2
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000048 sec.
-   Estimated elapse time: 0.048208 sec.
+   Average APSP time: 0.000040 sec.
+   Estimated elapse time: 0.040388 sec.
 Input filename: data/n8d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -1887,24 +1887,24 @@ Input filename: data/n8d4.random.edges
      990	0.230880	4.819961 ( 0.221135 )	4.819961 ( 0.221135 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.819961  Diam. gap = 1  ASPL gap = 0.221135
-Steps: 1000  Elapse time: 0.049495 sec. (APSP: 0.041699 sec. Check: 0.003717 sec. Other: 0.004079 sec.)
+Steps: 1000, Elapse time: 0.041951 sec. (APSP: 0.035393 sec. Check: 0.003226 sec. Other: 0.003332 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:56 2019
+Sat Sep 28 21:15:53 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 2
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.940519
 APSP: MATRIX Opetation
 Num. of Calulations: 100
-   Average APSP time: 0.001273 sec.
-   Estimated elapse time: 0.127258 sec.
+   Average APSP time: 0.000984 sec.
+   Estimated elapse time: 0.098381 sec.
 Input filename: data/n114d29.random.edges
    Vertexes: 1726
    Degree:   30
@@ -2014,24 +2014,24 @@ Input filename: data/n114d29.random.edges
       99	0.230880	2.856709 ( 0.395840 )	2.856709 ( 0.395840 )	4 ( 1 )			4 ( 1 )		1.0000 ( 1 / 1 )
 ---
 Diam. k = 4  ASPL l = 2.855359  Diam. gap = 1  ASPL gap = 0.394490
-Steps: 100  Elapse time: 0.082772 sec. (APSP: 0.073853 sec. Check: 0.007387 sec. Other: 0.001533 sec.)
+Steps: 100, Elapse time: 0.083368 sec. (APSP: 0.074786 sec. Check: 0.007201 sec. Other: 0.001381 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:56 2019
+Sat Sep 28 21:15:53 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 3
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000170 sec.
-   Estimated elapse time: 0.169802 sec.
+   Average APSP time: 0.000149 sec.
+   Estimated elapse time: 0.148964 sec.
 Input filename: data/n512d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -2140,24 +2140,24 @@ Input filename: data/n512d4.random.edges
      990	0.230880	4.903651 ( 0.304825 )	4.903651 ( 0.304825 )	7 ( 1 )			7 ( 1 )		0.1000 ( 1 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.902672  Diam. gap = 1  ASPL gap = 0.303847
-Steps: 1000  Elapse time: 0.175552 sec. (APSP: 0.169981 sec. Check: 0.004273 sec. Other: 0.001299 sec.)
+Steps: 1000, Elapse time: 0.124350 sec. (APSP: 0.120187 sec. Check: 0.003480 sec. Other: 0.000683 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:57 2019
+Sat Sep 28 21:15:53 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 3
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000216 sec.
-   Estimated elapse time: 0.216007 sec.
+   Average APSP time: 0.000128 sec.
+   Estimated elapse time: 0.128222 sec.
 Input filename: data/n256d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -2266,24 +2266,24 @@ Input filename: data/n256d4.random.edges
      990	0.230880	4.890870 ( 0.292044 )	4.890870 ( 0.292044 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.890870  Diam. gap = 1  ASPL gap = 0.292044
-Steps: 1000  Elapse time: 0.362007 sec. (APSP: 0.346938 sec. Check: 0.012930 sec. Other: 0.002139 sec.)
+Steps: 1000, Elapse time: 0.069698 sec. (APSP: 0.065841 sec. Check: 0.003088 sec. Other: 0.000769 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:57 2019
+Sat Sep 28 21:15:53 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 3
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000197 sec.
-   Estimated elapse time: 0.196600 sec.
+   Average APSP time: 0.000086 sec.
+   Estimated elapse time: 0.085783 sec.
 Input filename: data/n128d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -2392,24 +2392,24 @@ Input filename: data/n128d4.random.edges
      990	0.230880	4.878073 ( 0.279247 )	4.878073 ( 0.279247 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.878073  Diam. gap = 1  ASPL gap = 0.279247
-Steps: 1000  Elapse time: 0.154286 sec. (APSP: 0.106321 sec. Check: 0.004912 sec. Other: 0.043054 sec.)
+Steps: 1000, Elapse time: 0.047988 sec. (APSP: 0.043963 sec. Check: 0.003147 sec. Other: 0.000879 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:58 2019
+Sat Sep 28 21:15:53 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 3
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000060 sec.
-   Estimated elapse time: 0.059605 sec.
+   Average APSP time: 0.000040 sec.
+   Estimated elapse time: 0.039577 sec.
 Input filename: data/n64d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -2518,24 +2518,24 @@ Input filename: data/n64d4.random.edges
      990	0.230880	4.866836 ( 0.268010 )	4.866836 ( 0.268010 )	7 ( 1 )			7 ( 1 )		0.1000 ( 1 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.866836  Diam. gap = 1  ASPL gap = 0.268010
-Steps: 1000  Elapse time: 0.034296 sec. (APSP: 0.029133 sec. Check: 0.003748 sec. Other: 0.001415 sec.)
+Steps: 1000, Elapse time: 0.026011 sec. (APSP: 0.022044 sec. Check: 0.002928 sec. Other: 0.001039 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:58 2019
+Sat Sep 28 21:15:53 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 3
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000043 sec.
-   Estimated elapse time: 0.043011 sec.
+   Average APSP time: 0.000041 sec.
+   Estimated elapse time: 0.041389 sec.
 Input filename: data/n32d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -2644,24 +2644,24 @@ Input filename: data/n32d4.random.edges
      990	0.230880	4.852189 ( 0.253364 )	4.852189 ( 0.253364 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.852189  Diam. gap = 1  ASPL gap = 0.253364
-Steps: 1000  Elapse time: 0.029845 sec. (APSP: 0.025082 sec. Check: 0.003206 sec. Other: 0.001557 sec.)
+Steps: 1000, Elapse time: 0.026619 sec. (APSP: 0.022262 sec. Check: 0.002953 sec. Other: 0.001404 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:58 2019
+Sat Sep 28 21:15:53 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 3
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000048 sec.
-   Estimated elapse time: 0.047636 sec.
+   Average APSP time: 0.000043 sec.
+   Estimated elapse time: 0.042582 sec.
 Input filename: data/n16d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -2770,24 +2770,24 @@ Input filename: data/n16d4.random.edges
      990	0.230880	4.859344 ( 0.260519 )	4.859344 ( 0.260519 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.859344  Diam. gap = 1  ASPL gap = 0.260519
-Steps: 1000  Elapse time: 0.028565 sec. (APSP: 0.023460 sec. Check: 0.002998 sec. Other: 0.002106 sec.)
+Steps: 1000, Elapse time: 0.027844 sec. (APSP: 0.022734 sec. Check: 0.003017 sec. Other: 0.002093 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:58 2019
+Sat Sep 28 21:15:54 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 3
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000047 sec.
-   Estimated elapse time: 0.047016 sec.
+   Average APSP time: 0.000039 sec.
+   Estimated elapse time: 0.039196 sec.
 Input filename: data/n8d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -2896,24 +2896,24 @@ Input filename: data/n8d4.random.edges
      990	0.230880	4.861791 ( 0.262965 )	4.861791 ( 0.262965 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.861791  Diam. gap = 1  ASPL gap = 0.262965
-Steps: 1000  Elapse time: 0.057633 sec. (APSP: 0.049856 sec. Check: 0.003732 sec. Other: 0.004045 sec.)
+Steps: 1000, Elapse time: 0.049670 sec. (APSP: 0.042871 sec. Check: 0.003287 sec. Other: 0.003512 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:58 2019
+Sat Sep 28 21:15:54 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 3
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.940519
 APSP: MATRIX Opetation
 Num. of Calulations: 100
-   Average APSP time: 0.000979 sec.
-   Estimated elapse time: 0.097938 sec.
+   Average APSP time: 0.000983 sec.
+   Estimated elapse time: 0.098281 sec.
 Input filename: data/n114d29.random.edges
    Vertexes: 1726
    Degree:   30
@@ -3023,24 +3023,24 @@ Input filename: data/n114d29.random.edges
       99	0.230880	2.856360 ( 0.395491 )	2.856360 ( 0.395491 )	4 ( 1 )			4 ( 1 )		1.0000 ( 1 / 1 )
 ---
 Diam. k = 4  ASPL l = 2.854426  Diam. gap = 1  ASPL gap = 0.393556
-Steps: 100  Elapse time: 0.092409 sec. (APSP: 0.082827 sec. Check: 0.007920 sec. Other: 0.001662 sec.)
+Steps: 100, Elapse time: 0.081690 sec. (APSP: 0.073340 sec. Check: 0.007038 sec. Other: 0.001312 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:58 2019
+Sat Sep 28 21:15:54 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 4
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000159 sec.
-   Estimated elapse time: 0.159407 sec.
+   Average APSP time: 0.000149 sec.
+   Estimated elapse time: 0.149012 sec.
 Input filename: data/n512d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -3149,24 +3149,24 @@ Input filename: data/n512d4.random.edges
      990	0.230880	4.897933 ( 0.299107 )	4.897933 ( 0.299107 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.897933  Diam. gap = 1  ASPL gap = 0.299107
-Steps: 1000  Elapse time: 0.138159 sec. (APSP: 0.133774 sec. Check: 0.003663 sec. Other: 0.000722 sec.)
+Steps: 1000, Elapse time: 0.123646 sec. (APSP: 0.119534 sec. Check: 0.003472 sec. Other: 0.000640 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:59 2019
+Sat Sep 28 21:15:54 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 4
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000117 sec.
-   Estimated elapse time: 0.116587 sec.
+   Average APSP time: 0.000107 sec.
+   Estimated elapse time: 0.107193 sec.
 Input filename: data/n256d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -3275,24 +3275,24 @@ Input filename: data/n256d4.random.edges
      990	0.230880	4.890464 ( 0.291639 )	4.890464 ( 0.291639 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.890464  Diam. gap = 1  ASPL gap = 0.291639
-Steps: 1000  Elapse time: 0.080324 sec. (APSP: 0.075725 sec. Check: 0.003480 sec. Other: 0.001119 sec.)
+Steps: 1000, Elapse time: 0.068992 sec. (APSP: 0.065106 sec. Check: 0.003085 sec. Other: 0.000801 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:59 2019
+Sat Sep 28 21:15:54 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 4
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000088 sec.
-   Estimated elapse time: 0.088215 sec.
+   Average APSP time: 0.000070 sec.
+   Estimated elapse time: 0.070238 sec.
 Input filename: data/n128d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -3401,24 +3401,24 @@ Input filename: data/n128d4.random.edges
      990	0.230880	4.869496 ( 0.270670 )	4.869496 ( 0.270670 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.869496  Diam. gap = 1  ASPL gap = 0.270670
-Steps: 1000  Elapse time: 0.053777 sec. (APSP: 0.049085 sec. Check: 0.003532 sec. Other: 0.001160 sec.)
+Steps: 1000, Elapse time: 0.047508 sec. (APSP: 0.043650 sec. Check: 0.003024 sec. Other: 0.000834 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:59 2019
+Sat Sep 28 21:15:54 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 4
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000064 sec.
-   Estimated elapse time: 0.063801 sec.
+   Average APSP time: 0.000049 sec.
+   Estimated elapse time: 0.049400 sec.
 Input filename: data/n64d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -3527,24 +3527,24 @@ Input filename: data/n64d4.random.edges
      990	0.230880	4.871484 ( 0.272658 )	4.871484 ( 0.272658 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.871484  Diam. gap = 1  ASPL gap = 0.272658
-Steps: 1000  Elapse time: 0.030194 sec. (APSP: 0.025625 sec. Check: 0.003326 sec. Other: 0.001244 sec.)
+Steps: 1000, Elapse time: 0.025475 sec. (APSP: 0.021566 sec. Check: 0.002859 sec. Other: 0.001049 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:59 2019
+Sat Sep 28 21:15:54 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 4
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000043 sec.
-   Estimated elapse time: 0.042772 sec.
+   Average APSP time: 0.000035 sec.
+   Estimated elapse time: 0.034809 sec.
 Input filename: data/n32d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -3653,24 +3653,24 @@ Input filename: data/n32d4.random.edges
      990	0.230880	4.858060 ( 0.259234 )	4.858060 ( 0.259234 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.857143  Diam. gap = 1  ASPL gap = 0.258317
-Steps: 1000  Elapse time: 0.029353 sec. (APSP: 0.024581 sec. Check: 0.003211 sec. Other: 0.001561 sec.)
+Steps: 1000, Elapse time: 0.025338 sec. (APSP: 0.021091 sec. Check: 0.002860 sec. Other: 0.001387 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:59 2019
+Sat Sep 28 21:15:54 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 4
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000055 sec.
-   Estimated elapse time: 0.055170 sec.
+   Average APSP time: 0.000033 sec.
+   Estimated elapse time: 0.033188 sec.
 Input filename: data/n16d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -3779,24 +3779,24 @@ Input filename: data/n16d4.random.edges
      990	0.230880	4.858977 ( 0.260152 )	4.858977 ( 0.260152 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.858977  Diam. gap = 1  ASPL gap = 0.260152
-Steps: 1000  Elapse time: 0.032327 sec. (APSP: 0.026587 sec. Check: 0.003341 sec. Other: 0.002399 sec.)
+Steps: 1000, Elapse time: 0.027631 sec. (APSP: 0.022770 sec. Check: 0.002878 sec. Other: 0.001983 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:14:59 2019
+Sat Sep 28 21:15:54 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 4
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000044 sec.
-   Estimated elapse time: 0.044012 sec.
+   Average APSP time: 0.000032 sec.
+   Estimated elapse time: 0.031805 sec.
 Input filename: data/n8d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -3905,24 +3905,24 @@ Input filename: data/n8d4.random.edges
      990	0.230880	4.829256 ( 0.230431 )	4.829256 ( 0.230431 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.829256  Diam. gap = 1  ASPL gap = 0.230431
-Steps: 1000  Elapse time: 0.044306 sec. (APSP: 0.035747 sec. Check: 0.004272 sec. Other: 0.004287 sec.)
+Steps: 1000, Elapse time: 0.033113 sec. (APSP: 0.026446 sec. Check: 0.003430 sec. Other: 0.003237 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:00 2019
+Sat Sep 28 21:15:55 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 4
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.940519
 APSP: MATRIX Opetation
 Num. of Calulations: 100
-   Average APSP time: 0.000983 sec.
-   Estimated elapse time: 0.098300 sec.
+   Average APSP time: 0.001022 sec.
+   Estimated elapse time: 0.102201 sec.
 Input filename: data/n114d29.random.edges
    Vertexes: 1726
    Degree:   30
@@ -4032,24 +4032,24 @@ Input filename: data/n114d29.random.edges
       99	0.230880	2.858907 ( 0.398038 )	2.858907 ( 0.398038 )	4 ( 1 )			4 ( 1 )		1.0000 ( 1 / 1 )
 ---
 Diam. k = 4  ASPL l = 2.854796  Diam. gap = 1  ASPL gap = 0.393927
-Steps: 100  Elapse time: 0.085377 sec. (APSP: 0.076198 sec. Check: 0.007596 sec. Other: 0.001583 sec.)
+Steps: 100, Elapse time: 0.084287 sec. (APSP: 0.075722 sec. Check: 0.007232 sec. Other: 0.001333 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:00 2019
+Sat Sep 28 21:15:55 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 5
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000321 sec.
-   Estimated elapse time: 0.321007 sec.
+   Average APSP time: 0.000217 sec.
+   Estimated elapse time: 0.217438 sec.
 Input filename: data/n512d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -4158,24 +4158,24 @@ Input filename: data/n512d4.random.edges
      990	0.230880	4.900960 ( 0.302134 )	4.900960 ( 0.302134 )	7 ( 1 )			7 ( 1 )		0.1000 ( 1 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.899684  Diam. gap = 1  ASPL gap = 0.300858
-Steps: 1000  Elapse time: 0.145790 sec. (APSP: 0.140877 sec. Check: 0.003953 sec. Other: 0.000959 sec.)
+Steps: 1000, Elapse time: 0.121123 sec. (APSP: 0.117029 sec. Check: 0.003418 sec. Other: 0.000676 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:00 2019
+Sat Sep 28 21:15:55 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 5
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000144 sec.
-   Estimated elapse time: 0.143623 sec.
+   Average APSP time: 0.000117 sec.
+   Estimated elapse time: 0.116587 sec.
 Input filename: data/n256d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -4284,24 +4284,24 @@ Input filename: data/n256d4.random.edges
      990	0.230880	4.886650 ( 0.287824 )	4.886650 ( 0.287824 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.886650  Diam. gap = 1  ASPL gap = 0.287824
-Steps: 1000  Elapse time: 0.076414 sec. (APSP: 0.072227 sec. Check: 0.003340 sec. Other: 0.000847 sec.)
+Steps: 1000, Elapse time: 0.066139 sec. (APSP: 0.062423 sec. Check: 0.003057 sec. Other: 0.000659 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:00 2019
+Sat Sep 28 21:15:55 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 5
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000086 sec.
-   Estimated elapse time: 0.085831 sec.
+   Average APSP time: 0.000083 sec.
+   Estimated elapse time: 0.083208 sec.
 Input filename: data/n128d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -4410,24 +4410,24 @@ Input filename: data/n128d4.random.edges
      990	0.230880	4.880275 ( 0.281449 )	4.880275 ( 0.281449 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.879831  Diam. gap = 1  ASPL gap = 0.281005
-Steps: 1000  Elapse time: 0.048175 sec. (APSP: 0.043837 sec. Check: 0.003265 sec. Other: 0.001074 sec.)
+Steps: 1000, Elapse time: 0.043278 sec. (APSP: 0.039415 sec. Check: 0.003031 sec. Other: 0.000831 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:01 2019
+Sat Sep 28 21:15:55 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 5
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000054 sec.
-   Estimated elapse time: 0.054216 sec.
+   Average APSP time: 0.000044 sec.
+   Estimated elapse time: 0.043583 sec.
 Input filename: data/n64d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -4536,24 +4536,24 @@ Input filename: data/n64d4.random.edges
      990	0.230880	4.863809 ( 0.264983 )	4.863809 ( 0.264983 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.863809  Diam. gap = 1  ASPL gap = 0.264983
-Steps: 1000  Elapse time: 0.031415 sec. (APSP: 0.026607 sec. Check: 0.003471 sec. Other: 0.001337 sec.)
+Steps: 1000, Elapse time: 0.025456 sec. (APSP: 0.021589 sec. Check: 0.002872 sec. Other: 0.000995 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:01 2019
+Sat Sep 28 21:15:55 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 5
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000098 sec.
-   Estimated elapse time: 0.098228 sec.
+   Average APSP time: 0.000034 sec.
+   Estimated elapse time: 0.034380 sec.
 Input filename: data/n32d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -4662,24 +4662,24 @@ Input filename: data/n32d4.random.edges
      990	0.230880	4.862647 ( 0.263821 )	4.862647 ( 0.263821 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.862647  Diam. gap = 1  ASPL gap = 0.263821
-Steps: 1000  Elapse time: 0.041184 sec. (APSP: 0.034532 sec. Check: 0.004293 sec. Other: 0.002359 sec.)
+Steps: 1000, Elapse time: 0.025611 sec. (APSP: 0.021389 sec. Check: 0.002856 sec. Other: 0.001366 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:01 2019
+Sat Sep 28 21:15:55 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 5
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000084 sec.
-   Estimated elapse time: 0.084162 sec.
+   Average APSP time: 0.000039 sec.
+   Estimated elapse time: 0.039387 sec.
 Input filename: data/n16d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -4788,24 +4788,24 @@ Input filename: data/n16d4.random.edges
      990	0.230880	4.867784 ( 0.268958 )	4.867784 ( 0.268958 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.867784  Diam. gap = 1  ASPL gap = 0.268958
-Steps: 1000  Elapse time: 0.032630 sec. (APSP: 0.026594 sec. Check: 0.003577 sec. Other: 0.002459 sec.)
+Steps: 1000, Elapse time: 0.026766 sec. (APSP: 0.021762 sec. Check: 0.003004 sec. Other: 0.002001 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:01 2019
+Sat Sep 28 21:15:55 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 5
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000058 sec.
-   Estimated elapse time: 0.058174 sec.
+   Average APSP time: 0.000046 sec.
+   Estimated elapse time: 0.046396 sec.
 Input filename: data/n8d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -4914,24 +4914,24 @@ Input filename: data/n8d4.random.edges
      990	0.230880	4.847603 ( 0.248777 )	4.847358 ( 0.248532 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.847358  Diam. gap = 1  ASPL gap = 0.248532
-Steps: 1000  Elapse time: 0.051067 sec. (APSP: 0.043736 sec. Check: 0.003588 sec. Other: 0.003742 sec.)
+Steps: 1000, Elapse time: 0.042023 sec. (APSP: 0.035672 sec. Check: 0.003147 sec. Other: 0.003204 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:01 2019
+Sat Sep 28 21:15:55 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 5
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.940519
 APSP: MATRIX Opetation
 Num. of Calulations: 100
-   Average APSP time: 0.000860 sec.
-   Estimated elapse time: 0.086017 sec.
+   Average APSP time: 0.000910 sec.
+   Estimated elapse time: 0.091043 sec.
 Input filename: data/n114d29.random.edges
    Vertexes: 1726
    Degree:   30
@@ -5041,24 +5041,24 @@ Input filename: data/n114d29.random.edges
       99	0.230880	2.851727 ( 0.390858 )	2.851727 ( 0.390858 )	4 ( 1 )			4 ( 1 )		1.0000 ( 1 / 1 )
 ---
 Diam. k = 4  ASPL l = 2.850498  Diam. gap = 1  ASPL gap = 0.389628
-Steps: 100  Elapse time: 0.080542 sec. (APSP: 0.071542 sec. Check: 0.007502 sec. Other: 0.001498 sec.)
+Steps: 100, Elapse time: 0.083010 sec. (APSP: 0.074269 sec. Check: 0.007386 sec. Other: 0.001354 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:01 2019
+Sat Sep 28 21:15:56 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 6
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000175 sec.
-   Estimated elapse time: 0.175381 sec.
+   Average APSP time: 0.000167 sec.
+   Estimated elapse time: 0.166607 sec.
 Input filename: data/n512d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -5167,24 +5167,24 @@ Input filename: data/n512d4.random.edges
      990	0.230880	4.902367 ( 0.303541 )	4.902367 ( 0.303541 )	7 ( 1 )			7 ( 1 )		0.1000 ( 1 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.901327  Diam. gap = 1  ASPL gap = 0.302501
-Steps: 1000  Elapse time: 0.141456 sec. (APSP: 0.136816 sec. Check: 0.003840 sec. Other: 0.000800 sec.)
+Steps: 1000, Elapse time: 0.123311 sec. (APSP: 0.119302 sec. Check: 0.003394 sec. Other: 0.000616 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:02 2019
+Sat Sep 28 21:15:56 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 6
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000136 sec.
-   Estimated elapse time: 0.136375 sec.
+   Average APSP time: 0.000099 sec.
+   Estimated elapse time: 0.098801 sec.
 Input filename: data/n256d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -5293,24 +5293,24 @@ Input filename: data/n256d4.random.edges
      990	0.230880	4.891351 ( 0.292525 )	4.891351 ( 0.292525 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.891351  Diam. gap = 1  ASPL gap = 0.292525
-Steps: 1000  Elapse time: 0.075602 sec. (APSP: 0.071360 sec. Check: 0.003328 sec. Other: 0.000915 sec.)
+Steps: 1000, Elapse time: 0.065667 sec. (APSP: 0.061971 sec. Check: 0.003013 sec. Other: 0.000682 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:02 2019
+Sat Sep 28 21:15:56 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 6
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000090 sec.
-   Estimated elapse time: 0.089788 sec.
+   Average APSP time: 0.000070 sec.
+   Estimated elapse time: 0.070190 sec.
 Input filename: data/n128d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -5419,24 +5419,24 @@ Input filename: data/n128d4.random.edges
      990	0.230880	4.883638 ( 0.284812 )	4.883638 ( 0.284812 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.883638  Diam. gap = 1  ASPL gap = 0.284812
-Steps: 1000  Elapse time: 0.047970 sec. (APSP: 0.043238 sec. Check: 0.003705 sec. Other: 0.001027 sec.)
+Steps: 1000, Elapse time: 0.046586 sec. (APSP: 0.042796 sec. Check: 0.002980 sec. Other: 0.000810 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:02 2019
+Sat Sep 28 21:15:56 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 6
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000066 sec.
-   Estimated elapse time: 0.066423 sec.
+   Average APSP time: 0.000053 sec.
+   Estimated elapse time: 0.053215 sec.
 Input filename: data/n64d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -5545,24 +5545,24 @@ Input filename: data/n64d4.random.edges
      990	0.230880	4.855369 ( 0.256544 )	4.855369 ( 0.256544 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.855369  Diam. gap = 1  ASPL gap = 0.256544
-Steps: 1000  Elapse time: 0.032716 sec. (APSP: 0.027716 sec. Check: 0.003567 sec. Other: 0.001433 sec.)
+Steps: 1000, Elapse time: 0.025401 sec. (APSP: 0.021443 sec. Check: 0.002969 sec. Other: 0.000989 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:02 2019
+Sat Sep 28 21:15:56 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 6
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000073 sec.
-   Estimated elapse time: 0.073385 sec.
+   Average APSP time: 0.000033 sec.
+   Estimated elapse time: 0.033379 sec.
 Input filename: data/n32d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -5671,24 +5671,24 @@ Input filename: data/n32d4.random.edges
      990	0.230880	4.865643 ( 0.266818 )	4.865643 ( 0.266818 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.865643  Diam. gap = 1  ASPL gap = 0.266818
-Steps: 1000  Elapse time: 0.032535 sec. (APSP: 0.027099 sec. Check: 0.003596 sec. Other: 0.001840 sec.)
+Steps: 1000, Elapse time: 0.025511 sec. (APSP: 0.021258 sec. Check: 0.002840 sec. Other: 0.001413 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:02 2019
+Sat Sep 28 21:15:56 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 6
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000055 sec.
-   Estimated elapse time: 0.055027 sec.
+   Average APSP time: 0.000040 sec.
+   Estimated elapse time: 0.040197 sec.
 Input filename: data/n16d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -5797,24 +5797,24 @@ Input filename: data/n16d4.random.edges
      990	0.230880	4.842588 ( 0.243762 )	4.842588 ( 0.243762 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.842588  Diam. gap = 1  ASPL gap = 0.243762
-Steps: 1000  Elapse time: 0.086276 sec. (APSP: 0.036791 sec. Check: 0.004454 sec. Other: 0.045031 sec.)
+Steps: 1000, Elapse time: 0.027169 sec. (APSP: 0.022231 sec. Check: 0.002955 sec. Other: 0.001983 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:02 2019
+Sat Sep 28 21:15:56 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 6
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000042 sec.
-   Estimated elapse time: 0.041628 sec.
+   Average APSP time: 0.000030 sec.
+   Estimated elapse time: 0.030375 sec.
 Input filename: data/n8d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -5923,24 +5923,24 @@ Input filename: data/n8d4.random.edges
      990	0.230880	4.816292 ( 0.217466 )	4.816292 ( 0.217466 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.816292  Diam. gap = 1  ASPL gap = 0.217466
-Steps: 1000  Elapse time: 0.044425 sec. (APSP: 0.036483 sec. Check: 0.003745 sec. Other: 0.004197 sec.)
+Steps: 1000, Elapse time: 0.034808 sec. (APSP: 0.028360 sec. Check: 0.003112 sec. Other: 0.003336 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:02 2019
+Sat Sep 28 21:15:56 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 6
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.940519
 APSP: MATRIX Opetation
 Num. of Calulations: 100
-   Average APSP time: 0.001154 sec.
-   Estimated elapse time: 0.115442 sec.
+   Average APSP time: 0.000881 sec.
+   Estimated elapse time: 0.088058 sec.
 Input filename: data/n114d29.random.edges
    Vertexes: 1726
    Degree:   30
@@ -6050,24 +6050,24 @@ Input filename: data/n114d29.random.edges
       99	0.230880	2.856491 ( 0.395622 )	2.856491 ( 0.395622 )	4 ( 1 )			4 ( 1 )		1.0000 ( 1 / 1 )
 ---
 Diam. k = 4  ASPL l = 2.854355  Diam. gap = 1  ASPL gap = 0.393485
-Steps: 100  Elapse time: 0.103207 sec. (APSP: 0.091807 sec. Check: 0.009059 sec. Other: 0.002342 sec.)
+Steps: 100, Elapse time: 0.082098 sec. (APSP: 0.073641 sec. Check: 0.007177 sec. Other: 0.001280 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:03 2019
+Sat Sep 28 21:15:57 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 7
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000334 sec.
-   Estimated elapse time: 0.334406 sec.
+   Average APSP time: 0.000155 sec.
+   Estimated elapse time: 0.155210 sec.
 Input filename: data/n512d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -6176,24 +6176,24 @@ Input filename: data/n512d4.random.edges
      990	0.230880	4.899722 ( 0.300896 )	4.899722 ( 0.300896 )	7 ( 1 )			7 ( 1 )		0.1000 ( 1 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.899722  Diam. gap = 1  ASPL gap = 0.300896
-Steps: 1000  Elapse time: 0.154042 sec. (APSP: 0.148690 sec. Check: 0.004242 sec. Other: 0.001110 sec.)
+Steps: 1000, Elapse time: 0.122368 sec. (APSP: 0.118244 sec. Check: 0.003472 sec. Other: 0.000652 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:03 2019
+Sat Sep 28 21:15:57 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 7
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000141 sec.
-   Estimated elapse time: 0.140762 sec.
+   Average APSP time: 0.000111 sec.
+   Estimated elapse time: 0.111389 sec.
 Input filename: data/n256d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -6302,24 +6302,24 @@ Input filename: data/n256d4.random.edges
      990	0.230880	4.887888 ( 0.289062 )	4.887888 ( 0.289062 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.887590  Diam. gap = 1  ASPL gap = 0.288764
-Steps: 1000  Elapse time: 0.085897 sec. (APSP: 0.081141 sec. Check: 0.003736 sec. Other: 0.001020 sec.)
+Steps: 1000, Elapse time: 0.067926 sec. (APSP: 0.064034 sec. Check: 0.003078 sec. Other: 0.000814 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:03 2019
+Sat Sep 28 21:15:57 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 7
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000158 sec.
-   Estimated elapse time: 0.157595 sec.
+   Average APSP time: 0.000067 sec.
+   Estimated elapse time: 0.067186 sec.
 Input filename: data/n128d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -6428,24 +6428,24 @@ Input filename: data/n128d4.random.edges
      990	0.230880	4.875795 ( 0.276969 )	4.875795 ( 0.276969 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.875795  Diam. gap = 1  ASPL gap = 0.276969
-Steps: 1000  Elapse time: 0.061019 sec. (APSP: 0.055084 sec. Check: 0.004089 sec. Other: 0.001846 sec.)
+Steps: 1000, Elapse time: 0.043781 sec. (APSP: 0.039838 sec. Check: 0.003076 sec. Other: 0.000867 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:04 2019
+Sat Sep 28 21:15:57 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 7
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000049 sec.
-   Estimated elapse time: 0.049210 sec.
+   Average APSP time: 0.000042 sec.
+   Estimated elapse time: 0.042200 sec.
 Input filename: data/n64d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -6554,24 +6554,24 @@ Input filename: data/n64d4.random.edges
      990	0.230880	4.873012 ( 0.274187 )	4.873012 ( 0.274187 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.873012  Diam. gap = 1  ASPL gap = 0.274187
-Steps: 1000  Elapse time: 0.032207 sec. (APSP: 0.027390 sec. Check: 0.003513 sec. Other: 0.001304 sec.)
+Steps: 1000, Elapse time: 0.026246 sec. (APSP: 0.022241 sec. Check: 0.002942 sec. Other: 0.001063 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:04 2019
+Sat Sep 28 21:15:57 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 7
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000044 sec.
-   Estimated elapse time: 0.044394 sec.
+   Average APSP time: 0.000040 sec.
+   Estimated elapse time: 0.039816 sec.
 Input filename: data/n32d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -6680,24 +6680,24 @@ Input filename: data/n32d4.random.edges
      990	0.230880	4.856287 ( 0.257461 )	4.856287 ( 0.257461 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.856287  Diam. gap = 1  ASPL gap = 0.257461
-Steps: 1000  Elapse time: 0.030387 sec. (APSP: 0.025508 sec. Check: 0.003286 sec. Other: 0.001593 sec.)
+Steps: 1000, Elapse time: 0.026208 sec. (APSP: 0.021869 sec. Check: 0.002971 sec. Other: 0.001369 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:04 2019
+Sat Sep 28 21:15:57 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 7
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000050 sec.
-   Estimated elapse time: 0.050402 sec.
+   Average APSP time: 0.000041 sec.
+   Estimated elapse time: 0.041199 sec.
 Input filename: data/n16d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -6806,24 +6806,24 @@ Input filename: data/n16d4.random.edges
      990	0.230880	4.852006 ( 0.253180 )	4.850049 ( 0.251223 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.850049  Diam. gap = 1  ASPL gap = 0.251223
-Steps: 1000  Elapse time: 0.037564 sec. (APSP: 0.031380 sec. Check: 0.003627 sec. Other: 0.002557 sec.)
+Steps: 1000, Elapse time: 0.030450 sec. (APSP: 0.025309 sec. Check: 0.003082 sec. Other: 0.002058 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:04 2019
+Sat Sep 28 21:15:57 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 7
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000050 sec.
-   Estimated elapse time: 0.049591 sec.
+   Average APSP time: 0.000043 sec.
+   Estimated elapse time: 0.043011 sec.
 Input filename: data/n8d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -6932,24 +6932,24 @@ Input filename: data/n8d4.random.edges
      990	0.230880	4.823875 ( 0.225049 )	4.823875 ( 0.225049 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.823875  Diam. gap = 1  ASPL gap = 0.225049
-Steps: 1000  Elapse time: 0.050358 sec. (APSP: 0.042549 sec. Check: 0.003751 sec. Other: 0.004058 sec.)
+Steps: 1000, Elapse time: 0.040579 sec. (APSP: 0.034011 sec. Check: 0.003195 sec. Other: 0.003374 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:04 2019
+Sat Sep 28 21:15:57 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 7
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.940519
 APSP: MATRIX Opetation
 Num. of Calulations: 100
-   Average APSP time: 0.001171 sec.
-   Estimated elapse time: 0.117121 sec.
+   Average APSP time: 0.000989 sec.
+   Estimated elapse time: 0.098901 sec.
 Input filename: data/n114d29.random.edges
    Vertexes: 1726
    Degree:   30
@@ -7059,24 +7059,24 @@ Input filename: data/n114d29.random.edges
       99	0.230880	2.851113 ( 0.390243 )	2.851113 ( 0.390243 )	4 ( 1 )			4 ( 1 )		0.0000 ( 0 / 1 )
 ---
 Diam. k = 4  ASPL l = 2.850135  Diam. gap = 1  ASPL gap = 0.389266
-Steps: 100  Elapse time: 0.086595 sec. (APSP: 0.077237 sec. Check: 0.007679 sec. Other: 0.001679 sec.)
+Steps: 100, Elapse time: 0.083562 sec. (APSP: 0.075092 sec. Check: 0.007160 sec. Other: 0.001311 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:04 2019
+Sat Sep 28 21:15:58 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 8
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000159 sec.
-   Estimated elapse time: 0.159168 sec.
+   Average APSP time: 0.000149 sec.
+   Estimated elapse time: 0.149012 sec.
 Input filename: data/n512d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -7185,24 +7185,24 @@ Input filename: data/n512d4.random.edges
      990	0.230880	4.900769 ( 0.301943 )	4.900769 ( 0.301943 )	7 ( 1 )			7 ( 1 )		0.1000 ( 1 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.900769  Diam. gap = 1  ASPL gap = 0.301943
-Steps: 1000  Elapse time: 0.131905 sec. (APSP: 0.127638 sec. Check: 0.003580 sec. Other: 0.000687 sec.)
+Steps: 1000, Elapse time: 0.122879 sec. (APSP: 0.118800 sec. Check: 0.003463 sec. Other: 0.000616 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:04 2019
+Sat Sep 28 21:15:58 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 8
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000127 sec.
-   Estimated elapse time: 0.127172 sec.
+   Average APSP time: 0.000108 sec.
+   Estimated elapse time: 0.107574 sec.
 Input filename: data/n256d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -7311,24 +7311,24 @@ Input filename: data/n256d4.random.edges
      990	0.230880	4.883378 ( 0.284552 )	4.883378 ( 0.284552 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.883378  Diam. gap = 1  ASPL gap = 0.284552
-Steps: 1000  Elapse time: 0.073877 sec. (APSP: 0.069851 sec. Check: 0.003279 sec. Other: 0.000748 sec.)
+Steps: 1000, Elapse time: 0.066821 sec. (APSP: 0.063089 sec. Check: 0.003037 sec. Other: 0.000695 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:05 2019
+Sat Sep 28 21:15:58 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 8
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000102 sec.
-   Estimated elapse time: 0.102377 sec.
+   Average APSP time: 0.000095 sec.
+   Estimated elapse time: 0.094795 sec.
 Input filename: data/n128d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -7437,16 +7437,16 @@ Input filename: data/n128d4.random.edges
      990	0.230880	4.876070 ( 0.277244 )	4.876070 ( 0.277244 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.876070  Diam. gap = 1  ASPL gap = 0.277244
-Steps: 1000  Elapse time: 0.048330 sec. (APSP: 0.044219 sec. Check: 0.003232 sec. Other: 0.000878 sec.)
+Steps: 1000, Elapse time: 0.042476 sec. (APSP: 0.038141 sec. Check: 0.003288 sec. Other: 0.001046 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:05 2019
+Sat Sep 28 21:15:58 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 8
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
@@ -7454,7 +7454,7 @@ Algorithm: Simulated Annealing (2-opt)
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
    Average APSP time: 0.000049 sec.
-   Estimated elapse time: 0.049400 sec.
+   Estimated elapse time: 0.049210 sec.
 Input filename: data/n64d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -7563,24 +7563,24 @@ Input filename: data/n64d4.random.edges
      990	0.230880	4.860873 ( 0.262047 )	4.860873 ( 0.262047 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.860873  Diam. gap = 1  ASPL gap = 0.262047
-Steps: 1000  Elapse time: 0.028370 sec. (APSP: 0.024076 sec. Check: 0.003165 sec. Other: 0.001130 sec.)
+Steps: 1000, Elapse time: 0.028831 sec. (APSP: 0.024342 sec. Check: 0.003266 sec. Other: 0.001223 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:05 2019
+Sat Sep 28 21:15:58 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 8
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000055 sec.
-   Estimated elapse time: 0.054789 sec.
+   Average APSP time: 0.000043 sec.
+   Estimated elapse time: 0.042820 sec.
 Input filename: data/n32d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -7689,24 +7689,24 @@ Input filename: data/n32d4.random.edges
      990	0.230880	4.849988 ( 0.251162 )	4.849988 ( 0.251162 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.849988  Diam. gap = 1  ASPL gap = 0.251162
-Steps: 1000  Elapse time: 0.040253 sec. (APSP: 0.033330 sec. Check: 0.004389 sec. Other: 0.002534 sec.)
+Steps: 1000, Elapse time: 0.029128 sec. (APSP: 0.024328 sec. Check: 0.003200 sec. Other: 0.001600 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:05 2019
+Sat Sep 28 21:15:58 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 8
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000045 sec.
-   Estimated elapse time: 0.045204 sec.
+   Average APSP time: 0.000037 sec.
+   Estimated elapse time: 0.037003 sec.
 Input filename: data/n16d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -7815,24 +7815,24 @@ Input filename: data/n16d4.random.edges
      990	0.230880	4.843933 ( 0.245108 )	4.843933 ( 0.245108 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.843933  Diam. gap = 1  ASPL gap = 0.245108
-Steps: 1000  Elapse time: 0.168573 sec. (APSP: 0.126158 sec. Check: 0.024270 sec. Other: 0.018145 sec.)
+Steps: 1000, Elapse time: 0.031561 sec. (APSP: 0.025878 sec. Check: 0.003328 sec. Other: 0.002355 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:06 2019
+Sat Sep 28 21:15:58 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 8
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000087 sec.
-   Estimated elapse time: 0.086594 sec.
+   Average APSP time: 0.000041 sec.
+   Estimated elapse time: 0.041008 sec.
 Input filename: data/n8d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -7941,24 +7941,24 @@ Input filename: data/n8d4.random.edges
      990	0.230880	4.843933 ( 0.245108 )	4.843933 ( 0.245108 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.843933  Diam. gap = 1  ASPL gap = 0.245108
-Steps: 1000  Elapse time: 0.108753 sec. (APSP: 0.072786 sec. Check: 0.029750 sec. Other: 0.006217 sec.)
+Steps: 1000, Elapse time: 0.037061 sec. (APSP: 0.030246 sec. Check: 0.003287 sec. Other: 0.003528 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:06 2019
+Sat Sep 28 21:15:58 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 8
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.940519
 APSP: MATRIX Opetation
 Num. of Calulations: 100
-   Average APSP time: 0.001257 sec.
-   Estimated elapse time: 0.125680 sec.
+   Average APSP time: 0.000991 sec.
+   Estimated elapse time: 0.099063 sec.
 Input filename: data/n114d29.random.edges
    Vertexes: 1726
    Degree:   30
@@ -8068,24 +8068,24 @@ Input filename: data/n114d29.random.edges
       99	0.230880	2.859021 ( 0.398151 )	2.859021 ( 0.398151 )	4 ( 1 )			4 ( 1 )		1.0000 ( 1 / 1 )
 ---
 Diam. k = 4  ASPL l = 2.856965  Diam. gap = 1  ASPL gap = 0.396096
-Steps: 100  Elapse time: 0.104141 sec. (APSP: 0.093093 sec. Check: 0.009033 sec. Other: 0.002015 sec.)
+Steps: 100, Elapse time: 0.089448 sec. (APSP: 0.079877 sec. Check: 0.007837 sec. Other: 0.001734 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:06 2019
+Sat Sep 28 21:15:58 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 9
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000164 sec.
-   Estimated elapse time: 0.163984 sec.
+   Average APSP time: 0.000150 sec.
+   Estimated elapse time: 0.149632 sec.
 Input filename: data/n512d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -8194,24 +8194,24 @@ Input filename: data/n512d4.random.edges
      990	0.230880	4.899255 ( 0.300430 )	4.899255 ( 0.300430 )	7 ( 1 )			7 ( 1 )		0.2000 ( 2 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.898361  Diam. gap = 1  ASPL gap = 0.299535
-Steps: 1000  Elapse time: 0.149742 sec. (APSP: 0.144733 sec. Check: 0.004215 sec. Other: 0.000794 sec.)
+Steps: 1000, Elapse time: 0.130674 sec. (APSP: 0.126104 sec. Check: 0.003694 sec. Other: 0.000875 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:06 2019
+Sat Sep 28 21:15:59 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 9
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000127 sec.
-   Estimated elapse time: 0.127220 sec.
+   Average APSP time: 0.000124 sec.
+   Estimated elapse time: 0.123787 sec.
 Input filename: data/n256d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -8320,24 +8320,24 @@ Input filename: data/n256d4.random.edges
      990	0.230880	4.891152 ( 0.292327 )	4.891152 ( 0.292327 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.891152  Diam. gap = 1  ASPL gap = 0.292327
-Steps: 1000  Elapse time: 0.085039 sec. (APSP: 0.080430 sec. Check: 0.003733 sec. Other: 0.000877 sec.)
+Steps: 1000, Elapse time: 0.071476 sec. (APSP: 0.067129 sec. Check: 0.003342 sec. Other: 0.001005 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:06 2019
+Sat Sep 28 21:15:59 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 9
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000123 sec.
-   Estimated elapse time: 0.123405 sec.
+   Average APSP time: 0.000094 sec.
+   Estimated elapse time: 0.094175 sec.
 Input filename: data/n128d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -8446,24 +8446,24 @@ Input filename: data/n128d4.random.edges
      990	0.230880	4.871744 ( 0.272918 )	4.871744 ( 0.272918 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.871744  Diam. gap = 1  ASPL gap = 0.272918
-Steps: 1000  Elapse time: 0.057765 sec. (APSP: 0.053079 sec. Check: 0.003628 sec. Other: 0.001059 sec.)
+Steps: 1000, Elapse time: 0.044271 sec. (APSP: 0.040157 sec. Check: 0.003170 sec. Other: 0.000944 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:07 2019
+Sat Sep 28 21:15:59 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 9
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000052 sec.
-   Estimated elapse time: 0.052357 sec.
+   Average APSP time: 0.000041 sec.
+   Estimated elapse time: 0.040627 sec.
 Input filename: data/n64d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -8572,24 +8572,24 @@ Input filename: data/n64d4.random.edges
      990	0.230880	4.862188 ( 0.263362 )	4.862188 ( 0.263362 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.862188  Diam. gap = 1  ASPL gap = 0.263362
-Steps: 1000  Elapse time: 0.031930 sec. (APSP: 0.027061 sec. Check: 0.003457 sec. Other: 0.001412 sec.)
+Steps: 1000, Elapse time: 0.027201 sec. (APSP: 0.022868 sec. Check: 0.003129 sec. Other: 0.001204 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:07 2019
+Sat Sep 28 21:15:59 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 9
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000049 sec.
-   Estimated elapse time: 0.049400 sec.
+   Average APSP time: 0.000044 sec.
+   Estimated elapse time: 0.043774 sec.
 Input filename: data/n32d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -8698,24 +8698,24 @@ Input filename: data/n32d4.random.edges
      990	0.230880	4.852862 ( 0.254036 )	4.852862 ( 0.254036 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.852862  Diam. gap = 1  ASPL gap = 0.254036
-Steps: 1000  Elapse time: 0.030367 sec. (APSP: 0.025427 sec. Check: 0.003323 sec. Other: 0.001617 sec.)
+Steps: 1000, Elapse time: 0.030249 sec. (APSP: 0.025175 sec. Check: 0.003347 sec. Other: 0.001727 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:07 2019
+Sat Sep 28 21:15:59 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 9
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000057 sec.
-   Estimated elapse time: 0.056791 sec.
+   Average APSP time: 0.000047 sec.
+   Estimated elapse time: 0.047016 sec.
 Input filename: data/n16d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -8824,24 +8824,24 @@ Input filename: data/n16d4.random.edges
      990	0.230880	4.845401 ( 0.246575 )	4.845401 ( 0.246575 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.845401  Diam. gap = 1  ASPL gap = 0.246575
-Steps: 1000  Elapse time: 0.031389 sec. (APSP: 0.025783 sec. Check: 0.003300 sec. Other: 0.002306 sec.)
+Steps: 1000, Elapse time: 0.031281 sec. (APSP: 0.025462 sec. Check: 0.003324 sec. Other: 0.002496 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:07 2019
+Sat Sep 28 21:15:59 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 9
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000058 sec.
-   Estimated elapse time: 0.058174 sec.
+   Average APSP time: 0.000049 sec.
+   Estimated elapse time: 0.049210 sec.
 Input filename: data/n8d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -8950,24 +8950,24 @@ Input filename: data/n8d4.random.edges
      990	0.230880	4.852740 ( 0.253914 )	4.852740 ( 0.253914 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.852740  Diam. gap = 1  ASPL gap = 0.253914
-Steps: 1000  Elapse time: 0.035870 sec. (APSP: 0.028685 sec. Check: 0.003622 sec. Other: 0.003563 sec.)
+Steps: 1000, Elapse time: 0.036638 sec. (APSP: 0.028815 sec. Check: 0.003709 sec. Other: 0.004114 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:07 2019
+Sat Sep 28 21:15:59 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 9
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.940519
 APSP: MATRIX Opetation
 Num. of Calulations: 100
-   Average APSP time: 0.001061 sec.
-   Estimated elapse time: 0.106139 sec.
+   Average APSP time: 0.001000 sec.
+   Estimated elapse time: 0.100002 sec.
 Input filename: data/n114d29.random.edges
    Vertexes: 1726
    Degree:   30
@@ -9077,24 +9077,24 @@ Input filename: data/n114d29.random.edges
       99	0.230880	2.833113 ( 0.372243 )	2.833113 ( 0.372243 )	4 ( 1 )			4 ( 1 )		1.0000 ( 1 / 1 )
 ---
 Diam. k = 4  ASPL l = 2.830352  Diam. gap = 1  ASPL gap = 0.369482
-Steps: 100  Elapse time: 0.084618 sec. (APSP: 0.075338 sec. Check: 0.007676 sec. Other: 0.001603 sec.)
+Steps: 100, Elapse time: 0.089426 sec. (APSP: 0.079586 sec. Check: 0.007786 sec. Other: 0.002054 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:07 2019
+Sat Sep 28 21:16:00 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 10
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000193 sec.
-   Estimated elapse time: 0.192785 sec.
+   Average APSP time: 0.000151 sec.
+   Estimated elapse time: 0.151157 sec.
 Input filename: data/n512d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -9203,24 +9203,24 @@ Input filename: data/n512d4.random.edges
      990	0.230880	4.899867 ( 0.301041 )	4.899867 ( 0.301041 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.899867  Diam. gap = 1  ASPL gap = 0.301041
-Steps: 1000  Elapse time: 0.135676 sec. (APSP: 0.131433 sec. Check: 0.003544 sec. Other: 0.000699 sec.)
+Steps: 1000, Elapse time: 0.133836 sec. (APSP: 0.129224 sec. Check: 0.003729 sec. Other: 0.000884 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:07 2019
+Sat Sep 28 21:16:00 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 10
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000128 sec.
-   Estimated elapse time: 0.127983 sec.
+   Average APSP time: 0.000106 sec.
+   Estimated elapse time: 0.106001 sec.
 Input filename: data/n256d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -9329,24 +9329,24 @@ Input filename: data/n256d4.random.edges
      990	0.230880	4.889318 ( 0.290492 )	4.889318 ( 0.290492 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.889318  Diam. gap = 1  ASPL gap = 0.290492
-Steps: 1000  Elapse time: 0.073643 sec. (APSP: 0.069715 sec. Check: 0.003169 sec. Other: 0.000758 sec.)
+Steps: 1000, Elapse time: 0.071356 sec. (APSP: 0.067105 sec. Check: 0.003264 sec. Other: 0.000988 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:07 2019
+Sat Sep 28 21:16:00 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 10
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000089 sec.
-   Estimated elapse time: 0.089025 sec.
+   Average APSP time: 0.000086 sec.
+   Estimated elapse time: 0.085592 sec.
 Input filename: data/n128d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -9455,24 +9455,24 @@ Input filename: data/n128d4.random.edges
      990	0.230880	4.879954 ( 0.281128 )	4.879954 ( 0.281128 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.879954  Diam. gap = 1  ASPL gap = 0.281128
-Steps: 1000  Elapse time: 0.045920 sec. (APSP: 0.041836 sec. Check: 0.003191 sec. Other: 0.000894 sec.)
+Steps: 1000, Elapse time: 0.044867 sec. (APSP: 0.040525 sec. Check: 0.003272 sec. Other: 0.001070 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:08 2019
+Sat Sep 28 21:16:00 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 10
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000057 sec.
-   Estimated elapse time: 0.057030 sec.
+   Average APSP time: 0.000050 sec.
+   Estimated elapse time: 0.049782 sec.
 Input filename: data/n64d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -9581,24 +9581,24 @@ Input filename: data/n64d4.random.edges
      990	0.230880	4.867845 ( 0.269019 )	4.867845 ( 0.269019 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.867845  Diam. gap = 1  ASPL gap = 0.269019
-Steps: 1000  Elapse time: 0.029460 sec. (APSP: 0.025037 sec. Check: 0.003250 sec. Other: 0.001173 sec.)
+Steps: 1000, Elapse time: 0.027249 sec. (APSP: 0.023017 sec. Check: 0.003131 sec. Other: 0.001101 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:08 2019
+Sat Sep 28 21:16:00 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 10
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000078 sec.
-   Estimated elapse time: 0.078011 sec.
+   Average APSP time: 0.000039 sec.
+   Estimated elapse time: 0.039196 sec.
 Input filename: data/n32d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -9707,24 +9707,24 @@ Input filename: data/n32d4.random.edges
      990	0.230880	4.841610 ( 0.242784 )	4.841610 ( 0.242784 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.841610  Diam. gap = 1  ASPL gap = 0.242784
-Steps: 1000  Elapse time: 0.030296 sec. (APSP: 0.025424 sec. Check: 0.003236 sec. Other: 0.001636 sec.)
+Steps: 1000, Elapse time: 0.028371 sec. (APSP: 0.023666 sec. Check: 0.003145 sec. Other: 0.001560 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:08 2019
+Sat Sep 28 21:16:00 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 10
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000041 sec.
-   Estimated elapse time: 0.040579 sec.
+   Average APSP time: 0.000038 sec.
+   Estimated elapse time: 0.037622 sec.
 Input filename: data/n16d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -9833,24 +9833,24 @@ Input filename: data/n16d4.random.edges
      990	0.230880	4.843567 ( 0.244741 )	4.843567 ( 0.244741 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.843567  Diam. gap = 1  ASPL gap = 0.244741
-Steps: 1000  Elapse time: 0.034035 sec. (APSP: 0.028579 sec. Check: 0.003227 sec. Other: 0.002228 sec.)
+Steps: 1000, Elapse time: 0.034553 sec. (APSP: 0.028826 sec. Check: 0.003279 sec. Other: 0.002448 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:08 2019
+Sat Sep 28 21:16:00 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 10
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.993886
 APSP: MATRIX Opetation
 Num. of Calulations: 1000
-   Average APSP time: 0.000050 sec.
-   Estimated elapse time: 0.049973 sec.
+   Average APSP time: 0.000042 sec.
+   Estimated elapse time: 0.042009 sec.
 Input filename: data/n8d4.random.edges
    Vertexes: 512
    Degree:   4
@@ -9959,24 +9959,24 @@ Input filename: data/n8d4.random.edges
      990	0.230880	4.837329 ( 0.238503 )	4.837329 ( 0.238503 )	7 ( 1 )			7 ( 1 )		0.0000 ( 0 / 10 )
 ---
 Diam. k = 7  ASPL l = 4.837329  Diam. gap = 1  ASPL gap = 0.238503
-Steps: 1000  Elapse time: 0.042159 sec. (APSP: 0.035172 sec. Check: 0.003578 sec. Other: 0.003409 sec.)
+Steps: 1000, Elapse time: 0.041213 sec. (APSP: 0.034034 sec. Check: 0.003589 sec. Other: 0.003590 sec.)
 Verifing a regular graph... OK
 Run on Ripuka.local
-Mon Sep 16 18:15:08 2019
+Sat Sep 28 21:16:00 2019
 ---
 Verifing a regular graph... OK
 NO DEBUG MODE
 Seed: 10
 Num. of processes: 1
-Algorithm: Simulated Annealing (2-opt)
+Algorithm: Simulated Annealing
    MAX Temperature: 100.000000
    MIN Temperature: 0.217147
    Cooling Cycle: 1
    Cooling Rate : 0.940519
 APSP: MATRIX Opetation
 Num. of Calulations: 100
-   Average APSP time: 0.001014 sec.
-   Estimated elapse time: 0.101380 sec.
+   Average APSP time: 0.001013 sec.
+   Estimated elapse time: 0.101304 sec.
 Input filename: data/n114d29.random.edges
    Vertexes: 1726
    Degree:   30
@@ -10086,5 +10086,5 @@ Input filename: data/n114d29.random.edges
       99	0.230880	2.854073 ( 0.393203 )	2.854073 ( 0.393203 )	4 ( 1 )			4 ( 1 )		1.0000 ( 1 / 1 )
 ---
 Diam. k = 4  ASPL l = 2.851362  Diam. gap = 1  ASPL gap = 0.390493
-Steps: 100  Elapse time: 0.085098 sec. (APSP: 0.075924 sec. Check: 0.007539 sec. Other: 0.001634 sec.)
+Steps: 100, Elapse time: 0.088080 sec. (APSP: 0.078540 sec. Check: 0.007508 sec. Other: 0.002032 sec.)
 Verifing a regular graph... OK

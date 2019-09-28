@@ -3,7 +3,7 @@
 * MPI library (mpich, openmpi, and so on)
 
 # Options
-* -f : Input graph (Must be a simple graph, which has no loop and multiple edges)
+* -f : Input graph (When using a simple graph, add -N option)
 * -o : Output graph
 * -s : Random seed (>= 0, integer, default : 0)
 * -n : Number of evaluations (> 0, integer, default : 10,000)
@@ -17,8 +17,9 @@
 * -D : Estimate optimal maximum and minimum temperatures
 * -H : Hill climbing method is used instead of SA
 * -L : Use an adjacency matrix with saving memory for APSP calculation
-* -M : Assume that the input graph is symmetric.
-* -N : Omits graph verification that occurs before and after the execution of SA
+* -M : Assume that the input graph is symmetric
+* -N : Support not-simple graph
+* -O : Omits graph verification that occurs before and after the execution of SA
 
 # Examples of execution
     $ mpirun -np 1 ./gg -f ./data/n16d4.random.edges
