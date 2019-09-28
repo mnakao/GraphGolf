@@ -179,22 +179,18 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
     }
   }
 
-  for(int i=0;i<lines;i++)
-    printf("%d,%d %d,%d\n", edge[i][0]/width, edge[i][0]%width, edge[i][1]/width, edge[i][1]%width);
-  
-  EXIT(0);
   // Create adjacency matrix
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   int diam;    // NOT_USED 
   double ASPL; // NOT_USED
-  create_adjacency(nodes, lines, degree, edge, adjacency);
   while(1){
     int start_line = getRandom(lines);
     edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, NOT_USED);
+    create_adjacency(nodes, lines, degree, edge, adjacency);
     if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs))
       break;
   }
-  
+
   free(adjacency);
 }
 
