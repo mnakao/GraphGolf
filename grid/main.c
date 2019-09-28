@@ -2,21 +2,20 @@
 
 static void print_help(char *argv)
 {
-  END("%s -f <edge_file> [-r length] [-o <output_file>] [-s <random_seed>] [-n <calculations>] \
-[-w <max_temperature>] [-c <min_temperature>] [-g <gruops>] [-C <cooling_cycle>] [-W <weight>] [-y] [-d] [-N] [-B] [-h]\n", argv);
+  END("%s -f <edge_file> [-r length] [-o <output_file>] [-s <random_seed>] [-n <calculations>] [-w <max_temperature>]\
+ [-c <min_temperature>] [-g <gruops>] [-C <cooling_cycle>] [-W <weight>] [-B] [-D] [-H] [-M] [-N] [-Y] [-h]\n", argv);
 }
 
-static void set_args(const int argc, char **argv, char *infname, int *low_length,
-		     char *outfname, bool *outfnameflag, int *random_seed,
-		     long long *ncalcs, double *max_temp, bool *max_temp_flag,
-		     double *min_temp, bool *min_temp_flag, int *groups, int *cooling_cycle, double *weight,
-		     bool *hill_climbing_flag, bool *detect_temp_flag, bool *verify_flag, bool *enable_bfs)
+static void set_args(const int argc, char **argv, char *infname, int *low_length, char *outfname, bool *outfnameflag,
+		     int *random_seed, long long *ncalcs, double *max_temp, bool *max_temp_flag, double *min_temp,
+		     bool *min_temp_flag, int *groups, int *cooling_cycle, double *weight, bool *hill_climbing_flag,
+		     bool *detect_temp_flag, bool *verify_flag, bool *enable_bfs, bool *halfway_flag)
 {
   if(argc < 3)
     print_help(argv[0]);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:r:s:n:w:c:g:C:W:NdyBh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:r:s:n:w:c:g:C:W:BDHMNYh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -72,10 +71,13 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
     case 'N':
       *verify_flag = false;
       break;
-    case 'd':
+    case 'D':
       *detect_temp_flag = true;
       break;
-    case 'y':
+    case 'M':
+      *halfway_flag = true;
+      break;
+    case 'H':
       *hill_climbing_flag = true;
       break;
     case 'B':
@@ -141,6 +143,59 @@ static int max_node_num(const int lines, const int edge[lines*2])
     max = MAX(max, edge[i]);
 
   return max;
+}
+
+static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines,
+				  const int groups, const int degree, const int nodes, const int lines,
+				  const int based_width, const bool enable_bfs)
+{
+  int width = based_width * 2; // width == height
+  for(int i=0;i<based_lines;i++){
+    for(int j=0;j<2;j++){
+      int w = edge[i][j]/based_width;
+      int h = edge[i][j]%based_width;
+      edge[i][j] = w * width + h;
+    }
+  }
+    
+  if(groups == 2){
+    for(int i=0;i<based_lines;i++){
+      for(int j=0;j<2;j++){
+	int w = edge[i][j]/width;
+	int h = edge[i][j]%width;
+	edge[based_lines+i][j] = (based_width-w-1)*width + (width-h-1);
+      }
+    }
+  }
+  else if(groups == 4){
+    for(int i=0;i<based_lines;i++){
+      for(int j=0;j<2;j++){
+	int w = edge[i][j]/width;
+	int h = edge[i][j]%width;
+	edge[based_lines  +i][j] = (h)        *width + (width-w-1); // w,h -> h,width-w-1
+	edge[based_lines*2+i][j] = (width-w-1)*width + (width-h-1); // w,h -> width-w-1,width-h-1
+	edge[based_lines*3+i][j] = (width-h-1)*width + (w);         // w,h -> width-h-1, w
+      }
+    }
+  }
+
+  for(int i=0;i<lines;i++)
+    printf("%d,%d %d,%d\n", edge[i][0]/width, edge[i][0]%width, edge[i][1]/width, edge[i][1]%width);
+  
+  EXIT(0);
+  // Create adjacency matrix
+  int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
+  int diam;    // NOT_USED 
+  double ASPL; // NOT_USED
+  create_adjacency(nodes, lines, degree, edge, adjacency);
+  while(1){
+    int start_line = getRandom(lines);
+    edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, NOT_USED);
+    if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs))
+      break;
+  }
+  
+  free(adjacency);
 }
 
 static void verfy_graph(const int nodes, const int lines, int edge[lines][2])
@@ -297,10 +352,11 @@ static void check_length(const int lines, const int height, const int length, in
 int main(int argc, char *argv[])
 {
   bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false, verify_flag = true;
-  bool hill_climbing_flag = false, detect_temp_flag = false, enable_bfs = false;
+  bool hill_climbing_flag = false, detect_temp_flag = false, enable_bfs = false, halfway_flag = false;
   char hostname[MPI_MAX_PROCESSOR_NAME], infname[MAX_FILENAME_LENGTH], outfname[MAX_FILENAME_LENGTH];
   int namelen, diam = 0, low_diam = 0, random_seed = 0, cooling_cycle = 1;
-  int width = 0, height = 0, length = -1, low_length = NOT_DEFINED, groups = 1;
+  int based_width = 0, based_height = 0, width = 0, height = 0;
+  int length = -1, low_length = NOT_DEFINED, groups = 1;
   long long ncalcs = 10000, num_accepts = 0;
   double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
   double max_temp = 100.0, min_temp = 0.217147, max_diff_energy = 0;
@@ -311,38 +367,58 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Get_processor_name(hostname, &namelen);
-  PRINT_R0("Run on %s\n", hostname);
-  time_t t = time(NULL);
-  PRINT_R0("%s---\n", ctime(&t));
+  //  PRINT_R0("Run on %s\n", hostname);
+  //  time_t t = time(NULL);
+  //  PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
   set_args(argc, argv, infname, &low_length, outfname, &outfnameflag, &random_seed,
 	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag, &groups, &cooling_cycle,
-	   &weight, &hill_climbing_flag, &detect_temp_flag, &verify_flag, &enable_bfs);
+	   &weight, &hill_climbing_flag, &detect_temp_flag, &verify_flag, &enable_bfs, &halfway_flag);
 
   if(low_length == NOT_DEFINED)
-    ERROR("Must need -L.\n");
-  else if(hill_climbing_flag){
-    if(max_temp_flag)
-      ERROR("Both -y and -w cannot be used.\n");
-    else if(min_temp_flag)
-      ERROR("Both -y and -c cannot be used.\n");
-    else if(detect_temp_flag)
-      ERROR("Both -y and -d cannot be used.\n");
-  }
+    ERROR("Must need -r\n");
+  else if(hill_climbing_flag && max_temp_flag)
+    ERROR("Both -H and -w cannot be used.\n");
+  else if(hill_climbing_flag && min_temp_flag)
+    ERROR("Both -H and -c cannot be used.\n");
+  else if(hill_climbing_flag && detect_temp_flag)
+    ERROR("Both -H and -d cannot be used.\n");
   
   srandom(random_seed);
-  int lines      = count_lines(infname);
-  int (*edge)[2] = malloc(sizeof(int)*lines*2); // int edge[lines][2];
-  read_file_lattice(edge, &width, &height, infname);
+  int based_lines = count_lines(infname);
+  int lines       = (halfway_flag)? based_lines : based_lines * groups;
+  int (*edge)[2]  = malloc(sizeof(int)*lines*2); // int edge[lines][2];
+  read_file_lattice(edge, &based_width, &based_height, infname);
+  if(groups == 4 && (based_width != based_height))
+    ERROR("When -g=4, width(%d) must be equal to height(%d).\n", based_width, based_height);
+  
+  int based_nodes = max_node_num(based_lines, (int *)edge) + 1;
+  if(halfway_flag){
+    if(based_nodes%groups != 0)
+      ERROR("based_nodes must be divisible by groups\n");
+    else
+      based_nodes /= groups;
+  }
+  int nodes  = based_nodes * groups;
+  int degree = 2 * lines / nodes;
+  if(groups == 2)
+    height = based_height * 2;
+  else if(groups == 4){
+    height = based_height * 2;
+    width  = based_width  * 2;
+  }
 
-  int nodes      = max_node_num(lines, (int *)edge) + 1;
-  int degree     = 2 * lines / nodes;
   if(nodes <= degree)
     ERROR("n is too small. nodes = %d degree = %d\n", nodes, degree);
-  else if(width*height != nodes)
+  else if(based_width*based_height != based_nodes)
     ERROR("NG. Not grid graph (width %d x height %d != nodes %d).\n", width, height, nodes);
 
+  if(!halfway_flag)
+    create_symmetric_edge(edge, based_nodes, based_lines, groups, degree,
+			  nodes, lines, based_width, enable_bfs);
+
+  EXIT(0);
   if(verify_flag)
     verfy_graph(nodes, lines, edge);
 

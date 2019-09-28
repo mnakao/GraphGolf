@@ -28,6 +28,7 @@ int rank, size, threads;
 #define TIMER_ESTIMATED     1
 #define TIMER_APSP          2
 #define TIMER_CHECK         3
+#define NOT_USED -1
 
 #ifdef _KCOMPUTER
 #define POPCNT(a) __builtin_popcountll(a)
@@ -72,4 +73,6 @@ extern double timer_read(const int n);
 extern bool evaluation(const int nodes, const int lines, const int degree, 
 		       const int* restrict adjacency, int *diameter, double *ASPL, const bool enable_bfs);
 extern void edge_copy(int *restrict buf1, const int *restrict buf2, const int n);
+extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes,
+			const int based_lines, const int groups, const int start_line, const int ii);
 #endif
