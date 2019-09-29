@@ -1,14 +1,5 @@
 #include "common.h"
 
-void edge_copy(int *restrict buf1, const int *restrict buf2, const int n)
-{
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-  for(int i=0;i<n;i++)
-    buf1[i] = buf2[i];
-}
-
 int getRandom(const int max)
 {
   return (int)(random()*((double)max)/(1.0+RAND_MAX));
@@ -17,6 +8,64 @@ int getRandom(const int max)
 bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11)
 {
   return ((e00 == e10 && e01 == e11) || (e00 == e11 && e01 == e10));
+}
+
+bool check_symmetric_edge(const int lines, const int edge[lines][2], const int height,
+			  const int width, const int based_height, const int groups)
+{
+  assert(lines%groups == 0);
+  int based_lines = lines / groups;
+  int w[2], h[2], tmp_edge[2];
+
+  if(groups == 2){
+    for(int i=0;i<based_lines;i++){
+      for(int j=0;j<2;j++){
+        w[j] = edge[i][j]/height;
+        h[j] = edge[i][j]%height;
+	tmp_edge[j] = (width-w[j]-1)*height + (height-h[j]-1);
+      }
+      if(!has_duplicated_edge(edge[based_lines+i][0], edge[based_lines+i][1], tmp_edge[0], tmp_edge[1]))
+	return false;
+    }
+  }
+  else if(groups == 4){
+    for(int i=0;i<based_lines;i++){
+      for(int j=0;j<2;j++){
+	w[j] = edge[i][j]/height;
+	h[j] = edge[i][j]%height;
+      }
+      
+      for(int j=0;j<2;j++) tmp_edge[j] = h[j]*height + (height-w[j]-1);
+      if(!has_duplicated_edge(edge[based_lines+i][0], edge[based_lines+i][1], tmp_edge[0], tmp_edge[1]))
+        return false;
+
+      for(int j=0;j<2;j++) tmp_edge[j] = (height-w[j]-1)*height + (height-h[j]-1);
+      if(!has_duplicated_edge(edge[based_lines*2+i][0], edge[based_lines*2+i][1], tmp_edge[0], tmp_edge[1]))
+	return false;
+
+      for(int j=0;j<2;j++) tmp_edge[j] = (height-h[j]-1)*height + w[j];
+      if(!has_duplicated_edge(edge[based_lines*3+i][0], edge[based_lines*3+i][1], tmp_edge[0], tmp_edge[1]))
+	return false;
+    }
+  }
+  
+  return true;
+}
+
+void output_edge(const int lines, const int edge[lines][2], const int height)
+{
+  for(int i=0;i<lines;i++)
+    printf("%d,%d %d,%d\n",
+	   edge[i][0]/height, edge[i][0]%height, edge[i][1]/height, edge[i][1]%height);
+}
+
+void edge_copy(int *restrict buf1, const int *restrict buf2, const int n)
+{
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for(int i=0;i<n;i++)
+    buf1[i] = buf2[i];
 }
 
 void swap(int *a, int *b)

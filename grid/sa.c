@@ -48,8 +48,8 @@ bool has_duplicated_vertex(const int e00, const int e01, const int e10, const in
   return (e00 == e10 || e01 == e11 || e00 == e11 || e01 == e10);
 }
 
-static void edge_exchange(const int nodes, const int lines, const int degree,
-			  int edge[lines][2], int adjacency[nodes][degree], const int ii)
+static void edge_exchange(const int nodes, const int lines, const int degree, int edge[lines][2],
+			  const int adjacency[nodes][degree], const int groups, const int ii)
 {
   int line[2];
   while(1){
@@ -142,8 +142,9 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 	     const double cooling_rate, const int low_diam,  const double low_ASPL, const bool enable_bfs, 
 	     const bool hill_climbing_flag, const bool detect_temp_flag,
 	     double *max_diff_energy, const double max_temp, const double min_temp, int edge[lines][2],
-	     int *diam, double *ASPL, const int cooling_cycle, long long *total_accepts,
-	     const int height, int *length, const int low_length, double weight)
+	     int *diam, double *ASPL, const int cooling_cycle, long long *total_accepts, const int width,
+	     const int based_width, const int height, const int based_height, int *length,
+	     const int low_length, const double weight, const int groups)
 {
   int degree = 2 * lines / nodes;
   int best_edge[lines][2], tmp_edge[lines][2];
@@ -180,7 +181,8 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 
     while(1){
       edge_copy((int *)tmp_edge, (int *)edge, lines*2);
-      edge_exchange(nodes, lines, degree, tmp_edge, adjacency, (int)i);
+      edge_exchange(nodes, lines, degree, tmp_edge, adjacency, groups, (int)i);
+      assert(check_symmetric_edge(lines, edge, height, width, based_height, groups));
       create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
       if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, diam, ASPL, enable_bfs)) break;
     }
@@ -231,7 +233,8 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 }
 
 #define ESTIMATED_TIMES 5
-double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2], const bool enable_bfs)
+double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2],
+			     const int groups, const bool enable_bfs)
 {
   int degree = 2 * lines / nodes;
   int diam;    // Not use
@@ -245,7 +248,7 @@ double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
     edge_copy((int *)tmp_edge, (int *)edge, lines*2);
-    edge_exchange(nodes, lines, degree, tmp_edge, adjacency, (int)i);
+    edge_exchange(nodes, lines, degree, tmp_edge, adjacency, groups, (int)i);
     evaluation(nodes, lines, degree, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs);
   }
   timer_stop(TIMER_ESTIMATED);

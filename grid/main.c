@@ -57,7 +57,7 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
       break;
     case 'g':
       *groups = atoi(optarg);
-      if(*groups != 2 && *groups != 4)
+      if(*groups != 1 && *groups != 2 && *groups != 4)
         ERROR("-g value == 2 or 4\n");
       break;
     case 'C':
@@ -147,34 +147,33 @@ static int max_node_num(const int lines, const int edge[lines*2])
 
 static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines,
 				  const int groups, const int degree, const int nodes, const int lines,
-				  const int based_width, const bool enable_bfs)
+				  const int height, const int width, const int based_height, const bool enable_bfs)
 {
-  int width = based_width * 2; // width == height
   for(int i=0;i<based_lines;i++){
     for(int j=0;j<2;j++){
-      int w = edge[i][j]/based_width;
-      int h = edge[i][j]%based_width;
-      edge[i][j] = w * width + h;
+      int w = edge[i][j]/based_height;
+      int h = edge[i][j]%based_height;
+      edge[i][j] = w * height + h;
     }
   }
-    
+
   if(groups == 2){
     for(int i=0;i<based_lines;i++){
       for(int j=0;j<2;j++){
-	int w = edge[i][j]/width;
-	int h = edge[i][j]%width;
-	edge[based_lines+i][j] = (based_width-w-1)*width + (width-h-1);
+	int w = edge[i][j]/height;
+	int h = edge[i][j]%height;
+	edge[based_lines+i][j] = (width-w-1)*height + (height-h-1);
       }
     }
   }
   else if(groups == 4){
     for(int i=0;i<based_lines;i++){
       for(int j=0;j<2;j++){
-	int w = edge[i][j]/width;
-	int h = edge[i][j]%width;
-	edge[based_lines  +i][j] = (h)        *width + (width-w-1); // w,h -> h,width-w-1
-	edge[based_lines*2+i][j] = (width-w-1)*width + (width-h-1); // w,h -> width-w-1,width-h-1
-	edge[based_lines*3+i][j] = (width-h-1)*width + (w);         // w,h -> width-h-1, w
+	int w = edge[i][j]/height;
+	int h = edge[i][j]%height;
+	edge[based_lines  +i][j] = (h)         *height + (height-w-1); // w,h -> h,height-w-1
+	edge[based_lines*2+i][j] = (height-w-1)*height + (height-h-1); // w,h -> height-w-1,height-h-1
+	edge[based_lines*3+i][j] = (height-h-1)*height + (w);          // w,h -> height-h-1, w
       }
     }
   }
@@ -191,6 +190,9 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
       break;
   }
 
+  assert(check_symmetric_edge(lines, edge, height, width, based_height, groups));
+  OUTPUT_EDGE();
+  exit(0);
   free(adjacency);
 }
 
@@ -398,8 +400,14 @@ int main(int argc, char *argv[])
   }
   int nodes  = based_nodes * groups;
   int degree = 2 * lines / nodes;
-  if(groups == 2)
+  if(groups == 1){
+    height = based_height;
+    width  = based_width;
+  }
+  else if(groups == 2){
     height = based_height * 2;
+    width  = based_width;
+  }
   else if(groups == 4){
     height = based_height * 2;
     width  = based_width  * 2;
@@ -410,17 +418,16 @@ int main(int argc, char *argv[])
   else if(based_width*based_height != based_nodes)
     ERROR("NG. Not grid graph (width %d x height %d != nodes %d).\n", width, height, nodes);
 
-  if(!halfway_flag)
-    create_symmetric_edge(edge, based_nodes, based_lines, groups, degree,
-			  nodes, lines, based_width, enable_bfs);
+  if(!halfway_flag && groups != 1)
+    create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes, lines,
+			  height, width, based_height, enable_bfs);
 
-  EXIT(0);
   if(verify_flag)
     verfy_graph(nodes, lines, edge);
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
   check_current_edge(nodes, lines, edge, low_ASPL, enable_bfs);
-  double average_time = estimated_elapse_time(nodes, lines, edge, enable_bfs);
+  double average_time = estimated_elapse_time(nodes, lines, edge, groups, enable_bfs);
   if(hill_climbing_flag){
     max_temp = min_temp = 0.0;
     cooling_rate = 1.0;
@@ -446,7 +453,8 @@ int main(int argc, char *argv[])
   timer_start(TIMER_SA);
   long long step = sa(nodes, lines, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL, enable_bfs, 
 		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, max_temp, min_temp,
-		      edge, &diam, &ASPL, cooling_cycle, &num_accepts, height, &length, low_length, weight);
+		      edge, &diam, &ASPL, cooling_cycle, &num_accepts, width, based_width,
+		      height, based_height, &length, low_length, weight, groups);
   timer_stop(TIMER_SA);
   
   if(detect_temp_flag){
