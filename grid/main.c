@@ -3,7 +3,7 @@
 static void print_help(char *argv)
 {
   END("%s -f <edge_file> [-r length] [-o <output_file>] [-s <random_seed>] [-n <calculations>] [-w <max_temperature>]\
- [-c <min_temperature>] [-g <gruops>] [-C <cooling_cycle>] [-W <weight>] [-B] [-D] [-H] [-M] [-N] [-Y] [-h]\n", argv);
+ [-c <min_temperature>] [-g <gruops>] [-C <cooling_cycle>] [-W <weight>] [-B] [-D] [-H] [-M] [-N] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, char *infname, int *low_length, char *outfname, bool *outfnameflag,
@@ -15,7 +15,7 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
     print_help(argv[0]);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:r:s:n:w:c:g:C:W:BDHMNYh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:r:s:n:w:c:g:C:W:BDHMNh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -58,7 +58,7 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
     case 'g':
       *groups = atoi(optarg);
       if(*groups != 1 && *groups != 2 && *groups != 4)
-        ERROR("-g value == 2 or 4\n");
+        ERROR("-g value == 1 or 2 or 4\n");
       break;
     case 'C':
       *cooling_cycle = atoi(optarg);
@@ -68,20 +68,20 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
     case 'W':
       *weight = atof(optarg);
       break;
-    case 'N':
-      *verify_flag = false;
+    case 'B':
+      *enable_bfs = true;
       break;
     case 'D':
       *detect_temp_flag = true;
       break;
-    case 'M':
-      *halfway_flag = true;
-      break;
     case 'H':
       *hill_climbing_flag = true;
       break;
-    case 'B':
-      *enable_bfs = true;
+    case 'M':
+      *halfway_flag = true;
+      break;
+    case 'N':
+      *verify_flag = false;
       break;
     case 'h':
     default:
@@ -158,22 +158,19 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   }
 
   if(groups == 2){
-    for(int i=0;i<based_lines;i++){
+    for(int i=0;i<based_lines;i++)
       for(int j=0;j<2;j++){
-	int w = edge[i][j]/height;
-	int h = edge[i][j]%height;
-	edge[based_lines+i][j] = (width-w-1)*height + (height-h-1);
+	int w = WIDTH (edge[i][j], height);
+        int h = HEIGHT(edge[i][j], height);
+        edge[based_lines+i][j] = (width-w-1)*height + (height-h-1);
       }
-    }
   }
   else if(groups == 4){
     for(int i=0;i<based_lines;i++){
       for(int j=0;j<2;j++){
-	int w = edge[i][j]/height;
-	int h = edge[i][j]%height;
-	edge[based_lines  +i][j] = (h)         *height + (height-w-1); // w,h -> h,height-w-1
-	edge[based_lines*2+i][j] = (height-w-1)*height + (height-h-1); // w,h -> height-w-1,height-h-1
-	edge[based_lines*3+i][j] = (height-h-1)*height + (w);          // w,h -> height-h-1, w
+	edge[based_lines  +i][j] = ROTATE(edge[i][j], height, 90);
+	edge[based_lines*2+i][j] = ROTATE(edge[i][j], height, 180);
+	edge[based_lines*3+i][j] = ROTATE(edge[i][j], height, 270);
       }
     }
   }
@@ -190,6 +187,9 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
       break;
   }
 
+  assert(check_loop(lines, edge));
+  assert(check_duplicate_all_edge(lines, edge));
+  assert(check_vector(groups, lines, height, edge));
   assert(check_symmetric_edge(lines, edge, height, width, based_height, groups));
   free(adjacency);
 }
@@ -290,7 +290,7 @@ static void output_params(const int nodes, const int degree, const int groups, c
   PRINT_R0("DEBUG MODE\n");
 #endif
   PRINT_R0("Seed     : %d\n", random_seed);
-  PRINT_R0("Processes: %d\n", size);
+  PRINT_R0("Processes: %d\n", procs);
 #ifdef _OPENMP
   PRINT_R0("Threads  : %d\n", omp_get_max_threads());
 #endif
@@ -327,21 +327,21 @@ static void output_params(const int nodes, const int degree, const int groups, c
 static void output_file(FILE *fp, const int lines, const int height, int edge[lines][2])
 {
   for(int i=0;i<lines;i++)
-    fprintf(fp, "%d,%d %d,%d\n",
-	    edge[i][0]/height, edge[i][0]%height, edge[i][1]/height, edge[i][1]%height);
+    fprintf(fp, "%d,%d %d,%d\n", WIDTH(edge[i][0], height), HEIGHT(edge[i][0], height),
+	    WIDTH(edge[i][1], height), HEIGHT(edge[i][1], height));
 }
 
 static void check_length(const int lines, const int height, const int length, int edge[lines][2])
 {
   for(int i=0;i<lines;i++){
-    int x0 = edge[i][0]/height;
-    int y0 = edge[i][0]%height;
-    int x1 = edge[i][1]/height;
-    int y1 = edge[i][1]%height;
-    int distance = abs(x0 - x1) + abs(y0 - y1);
+    int w0 = WIDTH (edge[i][0], height);
+    int h0 = HEIGHT(edge[i][0], height);
+    int w1 = WIDTH (edge[i][1], height);
+    int h1 = HEIGHT(edge[i][1], height);
+    int distance = abs(w0 - w1) + abs(h0 - h1);
     if(distance > length)
       printf("Over length in line %d: %d,%d %d,%d : length = %d, distance = %d\n",
-	     i+1, x0, y0, x1, y1, length, distance);
+	     i+1, w0, h0, w1, h1, length, distance);
   }
 }
 
@@ -354,18 +354,17 @@ int main(int argc, char *argv[])
   int based_width = 0, based_height = 0, width = 0, height = 0;
   int length = -1, low_length = NOT_DEFINED, groups = 1;
   long long ncalcs = 10000, num_accepts = 0;
-  double ASPL = 0, low_ASPL = 0, cooling_rate = 0;
+  double ASPL = 0, low_ASPL = 0, cooling_rate = 0, weight = 1.0;
   double max_temp = 100.0, min_temp = 0.217147, max_diff_energy = 0;
-  double weight = 1.0;
   FILE *fp = NULL;
   
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Comm_size(MPI_COMM_WORLD, &procs);
   MPI_Get_processor_name(hostname, &namelen);
-  //  PRINT_R0("Run on %s\n", hostname);
-  //  time_t t = time(NULL);
-  //  PRINT_R0("%s---\n", ctime(&t));
+  PRINT_R0("Run on %s\n", hostname);
+  time_t t = time(NULL);
+  PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
   set_args(argc, argv, infname, &low_length, outfname, &outfnameflag, &random_seed,
@@ -387,14 +386,14 @@ int main(int argc, char *argv[])
   int (*edge)[2]  = malloc(sizeof(int)*lines*2); // int edge[lines][2];
   read_file_lattice(edge, &based_width, &based_height, infname);
   if(groups == 4 && (based_width != based_height))
-    ERROR("When -g=4, width(%d) must be equal to height(%d).\n", based_width, based_height);
+    ERROR("When g = 4, width(%d) must be equal to height(%d).\n", based_width, based_height);
   
   int based_nodes = max_node_num(based_lines, (int *)edge) + 1;
   if(halfway_flag){
     if(based_nodes%groups != 0)
       ERROR("based_nodes must be divisible by groups\n");
-    else
-      based_nodes /= groups;
+
+    based_nodes /= groups;
   }
   int nodes  = based_nodes * groups;
   int degree = 2 * lines / nodes;
@@ -406,7 +405,7 @@ int main(int argc, char *argv[])
     height = based_height * 2;
     width  = based_width;
   }
-  else if(groups == 4){
+  else{ // groups == 4
     height = based_height * 2;
     width  = based_width  * 2;
   }
@@ -414,7 +413,7 @@ int main(int argc, char *argv[])
   if(nodes <= degree)
     ERROR("n is too small. nodes = %d degree = %d\n", nodes, degree);
   else if(based_width*based_height != based_nodes)
-    ERROR("NG. Not grid graph (width %d x height %d != nodes %d).\n", width, height, nodes);
+    ERROR("Not grid graph (width %d x height %d != nodes %d).\n", width, height, nodes);
 
   if(!halfway_flag && groups != 1)
     create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes, lines,
@@ -443,16 +442,22 @@ int main(int argc, char *argv[])
       ERROR("Cannot open %s\n", outfname);
   }
 
-  output_params(nodes, degree, groups, low_length, random_seed, max_temp, min_temp, ncalcs, cooling_cycle, weight,
-		cooling_rate, infname, outfname, outfnameflag, average_time, hill_climbing_flag, width, height, enable_bfs);
-  
+  output_params(nodes, degree, groups, low_length, random_seed,
+		max_temp, min_temp, ncalcs,
+		cooling_cycle, weight, cooling_rate, infname,
+		outfname, outfnameflag, average_time,
+		hill_climbing_flag, width, height, enable_bfs);
+
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
-  long long step = sa(nodes, lines, max_temp, ncalcs, cooling_rate, low_diam, low_ASPL, enable_bfs, 
-		      hill_climbing_flag, detect_temp_flag, &max_diff_energy, max_temp, min_temp,
-		      edge, &diam, &ASPL, cooling_cycle, &num_accepts, width, based_width,
-		      height, based_height, &length, low_length, weight, groups);
+  long long step = sa(nodes, lines, max_temp, ncalcs,
+		      cooling_rate, low_diam, low_ASPL, enable_bfs, 
+		      hill_climbing_flag, detect_temp_flag,
+		      &max_diff_energy, max_temp, min_temp, edge,
+		      &diam, &ASPL, cooling_cycle, &num_accepts, width,
+		      based_width, height, based_height, &length,
+		      low_length, weight, groups);
   timer_stop(TIMER_SA);
   
   if(detect_temp_flag){

@@ -1,13 +1,33 @@
 #include "common.h"
 
-int getRandom(const int max)
+void create_adjacency(const int nodes, const int lines, const int degree,
+                      const int edge[lines][2], int adjacency[nodes][degree])
 {
-  return (int)(random()*((double)max)/(1.0+RAND_MAX));
+  int count[nodes];
+  for(int i=0;i<nodes;i++)
+    count[i] = 0;
+
+  for(int i=0;i<lines;i++){
+    int n1 = edge[i][0];
+    int n2 = edge[i][1];
+    adjacency[n1][count[n1]++] = n2;
+    adjacency[n2][count[n2]++] = n1;
+  }
+}
+
+bool has_duplicated_vertex(const int e00, const int e01, const int e10, const int e11)
+{
+  return (e00 == e10 || e01 == e11 || e00 == e11 || e01 == e10);
 }
 
 bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11)
 {
-  return ((e00 == e10 && e01 == e11) || (e00 == e11 && e01 == e10));
+  return (e00 == e10 && e01 == e11) || (e00 == e11 && e01 == e10);
+}
+
+int getRandom(const int max)
+{
+  return (int)(random()*((double)max)/(1.0+RAND_MAX));
 }
 
 int WIDTH(const int v, const int height)
@@ -33,6 +53,26 @@ int ROTATE(const int v, const int height, const int degree)
   else                   return (height-h-1)*height + w; // degree == 270
 }
 
+bool check_vector(const int groups, const int lines, const int height, const int edge[lines][2])
+{
+  if(groups == 1) return true;
+  
+  int based_lines = lines/groups;
+  int vec_w[lines], vec_h[lines];
+  for(int i=0;i<lines;i++){
+    vec_w[i] = WIDTH (edge[i][0], height) - WIDTH (edge[i][1], height);
+    vec_h[i] = HEIGHT(edge[i][0], height) - HEIGHT(edge[i][1], height);
+  }
+
+  if(groups == 2)
+    for(int i=0;i<based_lines;i++){
+      if(vec_w[i] == vec_w[based_lines+i] && vec_h[i] == vec_h[based_lines+i])
+	return false;
+  }
+  
+  return true;
+}
+
 bool check_symmetric_edge(const int lines, const int edge[lines][2], const int height,
 			  const int width, const int based_height, const int groups)
 {
@@ -41,11 +81,22 @@ bool check_symmetric_edge(const int lines, const int edge[lines][2], const int h
 
   if(groups == 2){
     for(int i=0;i<based_lines;i++){
-      for(int j=0;j<2;j++)
-	tmp_edge[j] = ROTATE(edge[i][j], height, 180);
-
+      for(int j=0;j<2;j++){
+	int w = WIDTH (edge[i][j], height);
+        int h = HEIGHT(edge[i][j], height);
+        tmp_edge[j] = (width-w-1)*height + (height-h-1);
+      }
+      
       if(!has_duplicated_edge(edge[based_lines+i][0], edge[based_lines+i][1], tmp_edge[0], tmp_edge[1]))
-	return false;
+	if(!( WIDTH (edge[based_lines+i][0], height) + WIDTH (edge[based_lines+i][1], height) == (width-1) &&
+              HEIGHT(edge[based_lines+i][0], height) + HEIGHT(edge[based_lines+i][1], height) == (height-1))){
+	  printf("i=%d: %d,%d-%d,%d %d,%d-%d,%d\n", i,
+                 WIDTH(edge[based_lines+i][0], height), HEIGHT(edge[based_lines+i][0], height),
+                 WIDTH(edge[based_lines+i][1], height), HEIGHT(edge[based_lines+i][1], height),
+                 WIDTH(tmp_edge[0], height), HEIGHT(tmp_edge[0], height),
+                 WIDTH(tmp_edge[1], height), HEIGHT(tmp_edge[1], height));
+	  return false;
+	}
     }
   }
   else if(groups == 4){
@@ -103,8 +154,8 @@ bool check_symmetric_edge(const int lines, const int edge[lines][2], const int h
 void output_edge(const int lines, const int edge[lines][2], const int height)
 {
   for(int i=0;i<lines;i++)
-    printf("%d,%d %d,%d\n",
-	   edge[i][0]/height, edge[i][0]%height, edge[i][1]/height, edge[i][1]%height);
+    printf("%d,%d %d,%d\n", WIDTH(edge[i][0], height), HEIGHT(edge[i][0], height),
+	   WIDTH(edge[i][1], height), HEIGHT(edge[i][1], height));
 }
 
 void copy_edge(int *restrict buf1, const int *restrict buf2, const int n)
@@ -136,6 +187,17 @@ bool check_loop(const int lines, const int edge[lines][2])
       flag = false;
 
   timer_stop(TIMER_CHECK);
+
+  if(flag == false){
+    for(int i=0;i<lines;i++)
+      if(edge[i][0] == edge[i][1]){
+	printf("%d: %d %d <--\n", i, edge[i][0], edge[i][1]);
+      }
+      else{
+	printf("%d: %d %d\n", i, edge[i][0], edge[i][1]);
+      }
+  }
+  
   return flag;
 }
 
@@ -149,56 +211,92 @@ bool check_duplicate_all_edge(const int lines, const int edge[lines][2])
 #endif
   for(int i=0;i<lines;i++)
     for(int j=i+1;j<lines;j++)
-      if(has_duplicated_edge(edge[i][0], edge[i][1], edge[j][0], edge[j][1]))
+      if(has_duplicated_edge(edge[i][0], edge[i][1], edge[j][0], edge[j][1])){
+	printf("%d %d %d %d\n", edge[i][0], edge[i][1], edge[j][0], edge[j][1]);
         flag = false;
+      }
 
   timer_stop(TIMER_CHECK);
   return flag;
 }
 
-bool check_duplicate_current_edge(const int lines, const int edge[lines][2], const int selected_line[2], int tmp_edge[2][2])
+bool check_duplicate_current_edge(const int lines, const int edge[lines][2], const int tmp_lines,
+				  const int tmp_edge[tmp_lines][2], const int tmp_line[2],
+				  const int groups, const int g_opt, const bool is_center)
 {
   timer_start(TIMER_CHECK);
+  int based_lines = lines/groups;
   bool flag = true;
 
+  if(g_opt == D_2G_OPT){
+    int tmp_line0 = tmp_line[0]%based_lines;
+    int tmp_line1 = tmp_line[1]%based_lines;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-  for(int i=0;i<lines;i++)
-    if(i != selected_line[0] && i != selected_line[1])
-      for(int j=0;j<2;j++)
-	if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
-	  flag = false;
-
+    for(int i=rank;i<based_lines;i+=procs)
+      if(i != tmp_line0 && i != tmp_line1)
+        for(int j=0;j<tmp_lines;j++)
+          if(has_duplicated_edge(tmp_edge[i][0], tmp_edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+            flag = false;
+  }
+  else if(g_opt == D_1G_OPT){
+    int tmp_line0 = tmp_line[0]%based_lines;
+    if(! is_center){
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+      for(int i=rank;i<based_lines;i+=procs)
+	if(i != tmp_line0)
+	  for(int j=0;j<tmp_lines;j++)
+	    if(has_duplicated_edge(tmp_edge[i][0], tmp_edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+	      flag = false;
+    }
+    else{
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+      for(int i=rank;i<lines;i+=procs)
+        if(i%based_lines != tmp_line0)
+          for(int j=0;j<tmp_lines;j++)
+            if(has_duplicated_edge(edge[i][0], edge[i][1], tmp_edge[j][0], tmp_edge[j][1]))
+              flag = false;
+    }
+  }
+    
   timer_stop(TIMER_CHECK);
   return flag;
 }
 
 bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes,
-		 const int based_lines, const int height, const int groups, const int start_line, const int ii)
+		 const int based_lines, const int height, const int groups, const int start_line, const long long ii)
 {
-  //  printf("edge_1g_opt\n");
-  if(groups == 1) // assert ?
-    return true;
+  assert(groups != 1);
   
-  int tmp_line[groups], tmp_edge[groups][2];
+  int tmp_line[groups], tmp_edge[groups][2], pattern;
   for(int i=0;i<groups;i++){
     int t = start_line + based_lines * i;
-    tmp_line[i] = (t < lines)? t : t-lines;
+    tmp_line[i] = (t < lines)? t : t - lines;
   }
+#ifdef _DEBUG_MSG
+  printf("edge_1g_opt: ii = %lld\n", ii);
+  for(int i=0;i<groups;i++)
+    printf("line[%d] = %d\n", i, tmp_line[i]);
 
-  //  for(int i=0;i<groups;i++)
-  //    printf("line[%d] = %d\n", i, tmp_line[i]);
+  for(int i=0;i<groups;i++)
+    printf("Before: %d,%d-%d,%d\n",
+	   WIDTH (edge[tmp_line[i]][0], height),
+  	   HEIGHT(edge[tmp_line[i]][0], height),
+  	   WIDTH (edge[tmp_line[i]][1], height),
+  	   HEIGHT(edge[tmp_line[i]][1], height));
+#endif
 
-  //  for(int i=0;i<groups;i++)
-  //    printf("Before: %d,%d-%d,%d\n",
-  //	   WIDTH (edge[tmp_line[i]][0], height),
-  //	   HEIGHT(edge[tmp_line[i]][0], height),
-  //	   WIDTH (edge[tmp_line[i]][1], height),
-  //	   HEIGHT(edge[tmp_line[i]][1], height));
-
+  if(edge[tmp_line[0]][0] == edge[tmp_line[groups-1]][1])  // A cycle is composed of four edges.
+    return false;
+  
   if(groups == 2){
-    if(getRandom(2) == 0){
+    pattern = getRandom(2);
+    if(pattern == 0){
       tmp_edge[0][0] = edge[tmp_line[0]][0]; tmp_edge[0][1] = edge[tmp_line[1]][0];
       tmp_edge[1][0] = edge[tmp_line[0]][1]; tmp_edge[1][1] = edge[tmp_line[1]][1];
     }
@@ -208,13 +306,10 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     }
   }
   else{ // groups == 4
-    if(edge[tmp_line[0]][0] == edge[tmp_line[groups-1]][1])  // A cycle is composed of four edges.
-      return false;
-
     int s = edge[tmp_line[0]][0];
     int e = edge[tmp_line[2]][1];
     while(1){
-      int pattern = getRandom(groups+1);
+      pattern = getRandom(groups+1);
       if(pattern != groups){
 	tmp_edge[0][0] = s;
 	tmp_edge[1][0] = ROTATE(s, height, 90);
@@ -261,18 +356,34 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     }
   }
 
+  if(groups == 2){
+    int vec_w[groups], vec_h[groups];
+    for(int i=0;i<groups;i++){
+      vec_w[i] = WIDTH (tmp_edge[i][0], height) - WIDTH (tmp_edge[i][1], height);
+      vec_h[i] = HEIGHT(tmp_edge[i][0], height) - HEIGHT(tmp_edge[i][1], height);
+    }
+
+    for(int i=1;i<groups;i++){
+      if(vec_w[0] == vec_w[i] && vec_h[0] == vec_h[i])
+	swap(&tmp_edge[i][0], &tmp_edge[i][1]);
+    }
+  }
+
+  if(check_duplicate_current_edge(lines, edge, groups, tmp_edge, tmp_line, groups, D_1G_OPT, (pattern==groups)))
+     return false;
+    
   for(int i=0;i<groups;i++){
     edge[tmp_line[i]][0] = tmp_edge[i][0];
     edge[tmp_line[i]][1] = tmp_edge[i][1];
   }
+#ifdef _DEBUG_MSG
+  for(int i=0;i<groups;i++)
+    printf("After : %d,%d-%d,%d\n",
+  	   WIDTH (edge[tmp_line[i]][0], height),
+  	   HEIGHT(edge[tmp_line[i]][0], height),
+  	   WIDTH (edge[tmp_line[i]][1], height),
+  	   HEIGHT(edge[tmp_line[i]][1], height));
+#endif
 
-  //  for(int i=0;i<groups;i++)
-  //    printf("After : %d,%d-%d,%d\n",
-  //	   WIDTH (edge[tmp_line[i]][0], height),
-  //	   HEIGHT(edge[tmp_line[i]][0], height),
-  //	   WIDTH (edge[tmp_line[i]][1], height),
-  //	   HEIGHT(edge[tmp_line[i]][1], height));
-    
-  assert(check_symmetric_edge(lines, edge, height, 10, 5, groups));
   return true;
 }

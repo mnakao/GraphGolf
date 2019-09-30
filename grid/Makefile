@@ -1,5 +1,6 @@
 .PHONY: clean cygnus ofp K
 #DEBUG=-DNDEBUG
+DEBUG=-D_DEBUG_MSG
 #########################################################
 CC=mpicc
 CFLAGS=-std=gnu99 -O3 -Wall -Wno-unknown-pragmas -march=native $(DEBUG)
@@ -69,5 +70,5 @@ test: gg
           ./gg -f data/w10h10d8.random.edges -s $$s -n 1000 -r 4 -W 2;\
           ./gg -f data/w20h20d4.random.edges -s $$s -n 1000 -r 2 -W 2;\
 	done >> result.txt
-	diff result.txt data/result.txt | grep -v sec | grep -v 2019 | grep -Ev "[0-9]c" | sort | uniq
-	rm -f result.txt
+#	diff result.txt data/result.txt | grep -v sec | grep -v 2019 | grep -Ev "[0-9]c" | sort | uniq
+#	rm -f result.txt

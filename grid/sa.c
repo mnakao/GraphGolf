@@ -28,26 +28,6 @@ static void print_results(const long long num, const double temp,
     PRINT_R0("-\n");
 }  
 
-void create_adjacency(const int nodes, const int lines, const int degree,
-		      const int edge[lines][2], int adjacency[nodes][degree])
-{
-  int count[nodes];
-  for(int i=0;i<nodes;i++)
-    count[i] = 0;
-
-  for(int i=0;i<lines;i++){
-    int n1 = edge[i][0];
-    int n2 = edge[i][1];
-    adjacency[n1][count[n1]++] = n2;
-    adjacency[n2][count[n2]++] = n1;
-  }
-}
-
-bool has_duplicated_vertex(const int e00, const int e01, const int e10, const int e11)
-{
-  return (e00 == e10 || e01 == e11 || e00 == e11 || e01 == e10);
-}
-
 static void exchange_edge(const int nodes, const int lines, const int degree, int edge[lines][2],
 			  const int adjacency[nodes][degree], const int height, const int width,
 			  const int groups, const long long ii)
@@ -78,7 +58,7 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 		   HEIGHT(edge[tmp_line[0]][0], height) + HEIGHT(edge[tmp_line[0]][1], height) == (height-1));
     bool flag1 = ( WIDTH (edge[tmp_line[1]][0], height)	+ WIDTH (edge[tmp_line[1]][1], height) == (width-1) &&
 		   HEIGHT(edge[tmp_line[1]][0], height) + HEIGHT(edge[tmp_line[1]][1], height) == (height-1));
-    bool diameter_flag = (flag0 || flag1);
+    bool diameter_flag = ((flag0 || flag1) && groups%2==0);
     if(diameter_flag){
       if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, groups, tmp_line[0], ii))
         return;
@@ -93,17 +73,19 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
       if(tmp_line[i*2+1] >= lines) tmp_line[i*2+1] -= lines;
     }
 
-    //    printf("edge_2g_opt\n");
-    //    for(int i=0;i<groups*2;i++)
-    //      printf("line[%d] = %d\n", i, tmp_line[i]);
+#ifdef _DEBUG_MSG
+    printf("edge_2g_opt: ii = %lld\n", ii);
+    for(int i=0;i<groups*2;i++)
+      printf("line[%d] = %d\n", i, tmp_line[i]);
 
-    //    for(int i=0;i<groups;i++)
-    //      printf("Before: %d,%d-%d,%d %d,%d-%d,%d\n",
-    //	     WIDTH(edge[tmp_line[i*2  ]][0], height), HEIGHT(edge[tmp_line[i*2  ]][0], height),
-    //	     WIDTH(edge[tmp_line[i*2  ]][1], height), HEIGHT(edge[tmp_line[i*2  ]][1], height),
-    //	     WIDTH(edge[tmp_line[i*2+1]][0], height), HEIGHT(edge[tmp_line[i*2+1]][0], height),
-    //             WIDTH(edge[tmp_line[i*2+1]][1], height), HEIGHT(edge[tmp_line[i*2+1]][1], height));
-	   
+    for(int i=0;i<groups;i++)
+      printf("Before: %d,%d-%d,%d %d,%d-%d,%d\n",
+    	     WIDTH(edge[tmp_line[i*2  ]][0], height), HEIGHT(edge[tmp_line[i*2  ]][0], height),
+    	     WIDTH(edge[tmp_line[i*2  ]][1], height), HEIGHT(edge[tmp_line[i*2  ]][1], height),
+    	     WIDTH(edge[tmp_line[i*2+1]][0], height), HEIGHT(edge[tmp_line[i*2+1]][0], height),
+	     WIDTH(edge[tmp_line[i*2+1]][1], height), HEIGHT(edge[tmp_line[i*2+1]][1], height));
+#endif
+    
     int r = (getRandom(2) == 0)? 1 : 0;
     int tmp_edge[groups*2][2];
     for(int i=0;i<groups;i++){
@@ -113,20 +95,24 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
       }
       swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][r]);
     }
-    
-    if(!check_duplicate_current_edge(lines, edge, tmp_line, tmp_edge))
-      continue;
 
-     for(int i=0;i<groups;i++){
-       for(int j=0;j<2;j++){
-	 edge[tmp_line[i*2  ]][j] = tmp_edge[i*2  ][j];
-	 edge[tmp_line[i*2+1]][j] = tmp_edge[i*2+1][j];
-       }
-       //       printf("After : %d,%d-%d,%d %d,%d-%d,%d\n",
-       //             WIDTH(edge[tmp_line[i*2  ]][0], height), HEIGHT(edge[tmp_line[i*2  ]][0], height),
-       //             WIDTH(edge[tmp_line[i*2  ]][1], height), HEIGHT(edge[tmp_line[i*2  ]][1], height),
-       //             WIDTH(edge[tmp_line[i*2+1]][0], height), HEIGHT(edge[tmp_line[i*2+1]][0], height),
-       //             WIDTH(edge[tmp_line[i*2+1]][1], height), HEIGHT(edge[tmp_line[i*2+1]][1], height));
+    if(!check_duplicate_current_edge(lines, edge, groups*2, tmp_edge, tmp_line, groups, D_2G_OPT, false)){
+      continue;
+    }
+    
+    for(int i=0;i<groups;i++){
+      for(int j=0;j<2;j++){
+	edge[tmp_line[i*2  ]][j] = tmp_edge[i*2  ][j];
+	edge[tmp_line[i*2+1]][j] = tmp_edge[i*2+1][j];
+      }
+
+#ifdef _DEBUG_MSG
+       printf("After : %d,%d-%d,%d %d,%d-%d,%d\n",
+	      WIDTH(edge[tmp_line[i*2  ]][0], height), HEIGHT(edge[tmp_line[i*2  ]][0], height),
+	      WIDTH(edge[tmp_line[i*2  ]][1], height), HEIGHT(edge[tmp_line[i*2  ]][1], height),
+	      WIDTH(edge[tmp_line[i*2+1]][0], height), HEIGHT(edge[tmp_line[i*2+1]][0], height),
+	      WIDTH(edge[tmp_line[i*2+1]][1], height), HEIGHT(edge[tmp_line[i*2+1]][1], height));
+#endif
      }
     break;
   }
@@ -181,11 +167,11 @@ static void calc_length(const int lines, int edge[lines][2], const int height,
   *total_over_length = 0;
   
   for(int i=0;i<lines;i++){
-    int x0 = edge[i][0]/height;
-    int y0 = edge[i][0]%height;
-    int x1 = edge[i][1]/height;
-    int y1 = edge[i][1]%height;
-    int distance = abs(x0 - x1) + abs(y0 - y1);
+    int w0 = WIDTH (edge[i][0], height);
+    int h0 = HEIGHT(edge[i][0], height);
+    int w1 = WIDTH (edge[i][1], height);
+    int h1 = HEIGHT(edge[i][1], height);
+    int distance = abs(w0 - w1) + abs(h0 - h1);
     *length = MAX((*length), distance);
     if(distance > low_length)
       *total_over_length += (distance-low_length);
@@ -200,8 +186,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 	     const int based_width, const int height, const int based_height, int *length,
 	     const int low_length, const double weight, const int groups)
 {
-  int degree = 2 * lines / nodes;
-  int best_edge[lines][2], tmp_edge[lines][2];
+  int degree = 2*lines/nodes, best_edge[lines][2], tmp_edge[lines][2];
   long long ii, accepts = 0, rejects = 0;
 
   // Create adjacency matrix
@@ -236,6 +221,9 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
     while(1){
       copy_edge((int *)tmp_edge, (int *)edge, lines*2);
       exchange_edge(nodes, lines, degree, tmp_edge, adjacency, height, width, groups, ii);
+      assert(check_loop(lines, tmp_edge));
+      assert(check_duplicate_all_edge(lines, tmp_edge));
+      assert(check_vector(groups, lines, height, tmp_edge));
       assert(check_symmetric_edge(lines, tmp_edge, height, width, based_height, groups));
       create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
       if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, diam, ASPL, enable_bfs))
@@ -287,7 +275,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 }
 
 #define ESTIMATED_TIMES 5
-double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2],
+double estimated_elapse_time(const int nodes, const int lines, const int edge[lines][2],
 			     const int height, const int width, const int groups,
 			     const bool enable_bfs)
 {
@@ -297,13 +285,11 @@ double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   int (*tmp_edge)[2]       = malloc(sizeof(int)*lines*2);      // int tmp_edge[lines][2];
   
-  copy_edge((int *)tmp_edge, (int *)edge, lines*2);
-  create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
-
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
     copy_edge((int *)tmp_edge, (int *)edge, lines*2);
     exchange_edge(nodes, lines, degree, tmp_edge, adjacency, height, width, groups, (int)i);
+    create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
     evaluation(nodes, lines, degree, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs);
   }
   timer_stop(TIMER_ESTIMATED);

@@ -70,7 +70,7 @@ static bool bfs(const int nodes, const int lines, const int degree,
   double sum    = 0.0;
   *diameter     = 0;
   
-  for(int s=rank;s<nodes;s+=size){
+  for(int s=rank;s<nodes;s+=procs){
     int num_frontier = 1, level = 0;
     for(int i=0;i<nodes;i++)
       bitmap[i] = NOT_VISITED;
@@ -118,7 +118,7 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
                       int *diameter, double *ASPL)
 {
   unsigned int elements = (nodes+(UINT64_BITS-1))/UINT64_BITS;
-  unsigned int chunk = (elements+(size-1))/size;
+  unsigned int chunk = (elements+(procs-1))/procs;
   size_t s = nodes * chunk * sizeof(uint64_t);
   uint64_t* A = malloc(s);  // uint64_t A[nodes][chunk];
   uint64_t* B = malloc(s);  // uint64_t B[nodes][chunk];
@@ -126,7 +126,7 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
   double sum = 0.0;
 
   *diameter = 1;
-  for(int t=rank;t<parsize;t+=size){
+  for(int t=rank;t<parsize;t+=procs){
     uint64_t kk, l;
     clear_buffers(A, B, nodes * chunk);
     for(l=0; l<UINT64_BITS*chunk && UINT64_BITS*t*chunk+l<nodes; l++){
