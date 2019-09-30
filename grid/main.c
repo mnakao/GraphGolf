@@ -184,15 +184,13 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   double ASPL; // NOT_USED
   while(1){
     int start_line = getRandom(lines);
-    edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, NOT_USED);
+    edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, groups, start_line, NOT_USED);
     create_adjacency(nodes, lines, degree, edge, adjacency);
     if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs))
       break;
   }
 
   assert(check_symmetric_edge(lines, edge, height, width, based_height, groups));
-  OUTPUT_EDGE();
-  exit(0);
   free(adjacency);
 }
 
@@ -427,7 +425,7 @@ int main(int argc, char *argv[])
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
   check_current_edge(nodes, lines, edge, low_ASPL, enable_bfs);
-  double average_time = estimated_elapse_time(nodes, lines, edge, groups, enable_bfs);
+  double average_time = estimated_elapse_time(nodes, lines, edge, height, width, groups, enable_bfs);
   if(hill_climbing_flag){
     max_temp = min_temp = 0.0;
     cooling_rate = 1.0;

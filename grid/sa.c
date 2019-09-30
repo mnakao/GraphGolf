@@ -48,32 +48,86 @@ bool has_duplicated_vertex(const int e00, const int e01, const int e10, const in
   return (e00 == e10 || e01 == e11 || e00 == e11 || e01 == e10);
 }
 
-static void edge_exchange(const int nodes, const int lines, const int degree, int edge[lines][2],
-			  const int adjacency[nodes][degree], const int groups, const int ii)
+static void exchange_edge(const int nodes, const int lines, const int degree, int edge[lines][2],
+			  const int adjacency[nodes][degree], const int height, const int width,
+			  const int groups, const long long ii)
 {
-  int line[2];
+  int tmp_line[groups*2], based_lines = lines/groups, based_nodes = nodes/groups;
+  assert(lines%groups == 0);
+  assert(nodes%groups == 0);
+
   while(1){
     while(1){
-      line[0] = getRandom(lines);
-      line[1] = getRandom(lines);
-      if(line[0] == line[1]) continue;
-      else if(has_duplicated_vertex(edge[line[0]][0], edge[line[0]][1], edge[line[1]][0], edge[line[1]][1]))
+      tmp_line[0] = getRandom(lines);
+      tmp_line[1] = getRandom(lines);
+      if(tmp_line[0] == tmp_line[1]) continue;
+      else if(has_duplicated_vertex(edge[tmp_line[0]][0], edge[tmp_line[0]][1], edge[tmp_line[1]][0], edge[tmp_line[1]][1])){
         continue;
+      }
+      else if((tmp_line[0] - tmp_line[1]) % based_lines == 0){
+        if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, groups, tmp_line[0], ii))
+	  return;
+	else
+	  continue;
+      }
       else
 	break;
     }
 
-    int tmp_edge[2][2];
-    tmp_edge[0][0] = edge[line[0]][0]; tmp_edge[0][1] = edge[line[0]][1];
-    tmp_edge[1][0] = edge[line[1]][0]; tmp_edge[1][1] = edge[line[1]][1];
-    int r = (getRandom(2) == 0)? 1 : 0;;
-    swap(&tmp_edge[0][1], &tmp_edge[1][r]);
+    bool flag0 = ( WIDTH (edge[tmp_line[0]][0], height) + WIDTH (edge[tmp_line[0]][1], height) == (width-1) &&
+		   HEIGHT(edge[tmp_line[0]][0], height) + HEIGHT(edge[tmp_line[0]][1], height) == (height-1));
+    bool flag1 = ( WIDTH (edge[tmp_line[1]][0], height)	+ WIDTH (edge[tmp_line[1]][1], height) == (width-1) &&
+		   HEIGHT(edge[tmp_line[1]][0], height) + HEIGHT(edge[tmp_line[1]][1], height) == (height-1));
+    bool diameter_flag = (flag0 || flag1);
+    if(diameter_flag){
+      if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, groups, tmp_line[0], ii))
+        return;
+      else
+        continue;
+    }
+    
+    for(int i=1;i<groups;i++){
+      tmp_line[i*2  ] = tmp_line[0] + based_lines * i;
+      tmp_line[i*2+1] = tmp_line[1] + based_lines * i;
+      if(tmp_line[i*2  ] >= lines) tmp_line[i*2  ] -= lines;
+      if(tmp_line[i*2+1] >= lines) tmp_line[i*2+1] -= lines;
+    }
 
-    if(!check_duplicate_current_edge(lines, edge, line, tmp_edge))
+    //    printf("edge_2g_opt\n");
+    //    for(int i=0;i<groups*2;i++)
+    //      printf("line[%d] = %d\n", i, tmp_line[i]);
+
+    //    for(int i=0;i<groups;i++)
+    //      printf("Before: %d,%d-%d,%d %d,%d-%d,%d\n",
+    //	     WIDTH(edge[tmp_line[i*2  ]][0], height), HEIGHT(edge[tmp_line[i*2  ]][0], height),
+    //	     WIDTH(edge[tmp_line[i*2  ]][1], height), HEIGHT(edge[tmp_line[i*2  ]][1], height),
+    //	     WIDTH(edge[tmp_line[i*2+1]][0], height), HEIGHT(edge[tmp_line[i*2+1]][0], height),
+    //             WIDTH(edge[tmp_line[i*2+1]][1], height), HEIGHT(edge[tmp_line[i*2+1]][1], height));
+	   
+    int r = (getRandom(2) == 0)? 1 : 0;
+    int tmp_edge[groups*2][2];
+    for(int i=0;i<groups;i++){
+      for(int j=0;j<2;j++){
+	tmp_edge[i*2  ][j] = edge[tmp_line[i*2  ]][j];
+	tmp_edge[i*2+1][j] = edge[tmp_line[i*2+1]][j];
+      }
+      swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][r]);
+    }
+    
+    if(!check_duplicate_current_edge(lines, edge, tmp_line, tmp_edge))
       continue;
-  
-    edge[line[0]][0] = tmp_edge[0][0]; edge[line[0]][1] = tmp_edge[0][1];
-    edge[line[1]][0] = tmp_edge[1][0]; edge[line[1]][1] = tmp_edge[1][1];
+
+     for(int i=0;i<groups;i++){
+       for(int j=0;j<2;j++){
+	 edge[tmp_line[i*2  ]][j] = tmp_edge[i*2  ][j];
+	 edge[tmp_line[i*2+1]][j] = tmp_edge[i*2+1][j];
+       }
+       //       printf("After : %d,%d-%d,%d %d,%d-%d,%d\n",
+       //             WIDTH(edge[tmp_line[i*2  ]][0], height), HEIGHT(edge[tmp_line[i*2  ]][0], height),
+       //             WIDTH(edge[tmp_line[i*2  ]][1], height), HEIGHT(edge[tmp_line[i*2  ]][1], height),
+       //             WIDTH(edge[tmp_line[i*2+1]][0], height), HEIGHT(edge[tmp_line[i*2+1]][0], height),
+       //             WIDTH(edge[tmp_line[i*2+1]][1], height), HEIGHT(edge[tmp_line[i*2+1]][1], height));
+     }
     break;
   }
 }
@@ -148,7 +202,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 {
   int degree = 2 * lines / nodes;
   int best_edge[lines][2], tmp_edge[lines][2];
-  long long i, accepts = 0, rejects = 0;
+  long long ii, accepts = 0, rejects = 0;
 
   // Create adjacency matrix
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
@@ -157,20 +211,20 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 
   int total_over_length = 0;
   calc_length(lines, edge, height, low_length, length, &total_over_length);
-  
+
   double current_ASPL = *ASPL,   best_ASPL   = *ASPL;
   int current_diam    = *diam,   best_diam   = *diam;
   int current_length  = *length, best_length = *length;
   int current_total_over_length = total_over_length;
   int print_interval  = (ncalcs/NUM_OF_PROGRESS == 0)? 1 : ncalcs/NUM_OF_PROGRESS;
-  edge_copy((int *)best_edge, (int *)edge, lines*2);
+  copy_edge((int *)best_edge, (int *)edge, lines*2);
     
   if(rank == 0 && !detect_temp_flag)
     print_result_header();
 
-  for(i=0;i<ncalcs;i++){
-    if(i % print_interval == 0 && !detect_temp_flag){
-      print_results(i, temp,
+  for(ii=0;ii<ncalcs;ii++){
+    if(ii % print_interval == 0 && !detect_temp_flag){
+      print_results(ii, temp,
 		    current_ASPL,   best_ASPL,   low_ASPL,
 		    current_diam,   best_diam,   low_diam,
 		    current_length, best_length, low_length,
@@ -180,27 +234,28 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
     }
 
     while(1){
-      edge_copy((int *)tmp_edge, (int *)edge, lines*2);
-      edge_exchange(nodes, lines, degree, tmp_edge, adjacency, groups, (int)i);
-      assert(check_symmetric_edge(lines, edge, height, width, based_height, groups));
+      copy_edge((int *)tmp_edge, (int *)edge, lines*2);
+      exchange_edge(nodes, lines, degree, tmp_edge, adjacency, height, width, groups, ii);
+      assert(check_symmetric_edge(lines, tmp_edge, height, width, based_height, groups));
       create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
-      if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, diam, ASPL, enable_bfs)) break;
+      if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, diam, ASPL, enable_bfs))
+	break;
     }
     calc_length(lines, tmp_edge, height, low_length, length, &total_over_length);
 
     if(accept(*ASPL, current_ASPL, temp, nodes, degree, hill_climbing_flag, detect_temp_flag,
-	      i, max_diff_energy, total_accepts, &accepts, &rejects,
+	      ii, max_diff_energy, total_accepts, &accepts, &rejects,
 	      total_over_length, current_total_over_length, max_temp, min_temp, weight)){
       current_ASPL   = *ASPL;
       current_diam   = *diam;
       current_length = *length;
       current_total_over_length = total_over_length;
-      edge_copy((int *)edge, (int *)tmp_edge, lines*2);
+      copy_edge((int *)edge, (int *)tmp_edge, lines*2);
       if((low_diam <= *diam) &&
 	 ((best_length > *length) ||
 	  (best_length == *length && best_diam > *diam) ||
 	  (best_length == *length && best_diam == *diam && best_ASPL > *ASPL))){
-	edge_copy((int *)best_edge, (int *)edge, lines*2);
+	copy_edge((int *)best_edge, (int *)edge, lines*2);
 	best_length = *length;
 	best_diam   = *diam;
 	best_ASPL   = *ASPL;
@@ -208,8 +263,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 
       if(best_ASPL == low_ASPL && best_length == low_length){
 	if(!detect_temp_flag){
-	  print_results(i, temp,
-			current_ASPL, best_ASPL, low_ASPL,
+	  print_results(ii, temp, current_ASPL, best_ASPL, low_ASPL,
 			current_diam, best_diam, low_diam,
 			current_length, best_length, low_length,
 			accepts, rejects);
@@ -218,23 +272,24 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 	break;
       }
     }
-
-    if((i+1)%cooling_cycle == 0)
+    
+    if((ii+1)%cooling_cycle == 0)
       temp *= cooling_rate;
   }
 
   *ASPL   = best_ASPL;
   *diam   = best_diam;
   *length = best_length;
-  edge_copy((int *)edge, (int *)best_edge, lines*2);
+  copy_edge((int *)edge, (int *)best_edge, lines*2);
   free(adjacency);
 
-  return i;
+  return ii;
 }
 
 #define ESTIMATED_TIMES 5
 double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2],
-			     const int groups, const bool enable_bfs)
+			     const int height, const int width, const int groups,
+			     const bool enable_bfs)
 {
   int degree = 2 * lines / nodes;
   int diam;    // Not use
@@ -242,13 +297,13 @@ double estimated_elapse_time(const int nodes, const int lines, int edge[lines][2
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   int (*tmp_edge)[2]       = malloc(sizeof(int)*lines*2);      // int tmp_edge[lines][2];
   
-  edge_copy((int *)tmp_edge, (int *)edge, lines*2);
+  copy_edge((int *)tmp_edge, (int *)edge, lines*2);
   create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
 
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
-    edge_copy((int *)tmp_edge, (int *)edge, lines*2);
-    edge_exchange(nodes, lines, degree, tmp_edge, adjacency, groups, (int)i);
+    copy_edge((int *)tmp_edge, (int *)edge, lines*2);
+    exchange_edge(nodes, lines, degree, tmp_edge, adjacency, height, width, groups, (int)i);
     evaluation(nodes, lines, degree, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs);
   }
   timer_stop(TIMER_ESTIMATED);
