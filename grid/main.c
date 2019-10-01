@@ -176,7 +176,7 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
     int start_line = getRandom(lines);
     if(! edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups, start_line, NOT_USED))
       continue;
-    create_adjacency(nodes, lines, degree, edge, adjacency);
+    create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
     if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs))
       break;
   }
@@ -207,10 +207,10 @@ static void verfy_graph(const int nodes, const int lines, int edge[lines][2])
     if(degree != n[i])
       ERROR("NG\nNot regular graph. degree = %d n[%d] = %d.\n", degree, i, n[i]);
 
-  if(!check_loop(lines, edge))
+  if(!check_loop(lines, (const int (*)[2])edge))
     ERROR("NG\nThe same node in the edge.\n");
 
-  if(!check_duplicate_all_edge(lines, edge))
+  if(!check_duplicate_all_edge(lines, (const int (*)[2])edge))
     ERROR("NG\nThe same node conbination in the edge.\n");
 
   PRINT_R0("OK\n");
@@ -416,7 +416,7 @@ int main(int argc, char *argv[])
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
   check_current_edge(nodes, lines, edge, low_ASPL, enable_bfs);
-  double average_time = estimated_elapse_time(nodes, lines, edge, height, width, groups, enable_bfs);
+  double average_time = estimated_elapse_time(nodes, lines, (const int (*)[2])edge, height, width, groups, enable_bfs);
   if(hill_climbing_flag){
     max_temp = min_temp = 0.0;
     cooling_rate = 1.0;

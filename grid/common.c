@@ -457,7 +457,8 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
   }
   */
 
-  if(!check_duplicate_current_edge(lines, edge, groups, tmp_edge, tmp_line, groups, D_1G_OPT, (pattern==groups)))
+  if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups, 
+(const int (*)[2])tmp_edge, tmp_line, groups, D_1G_OPT, (pattern==groups)))
      return false;
 
   for(int i=0;i<groups;i++){
