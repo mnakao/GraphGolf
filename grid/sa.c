@@ -138,7 +138,7 @@ static bool accept(const int new_length, const int current_length, const double 
 
   double f = (current_ASPL-new_ASPL)*nodes*(nodes-1);
   double p = (double)(current_total_over_length - new_total_over_length) / degree * nodes;
-   p *= (max_temp - temp) / (max_temp - min_temp);
+  //   p *= (max_temp - temp) / (max_temp - min_temp);
   double diff = f + p * weight;
   
   if(diff >= 0){

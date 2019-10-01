@@ -72,5 +72,5 @@ test: gg
 	  ./gg -f data/w5h5d4.random.edges   -s $$s -n 1000 -r 2 -W 2 -g 2;\
 	  ./gg -f data/w5h5d4.random.edges   -s $$s -n 1000 -r 2 -W 2 -g 4;\
 	done >> result.txt
-	diff result.txt data/result.txt | grep -v sec | grep -v 2019 | grep -Ev "[0-9]c" | sort | uniq
-	rm -f result.txt
+#	diff result.txt data/result.txt | grep -v sec | grep -v 2019 | grep -Ev "[0-9]c" | sort | uniq
+#	rm -f result.txt
