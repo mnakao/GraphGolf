@@ -119,30 +119,34 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
   }
 }
 
-//#define ALPHA 0.01
-//static double pre_w;
-static bool accept(const double ASPL, const double current_ASPL, const double temp, const int nodes, const int degree,
-		   const bool hill_climbing_flag, const bool detect_temp_flag, const long long i,
+// When the diameter is small, the length becomes long, so the diameter isn't adopted for evaluation.
+static bool accept(const int new_length, const int current_length, const double new_ASPL, const double current_ASPL,
+		   const int new_total_over_length, const int current_total_over_length, const double temp,
+		   const int nodes, const int degree, const bool hill_climbing_flag, const bool detect_temp_flag, 
 		   double *max_diff_energy, long long *total_accepts, long long *accepts, long long *rejects,
-		   const int total_over_length, const int current_total_over_length,
-		   const double max_temp, const double min_temp, const double weight)
+		   const double max_temp, const double min_temp, const double weight, const long long ii)
 {
-  double f = (current_ASPL-ASPL)*nodes*(nodes-1);
-  double p = (double)(current_total_over_length - total_over_length) / degree * nodes;
-  p *= (max_temp - temp) / (max_temp - min_temp);
-  //  if(i%100 == 0) printf("AA : %f %f\n", p, (max_temp - temp) / (max_temp - min_temp));
-  //  double w = (p==0)? pre_w : fabs(f/p) * ALPHA + pre_w * (1-ALPHA);
-  //  pre_w = w;
-  //  double diff = f + p * w;
+  if(new_length < current_length){
+    *accepts += 1;
+    if(ii > SKIP_ACCEPTS) *total_accepts +=1;
+    return true;
+  }
+  else if(new_length > current_length){
+    *rejects += 1;
+    return false;
+  }
+
+  double f = (current_ASPL-new_ASPL)*nodes*(nodes-1);
+  double p = (double)(current_total_over_length - new_total_over_length) / degree * nodes;
+   p *= (max_temp - temp) / (max_temp - min_temp);
   double diff = f + p * weight;
-  //  printf("diff %f = %f - %f\n", diff, f, current_total_over_length*weight);
   
   if(diff >= 0){
     *accepts += 1;
-    if(i > SKIP_ACCEPTS) *total_accepts +=1;
+    if(ii > SKIP_ACCEPTS) *total_accepts +=1;
     return true;
   }
-  if(hill_climbing_flag){ // Only accept when ASPL <= current_ASPL.
+  if(hill_climbing_flag){ // Only accept when new_ASPL <= current_ASPL.
     *rejects += 1;
     return false;
   }
@@ -152,7 +156,7 @@ static bool accept(const double ASPL, const double current_ASPL, const double te
 
   if(exp(diff/temp) > uniform_rand()){
     *accepts += 1;
-    if(i > SKIP_ACCEPTS) *total_accepts +=1;
+    if(ii > SKIP_ACCEPTS) *total_accepts +=1;
     return true;
   }
   else{
@@ -195,13 +199,13 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
   create_adjacency(nodes, lines, degree, edge, adjacency);
   evaluation(nodes, lines, degree, (const int* restrict)adjacency, diam, ASPL, enable_bfs);
 
-  int total_over_length = 0;
-  calc_length(lines, edge, height, low_length, length, &total_over_length);
+  int tmp_total_over_length = 0;
+  calc_length(lines, edge, height, low_length, length, &tmp_total_over_length);
 
-  double current_ASPL = *ASPL,   best_ASPL   = *ASPL;
-  int current_diam    = *diam,   best_diam   = *diam;
-  int current_length  = *length, best_length = *length;
-  int current_total_over_length = total_over_length;
+  double current_ASPL = *ASPL,   best_ASPL   = *ASPL,   tmp_ASPL;
+  int current_diam    = *diam,   best_diam   = *diam,   tmp_diam;
+  int current_length  = *length, best_length = *length, tmp_length;
+  int current_total_over_length = tmp_total_over_length;
   int print_interval  = (ncalcs/NUM_OF_PROGRESS == 0)? 1 : ncalcs/NUM_OF_PROGRESS;
   copy_edge((int *)best_edge, (int *)edge, lines*2);
     
@@ -227,27 +231,30 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
       assert(check_degree(nodes, lines, tmp_edge));
       assert(check_symmetric_edge(lines, tmp_edge, height, width, based_height, groups));
       create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
-      if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, diam, ASPL, enable_bfs))
+      if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, &tmp_diam, &tmp_ASPL, enable_bfs)){
+	calc_length(lines, tmp_edge, height, low_length, &tmp_length, &tmp_total_over_length);
 	break;
+      }
     }
-    calc_length(lines, tmp_edge, height, low_length, length, &total_over_length);
 
-    if(accept(*ASPL, current_ASPL, temp, nodes, degree, hill_climbing_flag, detect_temp_flag,
-	      ii, max_diff_energy, total_accepts, &accepts, &rejects,
-	      total_over_length, current_total_over_length, max_temp, min_temp, weight)){
-      current_ASPL   = *ASPL;
-      current_diam   = *diam;
-      current_length = *length;
-      current_total_over_length = total_over_length;
+    if(accept(tmp_length, current_length, tmp_ASPL, current_ASPL,
+	      tmp_total_over_length, current_total_over_length,
+	      temp, nodes, degree, hill_climbing_flag, detect_temp_flag,
+	      max_diff_energy, total_accepts, &accepts, &rejects,
+	      max_temp, min_temp, weight, ii)){
+      current_ASPL   = tmp_ASPL;
+      current_diam   = tmp_diam;
+      current_length = tmp_length;
+      current_total_over_length = tmp_total_over_length;
       copy_edge((int *)edge, (int *)tmp_edge, lines*2);
-      if((low_diam <= *diam) &&
-	 ((best_length > *length) ||
-	  (best_length == *length && best_diam > *diam) ||
-	  (best_length == *length && best_diam == *diam && best_ASPL > *ASPL))){
+      if((low_diam <= tmp_diam) &&
+	 ((best_length > tmp_length) ||
+	  (best_length == tmp_length && best_diam > tmp_diam) ||
+	  (best_length == tmp_length && best_diam == tmp_diam && best_ASPL > tmp_ASPL))){
 	copy_edge((int *)best_edge, (int *)edge, lines*2);
-	best_length = *length;
-	best_diam   = *diam;
-	best_ASPL   = *ASPL;
+	best_length = tmp_length;
+	best_diam   = tmp_diam;
+	best_ASPL   = tmp_ASPL;
       }
 
       if(best_ASPL == low_ASPL && best_length == low_length){
