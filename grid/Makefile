@@ -28,7 +28,7 @@ SRCS := main.c sa.c timer.c evaluation.c common.c
 OBJS := $(SRCS:%.c=%.o)
 
 gg: $(OBJS)
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LFLAGS)
 
 %.o: %.c common.h
 	$(CC) $(CFLAGS) -c $<
@@ -49,7 +49,7 @@ timer_omp.o: timer.c common.h
 	$(CC) $(CFLAGS) $(OPENMP) -c -o $@ $<
 
 gg_openmp: common_omp.o sa_omp.o evaluation_omp.o main_omp.o timer_omp.o
-	$(CC) $(CFLAGS) $(OPENMP) $(LFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(OPENMP) -o $@ $^ $(LFLAGS)
 
 openmp: gg_openmp
 all: gg gg_openmp

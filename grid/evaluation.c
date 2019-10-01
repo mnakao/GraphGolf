@@ -2,7 +2,9 @@
 
 static void clear_buffers(uint64_t* restrict A, uint64_t* restrict B, const int s)
 {
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
   for(int i=0;i<s;i++)
     A[i] = B[i] = 0;
 }
@@ -135,7 +137,9 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
     }
 
     for(kk=0;kk<nodes;kk++){
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
       for(int i=0;i<nodes;i++)
         for(int j=0;j<degree;j++){
           int n = *(adjacency + i * degree + j);  // int n = adjacency[i][j];
@@ -144,7 +148,9 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
         }
 
       uint64_t num = 0;
+#ifdef _OPENMP
 #pragma omp parallel for reduction(+:num)
+#endif
       for(int i=0;i<chunk*nodes;i++)
         num += POPCNT(B[i]);
 

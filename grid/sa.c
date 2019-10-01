@@ -29,8 +29,7 @@ static void print_results(const long long num, const double temp,
 }  
 
 static void exchange_edge(const int nodes, const int lines, const int degree, int edge[lines][2],
-			  const int adjacency[nodes][degree], const int height, const int width,
-			  const int groups, const long long ii)
+			  const int height, const int width, const int groups, const long long ii)
 {
   int tmp_line[groups*2], based_lines = lines/groups, based_nodes = nodes/groups;
   assert(lines%groups == 0);
@@ -98,7 +97,8 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 
     if(!check_duplicate_tmp_edge(D_2G_OPT, groups, tmp_edge))
       continue;
-    else if(!check_duplicate_current_edge(lines, edge, groups*2, tmp_edge, tmp_line, groups, D_2G_OPT, false))
+    else if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups*2, 
+					  (const int (*)[2])tmp_edge, tmp_line, groups, D_2G_OPT, false))
       continue;
 
     for(int i=0;i<groups;i++){
@@ -196,7 +196,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 
   // Create adjacency matrix
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-  create_adjacency(nodes, lines, degree, edge, adjacency);
+  create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
   evaluation(nodes, lines, degree, (const int* restrict)adjacency, diam, ASPL, enable_bfs);
 
   int tmp_total_over_length = 0;
@@ -225,12 +225,12 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 
     while(1){
       copy_edge((int *)tmp_edge, (int *)edge, lines*2);
-      exchange_edge(nodes, lines, degree, tmp_edge, adjacency, height, width, groups, ii);
+      exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, ii);
       assert(check_loop(lines, tmp_edge));
       assert(check_duplicate_all_edge(lines, tmp_edge));
       assert(check_degree(nodes, lines, tmp_edge));
       assert(check_symmetric_edge(lines, tmp_edge, height, width, based_height, groups));
-      create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
+      create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
       if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, &tmp_diam, &tmp_ASPL, enable_bfs)){
 	calc_length(lines, tmp_edge, height, low_length, &tmp_length, &tmp_total_over_length);
 	break;
@@ -296,8 +296,8 @@ double estimated_elapse_time(const int nodes, const int lines, const int edge[li
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
     copy_edge((int *)tmp_edge, (int *)edge, lines*2);
-    exchange_edge(nodes, lines, degree, tmp_edge, adjacency, height, width, groups, (int)i);
-    create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
+    exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, (int)i);
+    create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
     evaluation(nodes, lines, degree, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs);
   }
   timer_stop(TIMER_ESTIMATED);
@@ -316,7 +316,7 @@ void check_current_edge(const int nodes, const int lines, int edge[lines][2], co
   double ASPL;
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
 
-  create_adjacency(nodes, lines, degree, edge, adjacency);
+  create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
   if(! evaluation(nodes, lines, degree, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs))
     ERROR("The input file has a node which is never reached by another node.\n");
 
