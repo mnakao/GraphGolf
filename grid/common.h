@@ -66,6 +66,7 @@ extern bool has_duplicated_edge(const int e00, const int e01, const int e10, con
 extern bool has_duplicated_vertex(const int e00, const int e01, const int e10, const int e11);
 extern bool check_loop(const int lines, const int edge[lines][2]);
 extern bool check_duplicate_all_edge(const int lines, const int edge[lines][2]);
+extern bool check_duplicate_tmp_edge(const int g_opt, const int groups, int tmp_edge[groups*g_opt][2]);
 extern bool check_duplicate_current_edge(const int lines, const int edge[lines][2], const int tmp_lines,
 					 const int tmp_edge[tmp_lines][2], const int tmp_line[2],
 					 const int groups, const int g_opt, const bool is_center);
@@ -81,12 +82,13 @@ extern bool evaluation(const int nodes, const int lines, const int degree,
 		       const int* restrict adjacency, int *diameter, double *ASPL, const bool enable_bfs);
 extern void copy_edge(int *restrict buf1, const int *restrict buf2, const int n);
 extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes,
-			const int based_lines, const int height, const int groups, const int start_line, const long long ii);
+			const int based_lines, const int height, const int width, const int groups, const int start_line,
+			const long long ii);
 extern void output_edge(const int lines, const int edge[lines][2], const int height);
 extern bool check_symmetric_edge(const int lines, const int edge[lines][2], const int height, const int width,
 				 const int based_height, const int groups);
 extern bool check_vector(const int groups, const int lines, const int height, const int edge[lines][2]);
 extern int WIDTH (const int v, const int height);
 extern int HEIGHT(const int v, const int height);
-extern int ROTATE(const int v, const int height, const int degree);
+extern int ROTATE(const int v, const int height, const int width, const int groups, const int degree);
 #endif

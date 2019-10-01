@@ -159,18 +159,15 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
 
   if(groups == 2){
     for(int i=0;i<based_lines;i++)
-      for(int j=0;j<2;j++){
-	int w = WIDTH (edge[i][j], height);
-        int h = HEIGHT(edge[i][j], height);
-        edge[based_lines+i][j] = (width-w-1)*height + (height-h-1);
-      }
+      for(int j=0;j<2;j++)
+        edge[based_lines+i][j] = ROTATE(edge[i][j], height, width, groups, 180);
   }
   else if(groups == 4){
     for(int i=0;i<based_lines;i++){
       for(int j=0;j<2;j++){
-	edge[based_lines  +i][j] = ROTATE(edge[i][j], height, 90);
-	edge[based_lines*2+i][j] = ROTATE(edge[i][j], height, 180);
-	edge[based_lines*3+i][j] = ROTATE(edge[i][j], height, 270);
+	edge[based_lines  +i][j] = ROTATE(edge[i][j], height, width, groups, 90);
+	edge[based_lines*2+i][j] = ROTATE(edge[i][j], height, width, groups, 180);
+	edge[based_lines*3+i][j] = ROTATE(edge[i][j], height, width, groups, 270);
       }
     }
   }
@@ -181,7 +178,8 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   double ASPL; // NOT_USED
   while(1){
     int start_line = getRandom(lines);
-    edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, groups, start_line, NOT_USED);
+    if(! edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups, start_line, NOT_USED))
+      continue;
     create_adjacency(nodes, lines, degree, edge, adjacency);
     if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs))
       break;

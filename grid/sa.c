@@ -45,7 +45,7 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
         continue;
       }
       else if((tmp_line[0] - tmp_line[1]) % based_lines == 0){
-        if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, groups, tmp_line[0], ii))
+        if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups, tmp_line[0], ii))
 	  return;
 	else
 	  continue;
@@ -60,7 +60,7 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 		   HEIGHT(edge[tmp_line[1]][0], height) + HEIGHT(edge[tmp_line[1]][1], height) == (height-1));
     bool diameter_flag = ((flag0 || flag1) && groups%2==0);
     if(diameter_flag){
-      if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, groups, tmp_line[0], ii))
+      if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups, tmp_line[0], ii))
         return;
       else
         continue;
@@ -96,10 +96,11 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
       swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][r]);
     }
 
-    if(!check_duplicate_current_edge(lines, edge, groups*2, tmp_edge, tmp_line, groups, D_2G_OPT, false)){
+    if(!check_duplicate_tmp_edge(D_2G_OPT, groups, tmp_edge))
       continue;
-    }
-    
+    else if(!check_duplicate_current_edge(lines, edge, groups*2, tmp_edge, tmp_line, groups, D_2G_OPT, false))
+      continue;
+
     for(int i=0;i<groups;i++){
       for(int j=0;j<2;j++){
 	edge[tmp_line[i*2  ]][j] = tmp_edge[i*2  ][j];
