@@ -149,13 +149,9 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
 				  const int groups, const int degree, const int nodes, const int lines,
 				  const int height, const int width, const int based_height, const bool enable_bfs)
 {
-  for(int i=0;i<based_lines;i++){
-    for(int j=0;j<2;j++){
-      int w = edge[i][j]/based_height;
-      int h = edge[i][j]%based_height;
-      edge[i][j] = w * height + h;
-    }
-  }
+  for(int i=0;i<based_lines;i++)
+    for(int j=0;j<2;j++)
+      edge[i][j] = WIDTH(edge[i][j], based_height) * height + HEIGHT(edge[i][j], based_height);
 
   if(groups == 2){
     for(int i=0;i<based_lines;i++)
@@ -187,8 +183,9 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
 
   assert(check_loop(lines, edge));
   assert(check_duplicate_all_edge(lines, edge));
-  assert(check_vector(groups, lines, height, edge));
+  assert(check_degree(nodes, lines, edge));
   assert(check_symmetric_edge(lines, edge, height, width, based_height, groups));
+  
   free(adjacency);
 }
 
@@ -275,7 +272,7 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
   *low_ASPL = sum/((double)mn*(mn-1));
 }
 
-static void output_params(const int nodes, const int degree, const int groups, const int low_length, const int random_seed,
+static void output_params(const int degree, const int groups, const int low_length, const int random_seed,
 			  const double max_temp, const double min_temp, const long long ncalcs,
 			  const int cooling_cycle, const double weight, const double cooling_rate, const char *infname,
 			  const char *outfname, const bool outfnameflag, const double average_time,
@@ -302,6 +299,8 @@ static void output_params(const int nodes, const int degree, const int groups, c
     PRINT_R0("   Cooling Cycle: %d\n", cooling_cycle);
     PRINT_R0("   Cooling Rate : %f\n", cooling_rate);
     PRINT_R0("   Weight       : %f\n", weight);
+    if(groups != 1)
+      PRINT_R0("   Groups       : %d\n", groups);
   }
   else{
     PRINT_R0("Algorithm: Hill climbing Method\n");
@@ -311,12 +310,7 @@ static void output_params(const int nodes, const int degree, const int groups, c
   PRINT_R0("   Average APSP time    : %f sec.\n", average_time);
   PRINT_R0("   Estimated elapse time: %f sec.\n", average_time * ncalcs);
   PRINT_R0("Input filename: %s\n", infname);
-  PRINT_R0("   Vertexes: %d\n", nodes);
-  PRINT_R0("   Degree:   %d\n", degree);
-  PRINT_R0("   Groups:   %d\n", groups);
-  PRINT_R0("   Length:   %d\n", low_length);
-  PRINT_R0("   Width :   %d\n", width);
-  PRINT_R0("   Height:   %d\n", height);
+  PRINT_R0("   (w x h, d, r) = (%d x %d, %d, %d)\n", width, height, degree, low_length);
   if(outfnameflag)
     PRINT_R0("Output filename: %s\n", outfname);
   PRINT_R0("---\n");
@@ -440,7 +434,7 @@ int main(int argc, char *argv[])
       ERROR("Cannot open %s\n", outfname);
   }
 
-  output_params(nodes, degree, groups, low_length, random_seed,
+  output_params(degree, groups, low_length, random_seed,
 		max_temp, min_temp, ncalcs,
 		cooling_cycle, weight, cooling_rate, infname,
 		outfname, outfnameflag, average_time,

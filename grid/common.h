@@ -59,6 +59,7 @@ extern long long sa(const int nodes, const int lines, double temp, const long lo
 		    const double max_temp, const double min_temp, int edge[lines][2], int *diam, double *ASPL,
 		    const int cooling_cyclie, long long *num_accepts, const int width, const int based_width,
 		    const int height, const int based_height, int *length, const int low_length, const double weight, const int groups);
+extern bool check_degree(const int nodes, const int lines, int edge[lines][2]);
 extern void check_current_edge(const int nodes, const int lines, int edge[lines][2], const double low_ASPL, const bool enable_bfs);
 extern double estimated_elapse_time(const int nodes, const int lines, const int edge[lines][2], const int height, const int width,
 				    const int groups, const bool enable_bfs);
@@ -87,7 +88,7 @@ extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const 
 extern void output_edge(const int lines, const int edge[lines][2], const int height);
 extern bool check_symmetric_edge(const int lines, const int edge[lines][2], const int height, const int width,
 				 const int based_height, const int groups);
-extern bool check_vector(const int groups, const int lines, const int height, const int edge[lines][2]);
+//extern bool check_vector(const int groups, const int lines, const int height, const int edge[lines][2]);
 extern int WIDTH (const int v, const int height);
 extern int HEIGHT(const int v, const int height);
 extern int ROTATE(const int v, const int height, const int width, const int groups, const int degree);

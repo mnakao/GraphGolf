@@ -65,6 +65,27 @@ int ROTATE(const int v, const int height, const int width,
   }
 }
 
+bool check_degree(const int nodes, const int lines, int edge[lines][2])
+{
+  int n[nodes];
+  for(int i=0;i<nodes;i++)
+    n[i] = 0;
+  
+  for(int i=0;i<lines;i++){
+    n[edge[i][0]]++;
+    n[edge[i][1]]++;
+  }
+  
+  int degree = 2 * lines / nodes;
+  for(int i=0;i<nodes;i++)
+    if(degree != n[i])
+      return false;
+
+  return true;
+}
+
+/*
+// diameter is not implemented
 bool check_vector(const int groups, const int lines, const int height, const int edge[lines][2])
 {
   if(groups == 1) return true;
@@ -76,14 +97,38 @@ bool check_vector(const int groups, const int lines, const int height, const int
     vec_h[i] = HEIGHT(edge[i][0], height) - HEIGHT(edge[i][1], height);
   }
 
-  if(groups == 2)
-    for(int i=0;i<based_lines;i++){
-      if(vec_w[i] == vec_w[based_lines+i] && vec_h[i] == vec_h[based_lines+i])
+  if(groups == 2){
+    for(int i=0;i<based_lines;i++)
+      if(!(vec_w[i] == -1 * vec_w[based_lines+i] && vec_h[i] == -1 * vec_h[based_lines+i]))
 	return false;
+  }
+  else{ // groups == 4
+    for(int i=0;i<based_lines;i++){
+      if(!(vec_w[i] == -1 * vec_h[based_lines+i] && vec_h[i] == vec_w[based_lines+i])){
+	printf("%d,%d %d,%d\n", WIDTH (edge[i][0], height),HEIGHT(edge[i][0], height),WIDTH (edge[i][1], height),HEIGHT(edge[i][1], height));
+	printf("%d,%d %d,%d\n", WIDTH (edge[based_lines+i][0], height),HEIGHT(edge[based_lines+i][0], height),
+	       WIDTH (edge[based_lines+i][1], height),HEIGHT(edge[based_lines+i][1], height));
+	printf("A\n");
+        return false;
+      }
+      if(!(vec_w[i] == -1 * vec_w[based_lines*2+i] && vec_h[i] == -1 * vec_h[based_lines*2+i])){
+	printf("%d,%d %d,%d\n", WIDTH (edge[i][0], height),HEIGHT(edge[i][0], height),WIDTH (edge[i][1], height),HEIGHT(edge[i][1], height));
+	printf("%d,%d %d,%d\n", WIDTH (edge[based_lines*2+i][0], height),HEIGHT(edge[based_lines*2+i][0], height),
+               WIDTH (edge[based_lines*2+i][1], height),HEIGHT(edge[based_lines*2+i][1], height));
+	printf("B\n");
+	return false;
+      }
+      if(!(vec_w[i] == vec_h[based_lines*3+i] && vec_h[i] == -1 * vec_w[based_lines*3+i])){
+	printf("%d %d : %d %d\n", vec_w[i], vec_w[based_lines+i], vec_h[i], vec_h[based_lines+i]);
+	printf("C\n");
+        return false;
+      }
+    }
   }
   
   return true;
 }
+*/
 
 bool check_symmetric_edge(const int lines, const int edge[lines][2], const int height,
 			  const int width, const int based_height, const int groups)
@@ -93,11 +138,8 @@ bool check_symmetric_edge(const int lines, const int edge[lines][2], const int h
 
   if(groups == 2){
     for(int i=0;i<based_lines;i++){
-      for(int j=0;j<2;j++){
-	int w = WIDTH (edge[i][j], height);
-        int h = HEIGHT(edge[i][j], height);
-        tmp_edge[j] = (width-w-1)*height + (height-h-1);
-      }
+      for(int j=0;j<2;j++)
+	tmp_edge[j] = ROTATE(edge[i][j], height, width, groups, 180);
       
       if(!has_duplicated_edge(edge[based_lines+i][0], edge[based_lines+i][1], tmp_edge[0], tmp_edge[1]))
 	if(!( WIDTH (edge[based_lines+i][0], height) + WIDTH (edge[based_lines+i][1], height) == (width-1) &&
@@ -322,7 +364,8 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
   	   HEIGHT(edge[tmp_line[i]][1], height));
 #endif
 
-  if(edge[tmp_line[0]][0] == edge[tmp_line[groups-1]][1])  // A cycle is composed of four edges.
+  if(edge[tmp_line[0]][0] == edge[tmp_line[groups-1]][1] ||
+     edge[tmp_line[0]][1] == edge[tmp_line[groups-1]][0])  // A cycle is composed of four edges.
     return false;
   
   int s = edge[tmp_line[0]][0];
@@ -397,6 +440,7 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     if(e != tmp_edge[groups/2][1]) break;
   }
 
+  /*
   if(groups == 2){
     int vec_w[groups], vec_h[groups];
     for(int i=0;i<groups;i++){
@@ -405,10 +449,13 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     }
 
     for(int i=1;i<groups;i++){
-      if(vec_w[0] == vec_w[i] && vec_h[0] == vec_h[i])
+      if(vec_w[0] == vec_w[i] && vec_h[0] == vec_h[i]){
 	swap(&tmp_edge[i][0], &tmp_edge[i][1]);
+	printf("AAA\n");
+      }
     }
   }
+  */
 
   if(!check_duplicate_current_edge(lines, edge, groups, tmp_edge, tmp_line, groups, D_1G_OPT, (pattern==groups)))
      return false;

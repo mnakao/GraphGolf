@@ -224,7 +224,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
       exchange_edge(nodes, lines, degree, tmp_edge, adjacency, height, width, groups, ii);
       assert(check_loop(lines, tmp_edge));
       assert(check_duplicate_all_edge(lines, tmp_edge));
-      assert(check_vector(groups, lines, height, tmp_edge));
+      assert(check_degree(nodes, lines, tmp_edge));
       assert(check_symmetric_edge(lines, tmp_edge, height, width, based_height, groups));
       create_adjacency(nodes, lines, degree, tmp_edge, adjacency);
       if(evaluation(nodes, lines, degree, (const int* restrict)adjacency, diam, ASPL, enable_bfs))
