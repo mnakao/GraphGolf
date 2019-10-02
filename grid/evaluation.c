@@ -61,7 +61,7 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
 }
 #endif
 
-static bool bfs(const int nodes, int based_nodes, const int groups, const int lines, const int degree,
+static bool bfs(const int nodes, const int lines, const int degree,
 		int adjacency[nodes][degree], int *diameter, double *ASPL)
 {
   char *bitmap  = malloc(sizeof(char) * nodes);
@@ -72,7 +72,7 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
   double sum    = 0.0;
   *diameter     = 0;
   
-  for(int s=rank;s<based_nodes;s+=procs){
+  for(int s=rank;s<nodes;s+=procs){
     int num_frontier = 1, level = 0;
     for(int i=0;i<nodes;i++)
       bitmap[i] = NOT_VISITED;
@@ -90,14 +90,13 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
       frontier = next;
       next     = tmp;
     }
-    
     *diameter = MAX(*diameter, level-1);
 
     for(int i=s+1;i<nodes;i++){
       if(bitmap[i] == NOT_VISITED)
         reached = false;
-
-      sum += (distance[i] + 1) * (groups - i/based_nodes);
+      
+      sum += (distance[i] + 1);
     }
   }
   
@@ -117,23 +116,22 @@ static bool bfs(const int nodes, int based_nodes, const int groups, const int li
   return true;
 }
 
-static bool matrix_op(const int nodes, const int based_nodes, const int degree,
-		      const int* restrict adjacency, const int groups, int *diameter,
-		      double *ASPL)
+static bool matrix_op(const int nodes, const int degree, const int* restrict adjacency,
+                      int *diameter, double *ASPL)
 {
-  unsigned int elements = (based_nodes+(UINT64_BITS-1))/UINT64_BITS;
-  unsigned int chunk    = (elements+(procs-1))/procs;
-  size_t s    = nodes * chunk * sizeof(uint64_t);
+  unsigned int elements = (nodes+(UINT64_BITS-1))/UINT64_BITS;
+  unsigned int chunk = (elements+(procs-1))/procs;
+  size_t s = nodes * chunk * sizeof(uint64_t);
   uint64_t* A = malloc(s);  // uint64_t A[nodes][chunk];
   uint64_t* B = malloc(s);  // uint64_t B[nodes][chunk];
   int parsize = (elements+(chunk-1))/chunk;
-  double sum  = 0.0;
+  double sum = 0.0;
 
   *diameter = 1;
   for(int t=rank;t<parsize;t+=procs){
     uint64_t kk, l;
     clear_buffers(A, B, nodes * chunk);
-    for(l=0; l<UINT64_BITS*chunk && UINT64_BITS*t*chunk+l<based_nodes; l++){
+    for(l=0; l<UINT64_BITS*chunk && UINT64_BITS*t*chunk+l<nodes; l++){
       unsigned int offset = (UINT64_BITS*t*chunk+l)*chunk+l/UINT64_BITS;
       A[offset] = B[offset] = (0x1ULL<<(l%UINT64_BITS));
     }
@@ -163,7 +161,7 @@ static bool matrix_op(const int nodes, const int based_nodes, const int degree,
       A = B;
       B = tmp;
 
-      sum += ((double)nodes * l - num) * groups;
+      sum += ((double)nodes * l - num);
     }
     *diameter = MAX(*diameter, kk+1);
   }
@@ -190,11 +188,9 @@ bool evaluation(const int nodes, const int lines, const int degree, const int ba
 
   bool flag;
   if(enable_bfs)
-    flag = bfs(nodes, based_nodes, groups, lines, degree,
-	       (int (*)[degree])adjacency, diameter, ASPL);
+    flag = bfs(nodes, lines, degree, (int (*)[degree])adjacency, diameter, ASPL);
   else
-    flag = matrix_op(nodes, based_nodes, degree, adjacency,
-		     groups, diameter, ASPL);
+    flag = matrix_op(nodes, degree, adjacency, diameter, ASPL);
 
   timer_stop(TIMER_APSP);
   return flag;

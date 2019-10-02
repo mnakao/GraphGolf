@@ -398,9 +398,17 @@ int main(int argc, char *argv[])
       ERROR("based_nodes must be divisible by groups\n");
 
     based_nodes /= groups;
+    based_lines /= groups;
+    
+    if(groups == 2){
+      based_height /= 2;
+    }
+    else if(groups == 4){
+      based_width  /= 2;
+      based_height /= 2;
+    }
   }
-  int nodes  = based_nodes * groups;
-  int degree = 2 * lines / nodes;
+
   if(groups == 1){
     height = based_height;
     width  = based_width;
@@ -413,11 +421,13 @@ int main(int argc, char *argv[])
     height = based_height * 2;
     width  = based_width  * 2;
   }
-
+  
+  int nodes  = based_nodes * groups;
+  int degree = 2 * lines / nodes;
   if(nodes <= degree)
     ERROR("n is too small. nodes = %d degree = %d\n", nodes, degree);
   else if(based_width*based_height != based_nodes)
-    ERROR("Not grid graph (width %d x height %d != nodes %d).\n", width, height, nodes);
+    ERROR("Not grid graph (width %d x height %d != nodes %d).\n", based_width, based_height, based_nodes);
 
   if(!halfway_flag && groups != 1)
     create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes, lines,
