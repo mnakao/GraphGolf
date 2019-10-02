@@ -3,19 +3,19 @@
 static void print_help(char *argv)
 {
   END("%s -f <edge_file> [-r length] [-o <output_file>] [-s <random_seed>] [-n <calculations>] [-w <max_temperature>]\
- [-c <min_temperature>] [-g <gruops>] [-C <cooling_cycle>] [-W <weight>] [-B] [-D] [-H] [-M] [-N] [-h]\n", argv);
+ [-c <min_temperature>] [-g <gruops>] [-C <cooling_cycle>] [-W <weight>] [-B] [-D] [-H] [-M] [-N] [-R] [-h]\n", argv);
 }
 
 static void set_args(const int argc, char **argv, char *infname, int *low_length, char *outfname, bool *outfnameflag,
 		     int *random_seed, long long *ncalcs, double *max_temp, bool *max_temp_flag, double *min_temp,
 		     bool *min_temp_flag, int *groups, int *cooling_cycle, double *weight, bool *hill_climbing_flag,
-		     bool *detect_temp_flag, bool *verify_flag, bool *enable_bfs, bool *halfway_flag)
+		     bool *detect_temp_flag, bool *verify_flag, bool *enable_bfs, bool *halfway_flag, bool *enable_restriction)
 {
   if(argc < 3)
     print_help(argv[0]);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:r:s:n:w:c:g:C:W:BDHMNh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:r:s:n:w:c:g:C:W:BDHMNRh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -82,6 +82,9 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
       break;
     case 'N':
       *verify_flag = false;
+      break;
+    case 'R':
+      *enable_restriction = true;
       break;
     case 'h':
     default:
@@ -174,7 +177,8 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   double ASPL; // NOT_USED
   while(1){
     int start_line = getRandom(lines);
-    if(! edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups, start_line, NOT_USED))
+    if(! edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width,
+		     groups, start_line, NOT_USED, false, NOT_USED))
       continue;
     create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
     if(evaluation(nodes, lines, degree, based_nodes, groups, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs))
@@ -276,7 +280,8 @@ static void output_params(const int degree, const int groups, const int low_leng
 			  const double max_temp, const double min_temp, const long long ncalcs,
 			  const int cooling_cycle, const double weight, const double cooling_rate, const char *infname,
 			  const char *outfname, const bool outfnameflag, const double average_time,
-			  const bool hill_climbing_flag, const int width, const int height, const bool enable_bfs)
+			  const bool hill_climbing_flag, const int width, const int height, const bool enable_bfs,
+			  const bool enable_restriction)
 			  
 {
 #ifdef NDEBUG
@@ -293,7 +298,10 @@ static void output_params(const int degree, const int groups, const int low_leng
   else           PRINT_R0("APSP     : MATRIX Opetation\n");
 
   if(hill_climbing_flag == false){
-    PRINT_R0("Algorithm: Simulated Annealing\n");
+    if(enable_restriction)
+      PRINT_R0("Algorithm: Simulated Annealing (Restricted-2opt)\n");
+    else
+      PRINT_R0("Algorithm: Simulated Annealing (2-opt)\n");
     PRINT_R0("   MAX Temperature: %f\n", max_temp);
     PRINT_R0("   MIN Temperature: %f\n", min_temp);
     PRINT_R0("   Cooling Cycle: %d\n", cooling_cycle);
@@ -303,7 +311,10 @@ static void output_params(const int degree, const int groups, const int low_leng
       PRINT_R0("   Groups       : %d\n", groups);
   }
   else{
-    PRINT_R0("Algorithm: Hill climbing Method\n");
+    if(enable_restriction)
+      PRINT_R0("Algorithm: Hill climbing Method (Restricted-2opt)\n");
+    else
+      PRINT_R0("Algorithm: Hill climbing Method (2-opt)\n");
   }
 
   PRINT_R0("Num. of Calulations: %lld\n", ncalcs);
@@ -341,6 +352,7 @@ int main(int argc, char *argv[])
 {
   bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false, verify_flag = true;
   bool hill_climbing_flag = false, detect_temp_flag = false, enable_bfs = false, halfway_flag = false;
+  bool enable_restriction = false;
   char hostname[MPI_MAX_PROCESSOR_NAME], infname[MAX_FILENAME_LENGTH], outfname[MAX_FILENAME_LENGTH];
   int namelen, diam = 0, low_diam = 0, random_seed = 0, cooling_cycle = 1;
   int based_width = 0, based_height = 0, width = 0, height = 0;
@@ -361,7 +373,7 @@ int main(int argc, char *argv[])
   // Set arguments
   set_args(argc, argv, infname, &low_length, outfname, &outfnameflag, &random_seed,
 	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag, &groups, &cooling_cycle,
-	   &weight, &hill_climbing_flag, &detect_temp_flag, &verify_flag, &enable_bfs, &halfway_flag);
+	   &weight, &hill_climbing_flag, &detect_temp_flag, &verify_flag, &enable_bfs, &halfway_flag, &enable_restriction);
 
   if(low_length == NOT_DEFINED)
     ERROR("Must need -r\n");
@@ -416,7 +428,8 @@ int main(int argc, char *argv[])
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
   check_current_edge(nodes, lines, edge, low_ASPL, groups, enable_bfs);
-  double average_time = estimated_elapse_time(nodes, lines, (const int (*)[2])edge, height, width, groups, enable_bfs);
+  double average_time = estimated_elapse_time(nodes, lines, (const int (*)[2])edge,
+					      height, width, groups, low_length, enable_bfs);
   if(hill_climbing_flag){
     max_temp = min_temp = 0.0;
     cooling_rate = 1.0;
@@ -438,7 +451,8 @@ int main(int argc, char *argv[])
 		max_temp, min_temp, ncalcs,
 		cooling_cycle, weight, cooling_rate, infname,
 		outfname, outfnameflag, average_time,
-		hill_climbing_flag, width, height, enable_bfs);
+		hill_climbing_flag, width, height, enable_bfs,
+		enable_restriction);
 
   // Optimization
   timer_clear_all();
@@ -449,7 +463,7 @@ int main(int argc, char *argv[])
 		      &max_diff_energy, max_temp, min_temp, edge,
 		      &diam, &ASPL, cooling_cycle, &num_accepts, width,
 		      based_width, height, based_height, &length,
-		      low_length, weight, groups);
+		      low_length, weight, groups, enable_restriction);
   timer_stop(TIMER_SA);
   
   if(detect_temp_flag){

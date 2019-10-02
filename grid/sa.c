@@ -29,7 +29,8 @@ static void print_results(const long long num, const double temp,
 }  
 
 static void exchange_edge(const int nodes, const int lines, const int degree, int edge[lines][2],
-			  const int height, const int width, const int groups, const long long ii)
+			  const int height, const int width, const int groups, const int low_length, 
+			  const bool enable_restriction, const long long ii)
 {
   int tmp_line[groups*2], based_lines = lines/groups, based_nodes = nodes/groups;
   assert(lines%groups == 0);
@@ -44,7 +45,8 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
         continue;
       }
       else if((tmp_line[0] - tmp_line[1]) % based_lines == 0){
-        if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups, tmp_line[0], ii))
+        if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups,
+		       tmp_line[0], low_length, enable_restriction, ii))
 	  return;
 	else
 	  continue;
@@ -59,7 +61,8 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 		   HEIGHT(edge[tmp_line[1]][0], height) + HEIGHT(edge[tmp_line[1]][1], height) == (height-1));
     bool diameter_flag = ((flag0 || flag1) && groups%2==0);
     if(diameter_flag){
-      if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups, tmp_line[0], ii))
+      if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups,
+		     tmp_line[0], low_length, enable_restriction, ii))
         return;
       else
         continue;
@@ -95,6 +98,22 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
       swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][r]);
     }
 
+    bool continue_flag = false;
+    if(enable_restriction){
+      for(int i=0;i<2;i++){
+	int w0 = WIDTH (tmp_edge[i][0], height);
+	int h0 = HEIGHT(tmp_edge[i][0], height);
+	int w1 = WIDTH (tmp_edge[i][1], height);
+	int h1 = HEIGHT(tmp_edge[i][1], height);
+	int distance = abs(w0 - w1) + abs(h0 - h1);
+	if(distance > low_length){
+	  continue_flag = true;
+	  break;
+	}
+      }
+    }
+    if(continue_flag) continue;
+    
     if(!check_duplicate_tmp_edge(D_2G_OPT, groups, tmp_edge))
       continue;
     else if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups*2, 
@@ -120,21 +139,21 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 }
 
 // When the diameter is small, the length becomes long, so the diameter isn't adopted for evaluation.
-static bool accept(const int new_length, const int current_length, const double new_ASPL, const double current_ASPL,
+static bool accept(const double new_ASPL, const double current_ASPL,
 		   const int new_total_over_length, const int current_total_over_length, const double temp,
 		   const int nodes, const int degree, const bool hill_climbing_flag, const bool detect_temp_flag, 
 		   double *max_diff_energy, long long *total_accepts, long long *accepts, long long *rejects,
 		   const double max_temp, const double min_temp, const double weight, const long long ii)
 {
-  if(new_length < current_length){
-    *accepts += 1;
-    if(ii > SKIP_ACCEPTS) *total_accepts +=1;
-    return true;
-  }
-  else if(new_length > current_length){
-    *rejects += 1;
-    return false;
-  }
+  //  if(new_length < current_length){
+  //    *accepts += 1;
+  //    if(ii > SKIP_ACCEPTS) *total_accepts +=1;
+  //    return true;
+  //  }
+  //  else if(new_length > current_length){
+  //    *rejects += 1;
+  //    return false;
+  //  }
 
   double f = (current_ASPL-new_ASPL)*nodes*(nodes-1);
   double p = (double)(current_total_over_length - new_total_over_length) / degree * nodes;
@@ -189,7 +208,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 	     double *max_diff_energy, const double max_temp, const double min_temp, int edge[lines][2],
 	     int *diam, double *ASPL, const int cooling_cycle, long long *total_accepts, const int width,
 	     const int based_width, const int height, const int based_height, int *length,
-	     const int low_length, const double weight, const int groups)
+	     const int low_length, const double weight, const int groups, const bool enable_restriction)
 {
   int degree = 2*lines/nodes, best_edge[lines][2], tmp_edge[lines][2], based_nodes = nodes/groups;
   long long ii, accepts = 0, rejects = 0;
@@ -226,7 +245,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 
     while(1){
       copy_edge((int *)tmp_edge, (int *)edge, lines*2);
-      exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, ii);
+      exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, low_length, enable_restriction, ii);
       assert(check_loop(lines, tmp_edge));
       assert(check_duplicate_all_edge(lines, tmp_edge));
       assert(check_degree(nodes, lines, tmp_edge));
@@ -239,8 +258,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
       }
     }
 
-    if(accept(tmp_length, current_length, tmp_ASPL, current_ASPL,
-	      tmp_total_over_length, current_total_over_length,
+    if(accept(tmp_ASPL, current_ASPL, tmp_total_over_length, current_total_over_length,
 	      temp, nodes, degree, hill_climbing_flag, detect_temp_flag,
 	      max_diff_energy, total_accepts, &accepts, &rejects,
 	      max_temp, min_temp, weight, ii)){
@@ -287,7 +305,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 #define ESTIMATED_TIMES 5
 double estimated_elapse_time(const int nodes, const int lines, const int edge[lines][2],
 			     const int height, const int width, const int groups,
-			     const bool enable_bfs)
+			     const int low_length, const bool enable_bfs)
 {
   int based_nodes = nodes / groups;
   int degree = 2 * lines / nodes;
@@ -299,7 +317,7 @@ double estimated_elapse_time(const int nodes, const int lines, const int edge[li
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
     copy_edge((int *)tmp_edge, (int *)edge, lines*2);
-    exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, (int)i);
+    exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, low_length, false, (int)i);
     create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
     evaluation(nodes, lines, degree, based_nodes, groups,
 	       (const int* restrict)adjacency, &diam, &ASPL, enable_bfs);

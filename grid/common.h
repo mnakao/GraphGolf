@@ -58,11 +58,12 @@ extern long long sa(const int nodes, const int lines, double temp, const long lo
 		    const bool hill_climbing_flag, const bool detect_temp_flag, double *max_diff_energy,
 		    const double max_temp, const double min_temp, int edge[lines][2], int *diam, double *ASPL,
 		    const int cooling_cyclie, long long *num_accepts, const int width, const int based_width,
-		    const int height, const int based_height, int *length, const int low_length, const double weight, const int groups);
+		    const int height, const int based_height, int *length, const int low_length, const double weight,
+		    const int groups, const bool enable_restriction);
 extern bool check_degree(const int nodes, const int lines, int edge[lines][2]);
 extern void check_current_edge(const int nodes, const int lines, int edge[lines][2], const double low_ASPL, const int groups, const bool enable_bfs);
 extern double estimated_elapse_time(const int nodes, const int lines, const int edge[lines][2], const int height, const int width,
-				    const int groups, const bool enable_bfs);
+				    const int groups, const int low_length, const bool enable_bfs);
 extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);
 extern bool has_duplicated_vertex(const int e00, const int e01, const int e10, const int e11);
 extern bool check_loop(const int lines, const int edge[lines][2]);
@@ -84,7 +85,7 @@ extern bool evaluation(const int nodes, const int lines, const int degree, const
 extern void copy_edge(int *restrict buf1, const int *restrict buf2, const int n);
 extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes,
 			const int based_lines, const int height, const int width, const int groups, const int start_line,
-			const long long ii);
+			const int low_length, const bool enable_restriction, const long long ii);
 extern void output_edge(const int lines, const int edge[lines][2], const int height);
 extern bool check_symmetric_edge(const int lines, const int edge[lines][2], const int height, const int width,
 				 const int based_height, const int groups);
