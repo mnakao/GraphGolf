@@ -60,7 +60,7 @@ extern long long sa(const int nodes, const int lines, double temp, const long lo
 		    const int cooling_cyclie, long long *num_accepts, const int width, const int based_width,
 		    const int height, const int based_height, int *length, const int low_length, const double weight, const int groups);
 extern bool check_degree(const int nodes, const int lines, int edge[lines][2]);
-extern void check_current_edge(const int nodes, const int lines, int edge[lines][2], const double low_ASPL, const bool enable_bfs);
+extern void check_current_edge(const int nodes, const int lines, int edge[lines][2], const double low_ASPL, const int groups, const bool enable_bfs);
 extern double estimated_elapse_time(const int nodes, const int lines, const int edge[lines][2], const int height, const int width,
 				    const int groups, const bool enable_bfs);
 extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);
@@ -79,7 +79,7 @@ extern void timer_clear(const int n);
 extern void timer_start(const int n);
 extern void timer_stop(const int n);
 extern double timer_read(const int n);
-extern bool evaluation(const int nodes, const int lines, const int degree, 
+extern bool evaluation(const int nodes, const int lines, const int degree, const int based_nodes, const int groups,
 		       const int* restrict adjacency, int *diameter, double *ASPL, const bool enable_bfs);
 extern void copy_edge(int *restrict buf1, const int *restrict buf2, const int n);
 extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes,
