@@ -111,7 +111,6 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 	int distance = abs(w0 - w1) + abs(h0 - h1);
 	double alpha = 1.0 - (max_temp-temp)/(max_temp-min_temp);
 	int threshold = (int)((height+width-low_length)*alpha) + low_length;
-	printf("AA %d\n", threshold);
 	if(distance > threshold){
 	  continue_flag = true;
 	  break;
