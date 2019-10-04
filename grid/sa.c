@@ -30,7 +30,8 @@ static void print_results(const long long num, const double temp,
 
 static void exchange_edge(const int nodes, const int lines, const int degree, int edge[lines][2],
 			  const int height, const int width, const int groups, const int low_length, 
-			  const bool enable_restriction, const long long ii)
+			  const bool enable_restriction, const double max_temp, const double min_temp,
+			  const double temp, const long long ii)
 {
   int tmp_line[groups*2], based_lines = lines/groups, based_nodes = nodes/groups;
   assert(lines%groups == 0);
@@ -46,7 +47,8 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
       }
       else if((tmp_line[0] - tmp_line[1]) % based_lines == 0){
         if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups,
-		       tmp_line[0], low_length, enable_restriction, ii))
+		       tmp_line[0], low_length, enable_restriction, max_temp, min_temp,
+		       temp, ii))
 	  return;
 	else
 	  continue;
@@ -62,7 +64,8 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
     bool diameter_flag = ((flag0 || flag1) && groups%2==0);
     if(diameter_flag){
       if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups,
-		     tmp_line[0], low_length, enable_restriction, ii))
+		     tmp_line[0], low_length, enable_restriction, max_temp, min_temp,
+		     temp, ii))
         return;
       else
         continue;
@@ -106,7 +109,10 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 	int w1 = WIDTH (tmp_edge[i][1], height);
 	int h1 = HEIGHT(tmp_edge[i][1], height);
 	int distance = abs(w0 - w1) + abs(h0 - h1);
-	if(distance > low_length){
+	double alpha = 1.0 - (max_temp-temp)/(max_temp-min_temp);
+	int threshold = (int)((height+width-low_length)*alpha) + low_length;
+	printf("AA %d\n", threshold);
+	if(distance > threshold){
 	  continue_flag = true;
 	  break;
 	}
@@ -159,7 +165,6 @@ static bool accept(const double new_ASPL, const double current_ASPL,
   double p = (double)(current_total_over_length - new_total_over_length) / degree * nodes;
   //   p *= (max_temp - temp) / (max_temp - min_temp);
   double diff = f + p * weight;
-  
   if(diff >= 0){
     *accepts += 1;
     if(ii > SKIP_ACCEPTS) *total_accepts +=1;
@@ -245,7 +250,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 
     while(1){
       copy_edge((int *)tmp_edge, (int *)edge, lines*2);
-      exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, low_length, enable_restriction, ii);
+      exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, low_length, enable_restriction, max_temp, min_temp, temp, ii);
       assert(check_loop(lines, tmp_edge));
       assert(check_duplicate_all_edge(lines, tmp_edge));
       assert(check_degree(nodes, lines, tmp_edge));
@@ -317,7 +322,8 @@ double estimated_elapse_time(const int nodes, const int lines, const int edge[li
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
     copy_edge((int *)tmp_edge, (int *)edge, lines*2);
-    exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, low_length, false, (int)i);
+    exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, low_length, false,
+		  (double)NOT_USED, (double)NOT_USED, (double)NOT_USED, (int)i);
     create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
     evaluation(nodes, lines, degree, based_nodes, groups,
 	       (const int* restrict)adjacency, &diam, &ASPL, enable_bfs);

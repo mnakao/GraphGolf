@@ -1,5 +1,5 @@
 .PHONY: clean cygnus ofp K
-#DEBUG=-DNDEBUG
+DEBUG=-DNDEBUG
 #DEBUG=-D_DEBUG_MSG
 #########################################################
 CC=mpicc
