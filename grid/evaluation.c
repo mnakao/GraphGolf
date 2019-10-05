@@ -61,8 +61,9 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
 }
 #endif
 
-static bool bfs(const int nodes, const int lines, const int degree,
-		int adjacency[nodes][degree], int *diameter, double *ASPL)
+static bool bfs(const int nodes, const int degree, const int adjacency[nodes][degree],
+		const int based_nodes, const int height, const int based_height, const int groups,
+		int *diameter, double *ASPL)
 {
   char *bitmap  = malloc(sizeof(char) * nodes);
   int *frontier = malloc(sizeof(int)  * nodes);
@@ -71,15 +72,16 @@ static bool bfs(const int nodes, const int lines, const int degree,
   bool reached  = true;
   double sum    = 0.0;
   *diameter     = 0;
-  
-  for(int s=rank;s<nodes;s+=procs){
+
+  for(int s=rank;s<based_nodes;s+=procs){
+    int s1 = (s/based_height) * height + (s%based_height);
     int num_frontier = 1, level = 0;
     for(int i=0;i<nodes;i++)
       bitmap[i] = NOT_VISITED;
     
-    frontier[0] = s;
-    distance[s] = level;
-    bitmap[s]   = VISITED;
+    frontier[0]  = s1;
+    distance[s1] = level;
+    bitmap[s1]   = VISITED;
     
     while(1){
       num_frontier = top_down_step(level++, nodes, num_frontier, degree,
@@ -92,11 +94,12 @@ static bool bfs(const int nodes, const int lines, const int degree,
     }
     *diameter = MAX(*diameter, level-1);
 
-    for(int i=s+1;i<nodes;i++){
+    for(int i=0;i<nodes;i++){
+      if(i == s1) continue;
       if(bitmap[i] == NOT_VISITED)
         reached = false;
       
-      sum += (distance[i] + 1);
+      sum += (distance[i] + 1) * groups;
     }
   }
   
@@ -111,28 +114,30 @@ static bool bfs(const int nodes, const int lines, const int degree,
 
   MPI_Allreduce(MPI_IN_PLACE, diameter, 1, MPI_INT,    MPI_MAX, MPI_COMM_WORLD);
   MPI_Allreduce(MPI_IN_PLACE, &sum,     1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  *ASPL = sum / ((((double)nodes-1)*nodes)/2);
+  *ASPL = sum / ((((double)nodes-1)*nodes));
 
   return true;
 }
 
 static bool matrix_op(const int nodes, const int degree, const int* restrict adjacency,
-                      int *diameter, double *ASPL)
+                      const int based_nodes, const int height, const int based_height,
+		      const int groups, int *diameter, double *ASPL)
 {
-  unsigned int elements = (nodes+(UINT64_BITS-1))/UINT64_BITS;
-  unsigned int chunk = (elements+(procs-1))/procs;
-  size_t s = nodes * chunk * sizeof(uint64_t);
+  unsigned int elements = (based_nodes+(UINT64_BITS-1))/UINT64_BITS;
+  unsigned int chunk    = (elements+(procs-1))/procs;
+  size_t s    = nodes*chunk*sizeof(uint64_t);
   uint64_t* A = malloc(s);  // uint64_t A[nodes][chunk];
   uint64_t* B = malloc(s);  // uint64_t B[nodes][chunk];
   int parsize = (elements+(chunk-1))/chunk;
-  double sum = 0.0;
+  double sum  = 0.0;
 
   *diameter = 1;
   for(int t=rank;t<parsize;t+=procs){
     uint64_t kk, l;
-    clear_buffers(A, B, nodes * chunk);
-    for(l=0; l<UINT64_BITS*chunk && UINT64_BITS*t*chunk+l<nodes; l++){
-      unsigned int offset = (UINT64_BITS*t*chunk+l)*chunk+l/UINT64_BITS;
+    clear_buffers(A, B, nodes*chunk);
+    for(l=0; l<UINT64_BITS*chunk && UINT64_BITS*t*chunk+l<based_nodes; l++){
+      int s = (l/based_height) * height + (l%based_height);
+      unsigned int offset = (UINT64_BITS*t*chunk+s)*chunk+l/UINT64_BITS;
       A[offset] = B[offset] = (0x1ULL<<(l%UINT64_BITS));
     }
 
@@ -140,12 +145,13 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-      for(int i=0;i<nodes;i++)
+      for(int i=0;i<nodes;i++){
         for(int j=0;j<degree;j++){
           int n = *(adjacency + i * degree + j);  // int n = adjacency[i][j];
           for(int k=0;k<chunk;k++)
             B[i*chunk+k] |= A[n*chunk+k];
         }
+      }
 
       uint64_t num = 0;
 #ifdef _OPENMP
@@ -161,7 +167,7 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
       A = B;
       B = tmp;
 
-      sum += ((double)nodes * l - num);
+      sum += ((double)nodes * l - num) * groups;
     }
     *diameter = MAX(*diameter, kk+1);
   }
@@ -181,16 +187,20 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
   return true;
 }
 
-bool evaluation(const int nodes, const int lines, const int degree, const int based_nodes, const int groups,
-		const int* restrict adjacency, int *diameter, double *ASPL, const bool enable_bfs)
+bool evaluation(const int nodes, const int degree, const int groups,
+		const int* restrict adjacency, const int based_nodes,
+		const int height, const int based_height,
+		int *diameter, double *ASPL, const bool enable_bfs)
 {
   timer_start(TIMER_APSP);
 
   bool flag;
   if(enable_bfs)
-    flag = bfs(nodes, lines, degree, (int (*)[degree])adjacency, diameter, ASPL);
+    flag = bfs(nodes, degree, (int (*)[degree])adjacency, based_nodes, height, 
+	       based_height, groups, diameter, ASPL);
   else
-    flag = matrix_op(nodes, degree, adjacency, diameter, ASPL);
+    flag = matrix_op(nodes, degree, adjacency, based_nodes, height,
+		     based_height, groups, diameter, ASPL);
 
   timer_stop(TIMER_APSP);
   return flag;

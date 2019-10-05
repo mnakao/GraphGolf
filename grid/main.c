@@ -189,7 +189,8 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
 		     (double)NOT_USED, NOT_USED))
       continue;
     create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
-    if(evaluation(nodes, lines, degree, based_nodes, groups, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs))
+    if(evaluation(nodes, degree, groups, (const int* restrict)adjacency,
+		  based_nodes, height, based_height, &diam, &ASPL, enable_bfs))
       break;
   }
 
@@ -451,9 +452,10 @@ int main(int argc, char *argv[])
     verfy_graph(nodes, lines, edge);
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
-  check_current_edge(nodes, lines, edge, low_ASPL, groups, enable_bfs);
+  check_current_edge(nodes, lines, edge, low_ASPL, groups, height, based_height, enable_bfs);
   double average_time = estimated_elapse_time(nodes, lines, (const int (*)[2])edge,
-					      height, width, groups, low_length, enable_bfs);
+					      height, width, based_height, groups,
+					      low_length, enable_bfs);
   if(enable_hill_climbing){
     fixed_temp = max_temp = min_temp = 0.0;
     cooling_rate = 1.0;
