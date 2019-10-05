@@ -182,21 +182,26 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   int diam;    // NOT_USED 
   double ASPL; // NOT_USED
-  int i = 0;
-  while(1){
+  for(int i=0;i<INITIAL_TIMES;i++){
     int start_line = getRandom(lines);
     if(! edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width,
 		     groups, start_line, NOT_USED, false, (double)NOT_USED, (double)NOT_USED,
 		     (double)NOT_USED, NOT_USED))
       continue;
-    if(INITIAL_TIMES == i++)
-      break;
   }
 
-  create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
-  evaluation(nodes, degree, groups, (const int* restrict)adjacency,
-	     based_nodes, height, based_height, &diam, &ASPL, enable_bfs);
-
+  while(1){
+    int start_line = getRandom(lines);
+    if(! edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width,
+                     groups, start_line, NOT_USED, false, (double)NOT_USED, (double)NOT_USED,
+                     (double)NOT_USED, NOT_USED))
+      continue;
+    create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
+    if(evaluation(nodes, degree, groups, (const int* restrict)adjacency,
+		  based_nodes, height, based_height, &diam, &ASPL, enable_bfs))
+      break;
+  }
+  
   assert(check_loop(lines, edge));
   assert(check_duplicate_all_edge(lines, edge));
   assert(check_degree(nodes, lines, edge));
