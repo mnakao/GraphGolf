@@ -39,6 +39,8 @@ int rank, procs, threads;
 #endif
 #define UINT64_BITS         64
 #define CHUNK               64 /* (multiple of sizeof(uint64_t)*8 for AVX-512) */
+#define INITIAL_TIMES      100
+#define ESTIMATED_TIMES      5
 
 #define MAX_FILENAME_LENGTH 255
 #define NUM_OF_PROGRESS     100

@@ -306,7 +306,6 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
   return ii;
 }
 
-#define ESTIMATED_TIMES 5
 double estimated_elapse_time(const int nodes, const int lines, const int edge[lines][2],
 			     const int height, const int width, const int based_height, const int groups,
 			     const int low_length, const bool enable_bfs)
