@@ -3,19 +3,20 @@
 static void print_help(char *argv)
 {
   END("%s -f <edge_file> [-r length] [-o <output_file>] [-s <random_seed>] [-n <calculations>] [-w <max_temperature>]\
- [-c <min_temperature>] [-g <gruops>] [-C <cooling_cycle>] [-W <weight>] [-B] [-D] [-H] [-M] [-N] [-R] [-h]\n", argv);
+ [-c <min_temperature>] [-g <gruops>] [-C <cooling_cycle>] [-W <weight>] [-B] [-D] [-F] [-H] [-M] [-N] [-R] [-h]\n", argv);
 }
 
-static void set_args(const int argc, char **argv, char *infname, int *low_length, char *outfname, bool *outfnameflag,
-		     int *random_seed, long long *ncalcs, double *max_temp, bool *max_temp_flag, double *min_temp,
-		     bool *min_temp_flag, int *groups, int *cooling_cycle, double *weight, bool *hill_climbing_flag,
-		     bool *detect_temp_flag, bool *verify_flag, bool *enable_bfs, bool *halfway_flag, bool *enable_restriction)
+static void set_args(const int argc, char **argv, char *infname, int *low_length, char *outfname, bool *enable_outfname,
+		     int *random_seed, long long *ncalcs, double *max_temp, bool *enable_max_temp, double *min_temp,
+		     bool *enable_min_temp, int *groups, int *cooling_cycle, double *weight, bool *enable_hill_climbing,
+		     bool *enable_detect_temp, bool *enable_verify, bool *enable_bfs, bool *enable_halfway,
+		     double *fixed_temp, bool *enable_fixed_temp, bool *enable_restriction)
 {
   if(argc < 3)
     print_help(argv[0]);
 
   int result;
-  while((result = getopt(argc,argv,"f:o:r:s:n:w:c:g:C:W:BDHMNRh"))!=-1){
+  while((result = getopt(argc,argv,"f:o:r:s:n:w:c:g:C:W:BDF:HMNRh"))!=-1){
     switch(result){
     case 'f':
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
@@ -26,7 +27,7 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
       if(strlen(optarg) > MAX_FILENAME_LENGTH)
         ERROR("Output filename is long (%s). Please change MAX_FILENAME_LENGTH.\n", optarg);
       strcpy(outfname, optarg);
-      *outfnameflag = true;
+      *enable_outfname = true;
       break;
      case 'r':
       *low_length = atoi(optarg);
@@ -47,13 +48,13 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
       *max_temp = atof(optarg);
       if(*max_temp <= 0)
         ERROR("-w value > 0\n");
-      *max_temp_flag = true;
+      *enable_max_temp = true;
       break;
     case 'c':
       *min_temp = atof(optarg);
       if(*min_temp <= 0)
         ERROR("MIN value > 0\n");
-      *min_temp_flag = true;
+      *enable_min_temp = true;
       break;
     case 'g':
       *groups = atoi(optarg);
@@ -72,16 +73,22 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
       *enable_bfs = true;
       break;
     case 'D':
-      *detect_temp_flag = true;
+      *enable_detect_temp = true;
+      break;
+    case 'F':
+      *fixed_temp = atof(optarg);
+      if(*fixed_temp <= 0)
+	ERROR("-F value > 0\n");
+      *enable_fixed_temp = true;
       break;
     case 'H':
-      *hill_climbing_flag = true;
+      *enable_hill_climbing = true;
       break;
     case 'M':
-      *halfway_flag = true;
+      *enable_halfway = true;
       break;
     case 'N':
-      *verify_flag = false;
+      *enable_verify = false;
       break;
     case 'R':
       *enable_restriction = true;
@@ -280,8 +287,8 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
 static void output_params(const int degree, const int groups, const int low_length, const int random_seed,
 			  const double max_temp, const double min_temp, const long long ncalcs,
 			  const int cooling_cycle, const double weight, const double cooling_rate, const char *infname,
-			  const char *outfname, const bool outfnameflag, const double average_time,
-			  const bool hill_climbing_flag, const int width, const int height, const bool enable_bfs,
+			  const char *outfname, const bool enable_outfname, const double average_time,
+			  const bool enable_hill_climbing, const int width, const int height, const bool enable_bfs,
 			  const bool enable_restriction)
 			  
 {
@@ -298,7 +305,7 @@ static void output_params(const int degree, const int groups, const int low_leng
   if(enable_bfs) PRINT_R0("APSP     : BFS\n");
   else           PRINT_R0("APSP     : MATRIX Opetation\n");
 
-  if(hill_climbing_flag == false){
+  if(enable_hill_climbing == false){
     if(enable_restriction)
       PRINT_R0("Algorithm: Simulated Annealing (Restricted-2opt)\n");
     else
@@ -323,7 +330,7 @@ static void output_params(const int degree, const int groups, const int low_leng
   PRINT_R0("   Estimated elapse time: %f sec.\n", average_time * ncalcs);
   PRINT_R0("Input filename: %s\n", infname);
   PRINT_R0("   (w x h, d, r) = (%d x %d, %d, %d)\n", width, height, degree, low_length);
-  if(outfnameflag)
+  if(enable_outfname)
     PRINT_R0("Output filename: %s\n", outfname);
   PRINT_R0("---\n");
 }
@@ -351,16 +358,16 @@ static void check_length(const int lines, const int height, const int length, in
 
 int main(int argc, char *argv[])
 {
-  bool max_temp_flag = false, min_temp_flag = false, outfnameflag = false, verify_flag = true;
-  bool hill_climbing_flag = false, detect_temp_flag = false, enable_bfs = false, halfway_flag = false;
-  bool enable_restriction = false;
+  bool enable_max_temp = false, enable_min_temp = false, enable_outfname = false, enable_verify = true;
+  bool enable_hill_climbing = false, enable_detect_temp = false, enable_bfs = false, enable_halfway = false;
+  bool enable_fixed_temp = false, enable_restriction = false;
   char hostname[MPI_MAX_PROCESSOR_NAME], infname[MAX_FILENAME_LENGTH], outfname[MAX_FILENAME_LENGTH];
   int namelen, diam = 0, low_diam = 0, random_seed = 0, cooling_cycle = 1;
   int based_width = 0, based_height = 0, width = 0, height = 0;
   int length = -1, low_length = NOT_DEFINED, groups = 1;
   long long ncalcs = 10000, num_accepts = 0;
   double ASPL = 0, low_ASPL = 0, cooling_rate = 0, weight = 1.0;
-  double max_temp = 100.0, min_temp = 0.217147, max_diff_energy = 0;
+  double max_temp = 100.0, min_temp = 0.217147, fixed_temp = 0, max_diff_energy = 0;
   FILE *fp = NULL;
   
   MPI_Init(&argc, &argv);
@@ -372,29 +379,35 @@ int main(int argc, char *argv[])
   PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
-  set_args(argc, argv, infname, &low_length, outfname, &outfnameflag, &random_seed,
-	   &ncalcs, &max_temp, &max_temp_flag, &min_temp, &min_temp_flag, &groups, &cooling_cycle,
-	   &weight, &hill_climbing_flag, &detect_temp_flag, &verify_flag, &enable_bfs, &halfway_flag, &enable_restriction);
+  set_args(argc, argv, infname, &low_length, outfname, &enable_outfname, &random_seed,
+	   &ncalcs, &max_temp, &enable_max_temp, &min_temp, &enable_min_temp, &groups, &cooling_cycle,
+	   &weight, &enable_hill_climbing, &enable_detect_temp, &enable_verify, &enable_bfs, &enable_halfway,
+	   &fixed_temp, &enable_fixed_temp, &enable_restriction);
 
   if(low_length == NOT_DEFINED)
     ERROR("Must need -r\n");
-  else if(hill_climbing_flag && max_temp_flag)
+  else if(enable_hill_climbing && enable_max_temp)
     ERROR("Both -H and -w cannot be used.\n");
-  else if(hill_climbing_flag && min_temp_flag)
+  else if(enable_hill_climbing && enable_min_temp)
     ERROR("Both -H and -c cannot be used.\n");
-  else if(hill_climbing_flag && detect_temp_flag)
+  else if(enable_hill_climbing && enable_detect_temp)
     ERROR("Both -H and -d cannot be used.\n");
+  else if(max_temp == min_temp)
+    ERROR("The same values in -w and -c.\n");
+  else if(enable_fixed_temp && min_temp > fixed_temp)
+    ERROR("The value in -F (%f) must be less than min_temp in -c (%f)\n",
+	  fixed_temp, min_temp);
   
   srandom(random_seed);
   int based_lines = count_lines(infname);
-  int lines       = (halfway_flag)? based_lines : based_lines * groups;
+  int lines       = (enable_halfway)? based_lines : based_lines * groups;
   int (*edge)[2]  = malloc(sizeof(int)*lines*2); // int edge[lines][2];
   read_file_lattice(edge, &based_width, &based_height, infname);
   if(groups == 4 && (based_width != based_height))
     ERROR("When g = 4, width(%d) must be equal to height(%d).\n", based_width, based_height);
   
   int based_nodes = max_node_num(based_lines, (int *)edge) + 1;
-  if(halfway_flag){
+  if(enable_halfway){
     if(based_nodes%groups != 0)
       ERROR("based_nodes must be divisible by groups\n");
 
@@ -430,26 +443,30 @@ int main(int argc, char *argv[])
   else if(based_width*based_height != based_nodes)
     ERROR("Not grid graph (width %d x height %d != nodes %d).\n", based_width, based_height, based_nodes);
 
-  if(!halfway_flag && groups != 1)
+  if(!enable_halfway && groups != 1)
     create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes, lines,
 			  height, width, based_height, enable_bfs);
 
-  if(verify_flag)
+  if(enable_verify)
     verfy_graph(nodes, lines, edge);
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
   check_current_edge(nodes, lines, edge, low_ASPL, groups, enable_bfs);
   double average_time = estimated_elapse_time(nodes, lines, (const int (*)[2])edge,
 					      height, width, groups, low_length, enable_bfs);
-  if(hill_climbing_flag){
-    max_temp = min_temp = 0.0;
+  if(enable_hill_climbing){
+    fixed_temp = max_temp = min_temp = 0.0;
+    cooling_rate = 1.0;
+  }
+  else if(enable_fixed_temp){
     cooling_rate = 1.0;
   }
   else{
+    fixed_temp = max_temp;
     cooling_rate = (max_temp != min_temp)? pow(min_temp/max_temp, (double)cooling_cycle/ncalcs) : 1.0;
   }
 
-  if(outfnameflag && rank == 0){
+  if(enable_outfname && rank == 0){
     struct stat stat_buf;
     if(stat(outfname, &stat_buf) == 0)
       ERROR("Output file %s exsits. \n", outfname);
@@ -461,23 +478,23 @@ int main(int argc, char *argv[])
   output_params(degree, groups, low_length, random_seed,
 		max_temp, min_temp, ncalcs,
 		cooling_cycle, weight, cooling_rate, infname,
-		outfname, outfnameflag, average_time,
-		hill_climbing_flag, width, height, enable_bfs,
+		outfname, enable_outfname, average_time,
+		enable_hill_climbing, width, height, enable_bfs,
 		enable_restriction);
 
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
-  long long step = sa(nodes, lines, max_temp, ncalcs,
+  long long step = sa(nodes, lines, fixed_temp, ncalcs,
 		      cooling_rate, low_diam, low_ASPL, enable_bfs, 
-		      hill_climbing_flag, detect_temp_flag,
+		      enable_hill_climbing, enable_detect_temp,
 		      &max_diff_energy, max_temp, min_temp, edge,
 		      &diam, &ASPL, cooling_cycle, &num_accepts, width,
 		      based_width, height, based_height, &length,
 		      low_length, weight, groups, enable_restriction);
   timer_stop(TIMER_SA);
   
-  if(detect_temp_flag){
+  if(enable_detect_temp){
     // Set max temperature to accept it   50% in maximum diff energy.
     PRINT_R0("Proposed max temperature is %f\n", (-1.0 * max_diff_energy) / log(0.5));
     // Set min temperature to accept it 0.01% in minimum diff energy.
@@ -497,13 +514,13 @@ int main(int argc, char *argv[])
   if(ncalcs > SKIP_ACCEPTS)
     PRINT_R0("Accept rate: %f (= %lld/%lld)\n",
 	     (double)num_accepts/(ncalcs-SKIP_ACCEPTS), num_accepts, ncalcs-SKIP_ACCEPTS);
-  if(rank == 0 && outfnameflag){
+  if(rank == 0 && enable_outfname){
     output_file(fp, lines, height, edge);
     fclose(fp);
   }
 
   check_length(lines, height, low_length, edge);
-  if(verify_flag)
+  if(enable_verify)
     verfy_graph(nodes, lines, edge);
 
   MPI_Finalize();
