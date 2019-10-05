@@ -178,7 +178,8 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   while(1){
     int start_line = getRandom(lines);
     if(! edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width,
-		     groups, start_line, NOT_USED, false, NOT_USED))
+		     groups, start_line, NOT_USED, false, (double)NOT_USED, (double)NOT_USED,
+		     (double)NOT_USED, NOT_USED))
       continue;
     create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
     if(evaluation(nodes, lines, degree, based_nodes, groups, (const int* restrict)adjacency, &diam, &ASPL, enable_bfs))

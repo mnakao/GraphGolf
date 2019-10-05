@@ -342,7 +342,8 @@ bool check_duplicate_current_edge(const int lines, const int edge[lines][2], con
 
 bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes,
 		 const int based_lines, const int height, const int width, const int groups, const int start_line,
-		 const int low_length, const bool enable_restriction, const long long ii)
+		 const int low_length, const bool enable_restriction, const double max_temp, const double min_temp,
+		 const double temp, const long long ii)
 {
   assert(groups != 1);
   
@@ -464,7 +465,9 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
         int w1 = WIDTH (tmp_edge[i][1], height);
         int h1 = HEIGHT(tmp_edge[i][1], height);
         int distance = abs(w0 - w1) + abs(h0 - h1);
-        if(distance > low_length)
+	double alpha = 1.0 - (max_temp-temp)/(max_temp-min_temp);
+	int threshold = (int)((height+width-low_length)*alpha) + low_length;
+        if(distance > threshold)
 	  return false;
       }
     }
