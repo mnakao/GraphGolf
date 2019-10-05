@@ -146,7 +146,7 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 // When the diameter is small, the length becomes long, so the diameter isn't adopted for evaluation.
 static bool accept(const double new_ASPL, const double current_ASPL,
 		   const int new_total_over_length, const int current_total_over_length, const double temp,
-		   const int nodes, const int degree, const bool hill_climbing_flag, const bool detect_temp_flag, 
+		   const int nodes, const int degree, const bool enable_hill_climbing, const bool enable_detect_temp, 
 		   double *max_diff_energy, long long *total_accepts, long long *accepts, long long *rejects,
 		   const double max_temp, const double min_temp, const double weight, const long long ii)
 {
@@ -169,12 +169,12 @@ static bool accept(const double new_ASPL, const double current_ASPL,
     if(ii > SKIP_ACCEPTS) *total_accepts +=1;
     return true;
   }
-  if(hill_climbing_flag){ // Only accept when new_ASPL <= current_ASPL.
+  if(enable_hill_climbing){ // Only accept when new_ASPL <= current_ASPL.
     *rejects += 1;
     return false;
   }
 
-  if(detect_temp_flag)
+  if(enable_detect_temp)
     *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);
 
   if(exp(diff/temp) > uniform_rand()){
@@ -208,7 +208,7 @@ static void calc_length(const int lines, int edge[lines][2], const int height,
 
 long long sa(const int nodes, const int lines, double temp, const long long ncalcs,
 	     const double cooling_rate, const int low_diam,  const double low_ASPL, const bool enable_bfs, 
-	     const bool hill_climbing_flag, const bool detect_temp_flag,
+	     const bool enable_hill_climbing, const bool enable_detect_temp,
 	     double *max_diff_energy, const double max_temp, const double min_temp, int edge[lines][2],
 	     int *diam, double *ASPL, const int cooling_cycle, long long *total_accepts, const int width,
 	     const int based_width, const int height, const int based_height, int *length,
@@ -233,11 +233,11 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
   int print_interval  = (ncalcs/NUM_OF_PROGRESS == 0)? 1 : ncalcs/NUM_OF_PROGRESS;
   copy_edge((int *)best_edge, (int *)edge, lines*2);
     
-  if(rank == 0 && !detect_temp_flag)
+  if(rank == 0 && !enable_detect_temp)
     print_result_header();
 
   for(ii=0;ii<ncalcs;ii++){
-    if(ii % print_interval == 0 && !detect_temp_flag){
+    if(ii % print_interval == 0 && !enable_detect_temp){
       print_results(ii, temp,
 		    current_ASPL,   best_ASPL,   low_ASPL,
 		    current_diam,   best_diam,   low_diam,
@@ -263,7 +263,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
     }
 
     if(accept(tmp_ASPL, current_ASPL, tmp_total_over_length, current_total_over_length,
-	      temp, nodes, degree, hill_climbing_flag, detect_temp_flag,
+	      temp, nodes, degree, enable_hill_climbing, enable_detect_temp,
 	      max_diff_energy, total_accepts, &accepts, &rejects,
 	      max_temp, min_temp, weight, ii)){
       current_ASPL   = tmp_ASPL;
@@ -282,7 +282,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
       }
 
       if(best_ASPL == low_ASPL && best_length == low_length){
-	if(!detect_temp_flag){
+	if(!enable_detect_temp){
 	  print_results(ii, temp, current_ASPL, best_ASPL, low_ASPL,
 			current_diam, best_diam, low_diam,
 			current_length, best_length, low_length,
