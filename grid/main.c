@@ -468,11 +468,7 @@ int main(int argc, char *argv[])
     fixed_temp = max_temp = min_temp = 0.0;
     cooling_rate = 1.0;
   }
-  else if(enable_fixed_temp){
-    cooling_rate = 1.0;
-  }
   else{
-    fixed_temp = max_temp;
     cooling_rate = (max_temp != min_temp)? pow(min_temp/max_temp, (double)cooling_cycle/ncalcs) : 1.0;
   }
 
@@ -495,10 +491,11 @@ int main(int argc, char *argv[])
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
-  long long step = sa(nodes, lines, fixed_temp, ncalcs,
+  long long step = sa(nodes, lines, max_temp, ncalcs,
 		      cooling_rate, low_diam, low_ASPL, enable_bfs, 
 		      enable_hill_climbing, enable_detect_temp,
-		      &max_diff_energy, max_temp, min_temp, edge,
+		      &max_diff_energy, max_temp, min_temp,
+		      enable_fixed_temp, fixed_temp, edge,
 		      &diam, &ASPL, cooling_cycle, &num_accepts, width,
 		      based_width, height, based_height, &length,
 		      low_length, weight, groups, enable_restriction);

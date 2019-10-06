@@ -58,7 +58,8 @@ extern void swap(int *a, int *b);
 extern long long sa(const int nodes, const int lines, double temp, const long long ncalcs,
 		    const double cooling_rate, const int low_diam, const double low_ASPL, const bool enable_bfs, 
 		    const bool enable_hill_climbing, const bool enable_detect_temp, double *max_diff_energy,
-		    const double max_temp, const double min_temp, int edge[lines][2], int *diam, double *ASPL,
+		    const double max_temp, const double min_temp, const bool enable_fixed_temp, const double fixed_temp,
+		    int edge[lines][2], int *diam, double *ASPL,
 		    const int cooling_cyclie, long long *num_accepts, const int width, const int based_width,
 		    const int height, const int based_height, int *length, const int low_length, const double weight,
 		    const int groups, const bool enable_restriction);

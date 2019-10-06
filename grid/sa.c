@@ -15,9 +15,13 @@ static void print_results(const long long num, const double temp,
 			  const double current_ASPL, const double best_ASPL, const double low_ASPL,
 			  const int current_diam,    const int best_diam,    const int low_diam,
 			  const int current_length,  const int best_length,  const int low_length,
+			  const bool enable_fixed_temp, const double fixed_temp,
 			  const long long accepts, const long long rejects)
 {
-  PRINT_R0("%8lld\t%f\t", num, temp);
+  if(enable_fixed_temp)
+    PRINT_R0("%8lld\t%f\t", num, fixed_temp);
+  else
+    PRINT_R0("%8lld\t%f\t", num, temp);
   PRINT_R0("%f ( %f )   %f ( %f )     %2d ( %2d )        %2d ( %2d )        %2d ( %2d )        %2d ( %2d )         ",
 	   current_ASPL,   current_ASPL-low_ASPL,     best_ASPL,   best_ASPL-low_ASPL,
 	   current_diam,   current_diam-low_diam,     best_diam,   best_diam-low_diam,
@@ -144,7 +148,7 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 }
 
 // When the diameter is small, the length becomes long, so the diameter isn't adopted for evaluation.
-static bool accept(const double new_ASPL, const double current_ASPL,
+static bool accept(const double new_ASPL, const double current_ASPL, const bool enable_fixed_temp, const double fixed_temp,
 		   const int new_total_over_length, const int current_total_over_length, const double temp,
 		   const int nodes, const int degree, const bool enable_hill_climbing, const bool enable_detect_temp, 
 		   double *max_diff_energy, long long *total_accepts, long long *accepts, long long *rejects,
@@ -177,7 +181,8 @@ static bool accept(const double new_ASPL, const double current_ASPL,
   if(enable_detect_temp)
     *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);
 
-  if(exp(diff/temp) > uniform_rand()){
+  double v = (enable_fixed_temp)? exp(diff/fixed_temp) : exp(diff/temp);
+  if(v > uniform_rand()){
     *accepts += 1;
     if(ii > SKIP_ACCEPTS) *total_accepts +=1;
     return true;
@@ -209,7 +214,8 @@ static void calc_length(const int lines, int edge[lines][2], const int height,
 long long sa(const int nodes, const int lines, double temp, const long long ncalcs,
 	     const double cooling_rate, const int low_diam,  const double low_ASPL, const bool enable_bfs, 
 	     const bool enable_hill_climbing, const bool enable_detect_temp,
-	     double *max_diff_energy, const double max_temp, const double min_temp, int edge[lines][2],
+	     double *max_diff_energy, const double max_temp, const double min_temp,
+	     const bool enable_fixed_temp,  const double fixed_temp, int edge[lines][2],
 	     int *diam, double *ASPL, const int cooling_cycle, long long *total_accepts, const int width,
 	     const int based_width, const int height, const int based_height, int *length,
 	     const int low_length, const double weight, const int groups, const bool enable_restriction)
@@ -242,6 +248,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 		    current_ASPL,   best_ASPL,   low_ASPL,
 		    current_diam,   best_diam,   low_diam,
 		    current_length, best_length, low_length,
+		    enable_fixed_temp, fixed_temp,
 		    accepts, rejects);
       accepts = 0;
       rejects = 0;
@@ -262,7 +269,8 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
       }
     }
 
-    if(accept(tmp_ASPL, current_ASPL, tmp_total_over_length, current_total_over_length,
+    if(accept(tmp_ASPL, current_ASPL, enable_fixed_temp, fixed_temp,
+	      tmp_total_over_length, current_total_over_length,
 	      temp, nodes, degree, enable_hill_climbing, enable_detect_temp,
 	      max_diff_energy, total_accepts, &accepts, &rejects,
 	      max_temp, min_temp, weight, ii)){
@@ -286,6 +294,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 	  print_results(ii, temp, current_ASPL, best_ASPL, low_ASPL,
 			current_diam, best_diam, low_diam,
 			current_length, best_length, low_length,
+			enable_fixed_temp, fixed_temp,
 			accepts, rejects);
 	  PRINT_R0("---\nFound optimum solution.\n");
 	}
