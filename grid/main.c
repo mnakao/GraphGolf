@@ -298,7 +298,7 @@ static void output_params(const int degree, const int groups, const int low_leng
 			  const int cooling_cycle, const double weight, const double cooling_rate, const char *infname,
 			  const char *outfname, const bool enable_outfname, const double average_time,
 			  const bool enable_hill_climbing, const int width, const int height, const bool enable_bfs,
-			  const bool enable_restriction)
+			  const bool enable_restriction, const bool enable_fixed_temp, const double fixed_temp)
 			  
 {
 #ifdef NDEBUG
@@ -315,10 +315,18 @@ static void output_params(const int degree, const int groups, const int low_leng
   else           PRINT_R0("APSP     : MATRIX Opetation\n");
 
   if(enable_hill_climbing == false){
-    if(enable_restriction)
-      PRINT_R0("Algorithm: Simulated Annealing (Restricted-2opt)\n");
-    else
-      PRINT_R0("Algorithm: Simulated Annealing (2-opt)\n");
+    if(enable_fixed_temp){
+      if(enable_restriction)
+	PRINT_R0("Algorithm: Fixed Temperature Simulated Annealing (Restricted-2opt) : %f\n", fixed_temp);
+      else
+        PRINT_R0("Algorithm: Fixed Temperature Simulated Annealing (2-opt) : %f\n", fixed_temp);
+    }
+    else{
+      if(enable_restriction)
+	PRINT_R0("Algorithm: Simulated Annealing (Restricted-2opt)\n");
+      else
+	PRINT_R0("Algorithm: Simulated Annealing (2-opt)\n");
+    }
     PRINT_R0("   MAX Temperature: %f\n", max_temp);
     PRINT_R0("   MIN Temperature: %f\n", min_temp);
     PRINT_R0("   Cooling Cycle: %d\n", cooling_cycle);
@@ -486,7 +494,7 @@ int main(int argc, char *argv[])
 		cooling_cycle, weight, cooling_rate, infname,
 		outfname, enable_outfname, average_time,
 		enable_hill_climbing, width, height, enable_bfs,
-		enable_restriction);
+		enable_restriction, enable_fixed_temp, fixed_temp);
 
   // Optimization
   timer_clear_all();
