@@ -152,7 +152,7 @@ static bool accept(const double new_ASPL, const double current_ASPL, const bool 
 		   const int new_total_over_length, const int current_total_over_length, const double temp,
 		   const int nodes, const int degree, const bool enable_hill_climbing, const bool enable_detect_temp, 
 		   double *max_diff_energy, long long *total_accepts, long long *accepts, long long *rejects,
-		   const double max_temp, const double min_temp, const double weight, const long long ii)
+		   const double max_temp, const double min_temp, const double weight, const int groups, const long long ii)
 {
   //  if(new_length < current_length){
   //    *accepts += 1;
@@ -164,22 +164,27 @@ static bool accept(const double new_ASPL, const double current_ASPL, const bool 
   //    return false;
   //  }
 
-  double f = (current_ASPL-new_ASPL)*nodes*(nodes-1);
+  double f = ((current_ASPL-new_ASPL)*nodes*(nodes-1));
   double p = (double)(current_total_over_length - new_total_over_length) / degree * nodes;
+  f /= groups;
+  p /= groups;
   //   p *= (max_temp - temp) / (max_temp - min_temp);
-  double diff = f + p * weight;
-  if(diff >= 0){
-    *accepts += 1;
-    if(ii > SKIP_ACCEPTS) *total_accepts +=1;
-    return true;
-  }
-  if(enable_hill_climbing){ // Only accept when new_ASPL <= current_ASPL.
-    *rejects += 1;
-    return false;
-  }
 
-  if(enable_detect_temp)
-    *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);
+  double diff = f + p * weight;
+  if(enable_detect_temp){
+    *max_diff_energy = MAX(*max_diff_energy, -1.0 * f);
+  }
+  else{
+    if(diff >= 0){
+      *accepts += 1;
+      if(ii > SKIP_ACCEPTS) *total_accepts +=1;
+      return true;
+    }
+    if(enable_hill_climbing){ // Only accept when new_ASPL <= current_ASPL.
+      *rejects += 1;
+      return false;
+    }
+  }
 
   double v = (enable_fixed_temp)? exp(diff/fixed_temp) : exp(diff/temp);
   if(v > uniform_rand()){
@@ -273,7 +278,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 	      tmp_total_over_length, current_total_over_length,
 	      temp, nodes, degree, enable_hill_climbing, enable_detect_temp,
 	      max_diff_energy, total_accepts, &accepts, &rejects,
-	      max_temp, min_temp, weight, ii)){
+	      max_temp, min_temp, weight, groups, ii)){
       current_ASPL   = tmp_ASPL;
       current_diam   = tmp_diam;
       current_length = tmp_length;
