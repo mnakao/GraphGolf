@@ -182,13 +182,6 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   int diam;    // NOT_USED 
   double ASPL; // NOT_USED
-  for(int i=0;i<INITIAL_TIMES;i++){
-    int start_line = getRandom(lines);
-    if(! edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width,
-		     groups, start_line, NOT_USED, false, (double)NOT_USED, (double)NOT_USED,
-		     (double)NOT_USED, NOT_USED))
-      continue;
-  }
 
   while(1){
     int start_line = getRandom(lines);

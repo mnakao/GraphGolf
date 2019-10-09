@@ -147,6 +147,8 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
   }
 }
 
+#define ALPHA 0.01
+static double pre_w;
 // When the diameter is small, the length becomes long, so the diameter isn't adopted for evaluation.
 static bool accept(const double new_ASPL, const double current_ASPL, const bool enable_fixed_temp, const double fixed_temp,
 		   const int new_total_over_length, const int current_total_over_length, const double temp,
@@ -164,15 +166,18 @@ static bool accept(const double new_ASPL, const double current_ASPL, const bool 
   //    return false;
   //  }
 
-  double f = ((current_ASPL-new_ASPL)*nodes*(nodes-1));
-  double p = (double)(current_total_over_length - new_total_over_length) / degree * nodes;
-  f /= groups;
-  p /= groups;
+  double f = ((current_ASPL-new_ASPL)*nodes*(nodes-1)) / groups;
+  double p = ((double)(current_total_over_length - new_total_over_length)) / groups;
+  double w = (p==0)? pre_w : fabs(f/p) * ALPHA + pre_w * (1-ALPHA);
+  pre_w = w;
+  double diff = f + p * w;
   //   p *= (max_temp - temp) / (max_temp - min_temp);
 
-  double diff = f + p * weight;
+  //  double diff = f + p * weight;
   if(enable_detect_temp){
     *max_diff_energy = MAX(*max_diff_energy, -1.0 * f);
+    if(f < 0 && p > 0)
+      printf("f(%f) + p(%f) * w(%f) = %f %f\n", f, p, w, diff, exp(diff/temp));
   }
   else{
     if(diff >= 0){
@@ -187,6 +192,7 @@ static bool accept(const double new_ASPL, const double current_ASPL, const bool 
   }
 
   double v = (enable_fixed_temp)? exp(diff/fixed_temp) : exp(diff/temp);
+
   if(v > uniform_rand()){
     *accepts += 1;
     if(ii > SKIP_ACCEPTS) *total_accepts +=1;
