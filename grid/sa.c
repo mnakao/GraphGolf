@@ -105,23 +105,31 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
       swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][r]);
     }
 
-    bool continue_flag = false;
     if(enable_restriction){
+      int tmp_length = -1;
       for(int i=0;i<2;i++){
 	int w0 = WIDTH (tmp_edge[i][0], height);
 	int h0 = HEIGHT(tmp_edge[i][0], height);
 	int w1 = WIDTH (tmp_edge[i][1], height);
 	int h1 = HEIGHT(tmp_edge[i][1], height);
-	int distance = abs(w0 - w1) + abs(h0 - h1);
-	double alpha = 1.0 - (max_temp-temp)/(max_temp-min_temp);
-	int threshold = (int)((height+width-low_length)*alpha) + low_length;
-	if(distance > threshold){
-	  continue_flag = true;
-	  break;
+	tmp_length = MAX(tmp_length, abs(w0 - w1) + abs(h0 - h1));
+      }
+      double alpha = 1.0 - (max_temp-temp)/(max_temp-min_temp);
+      int threshold = (int)((height+width-low_length)*alpha) + low_length;
+      if(tmp_length > threshold){
+	int prev_length = -1;
+	for(int i=0;i<2;i++){
+	  int w0 = WIDTH (edge[tmp_line[i]][0], height);
+	  int h0 = HEIGHT(edge[tmp_line[i]][0], height);
+	  int w1 = WIDTH (edge[tmp_line[i]][1], height);
+	  int h1 = HEIGHT(edge[tmp_line[i]][1], height);
+	  prev_length = MAX(prev_length, abs(w0 - w1) + abs(h0 - h1));
 	}
+	
+	if(tmp_length > prev_length)
+	  continue;
       }
     }
-    if(continue_flag) continue;
     
     if(!check_duplicate_tmp_edge(D_2G_OPT, groups, tmp_edge))
       continue;

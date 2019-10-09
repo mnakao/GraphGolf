@@ -451,37 +451,31 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     }
     if(e != tmp_edge[groups/2][1]) break;
   }
-
-  /*
-  if(groups == 2){
-    int vec_w[groups], vec_h[groups];
-    for(int i=0;i<groups;i++){
-      vec_w[i] = WIDTH (tmp_edge[i][0], height) - WIDTH (tmp_edge[i][1], height);
-      vec_h[i] = HEIGHT(tmp_edge[i][0], height) - HEIGHT(tmp_edge[i][1], height);
+  
+  if(enable_restriction){
+    int tmp_length = -1;
+    for(int i=0;i<groups;i+=2){
+      int w0 = WIDTH (tmp_edge[i][0], height);
+      int h0 = HEIGHT(tmp_edge[i][0], height);
+      int w1 = WIDTH (tmp_edge[i][1], height);
+      int h1 = HEIGHT(tmp_edge[i][1], height);
+      tmp_length = MAX(tmp_length, abs(w0 - w1) + abs(h0 - h1));
     }
-
-    for(int i=1;i<groups;i++){
-      if(vec_w[0] == vec_w[i] && vec_h[0] == vec_h[i]){
-	swap(&tmp_edge[i][0], &tmp_edge[i][1]);
-	printf("AAA\n");
+    double alpha = 1.0 - (max_temp-temp)/(max_temp-min_temp);
+    int threshold = (int)((height+width-low_length)*alpha) + low_length;
+    if(tmp_length > threshold){
+      int prev_length = -1;
+      for(int i=0;i<groups;i+=2){
+	int w0 = WIDTH (edge[tmp_line[i]][0], height);
+	int h0 = HEIGHT(edge[tmp_line[i]][0], height);
+	int w1 = WIDTH (edge[tmp_line[i]][1], height);
+	int h1 = HEIGHT(edge[tmp_line[i]][1], height);
+	prev_length = MAX(prev_length, abs(w0 - w1) + abs(h0 - h1));
       }
+      if(tmp_length > prev_length)
+	return false;
     }
   }
-  */
-
-    if(enable_restriction){
-      for(int i=0;i<groups;i+=2){
-        int w0 = WIDTH (tmp_edge[i][0], height);
-        int h0 = HEIGHT(tmp_edge[i][0], height);
-        int w1 = WIDTH (tmp_edge[i][1], height);
-        int h1 = HEIGHT(tmp_edge[i][1], height);
-        int distance = abs(w0 - w1) + abs(h0 - h1);
-	double alpha = 1.0 - (max_temp-temp)/(max_temp-min_temp);
-	int threshold = (int)((height+width-low_length)*alpha) + low_length;
-        if(distance > threshold)
-	  return false;
-      }
-    }
   
   if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups, 
 				   (const int (*)[2])tmp_edge, tmp_line,
@@ -492,6 +486,7 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     edge[tmp_line[i]][0] = tmp_edge[i][0];
     edge[tmp_line[i]][1] = tmp_edge[i][1];
   }
+  
 #ifdef _DEBUG_MSG
   for(int i=0;i<groups;i++)
     printf("After : %d,%d-%d,%d\n",
