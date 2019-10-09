@@ -1,6 +1,6 @@
 .PHONY: clean cygnus ofp K
 DEBUG=-DNDEBUG
-DEBUG=-D_DEBUG_MSG
+#DEBUG=-D_DEBUG_MSG
 #########################################################
 CC=mpicc
 CFLAGS=-std=gnu99 -O3 -Wall -Wno-unknown-pragmas -march=native $(DEBUG)
