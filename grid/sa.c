@@ -144,7 +144,7 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 	  prev_length = MAX(prev_length, abs(w0 - w1) + abs(h0 - h1));
 	}
 	
-	if(tmp_length >= prev_length)
+	if(tmp_length > prev_length)
 	  continue;
       }
     }

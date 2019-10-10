@@ -472,7 +472,7 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
 	int h1 = HEIGHT(edge[tmp_line[i]][1], height);
 	prev_length = MAX(prev_length, abs(w0 - w1) + abs(h0 - h1));
       }
-      if(tmp_length >= prev_length)
+      if(tmp_length > prev_length)
 	return false;
     }
   }
