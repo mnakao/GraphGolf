@@ -34,24 +34,42 @@ static void print_results(const long long num, const double temp,
 
 static void exchange_edge(const int nodes, const int lines, const int degree, int edge[lines][2],
 			  const int height, const int width, const int groups, const int low_length, 
-			  const bool enable_restriction, const double max_temp, const double min_temp,
+			  const bool enable_restricted_2opt, const double max_temp, const double min_temp,
 			  const double temp, const long long ii)
 {
   int tmp_line[groups*2], based_lines = lines/groups, based_nodes = nodes/groups;
   assert(lines%groups == 0);
   assert(nodes%groups == 0);
 
+  int over_length_line[lines], num_of_over_length = 0;
+  for(int i=0;i<lines;i++){
+    int w0 = WIDTH (edge[i][0], height);
+    int h0 = HEIGHT(edge[i][0], height);
+    int w1 = WIDTH (edge[i][1], height);
+    int h1 = HEIGHT(edge[i][1], height);
+    int tmp_length = abs(w0 - w1) + abs(h0 - h1);
+    if(tmp_length > low_length)
+      over_length_line[num_of_over_length++] = i;
+  }
+
   while(1){
     while(1){
       tmp_line[0] = getRandom(lines);
-      tmp_line[1] = getRandom(lines);
+      if(num_of_over_length == 0)
+	tmp_line[1] = getRandom(lines);
+      else{
+	tmp_line[1] = over_length_line[getRandom(num_of_over_length)];
+	if(getRandom(2) == 0)
+	  swap(&tmp_line[0], &tmp_line[1]);
+      }
+
       if(tmp_line[0] == tmp_line[1]) continue;
       else if(has_duplicated_vertex(edge[tmp_line[0]][0], edge[tmp_line[0]][1], edge[tmp_line[1]][0], edge[tmp_line[1]][1])){
         continue;
       }
       else if((tmp_line[0] - tmp_line[1]) % based_lines == 0){
         if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups,
-		       tmp_line[0], low_length, enable_restriction, max_temp, min_temp,
+		       tmp_line[0], low_length, enable_restricted_2opt, max_temp, min_temp,
 		       temp, ii))
 	  return;
 	else
@@ -68,7 +86,7 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
     bool diameter_flag = ((flag0 || flag1) && groups%2==0);
     if(diameter_flag){
       if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups,
-		     tmp_line[0], low_length, enable_restriction, max_temp, min_temp,
+		     tmp_line[0], low_length, enable_restricted_2opt, max_temp, min_temp,
 		     temp, ii))
         return;
       else
@@ -95,7 +113,7 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 	     WIDTH(edge[tmp_line[i*2+1]][1], height), HEIGHT(edge[tmp_line[i*2+1]][1], height));
 #endif
     
-    int r = (getRandom(2) == 0)? 1 : 0;
+    int r = getRandom(2);
     int tmp_edge[groups*2][2];
     for(int i=0;i<groups;i++){
       for(int j=0;j<2;j++){
@@ -105,7 +123,7 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
       swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][r]);
     }
 
-    if(enable_restriction){
+    if(enable_restricted_2opt){
       int tmp_length = -1;
       for(int i=0;i<2;i++){
 	int w0 = WIDTH (tmp_edge[i][0], height);
@@ -126,7 +144,7 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 	  prev_length = MAX(prev_length, abs(w0 - w1) + abs(h0 - h1));
 	}
 	
-	if(tmp_length > prev_length)
+	if(tmp_length >= prev_length)
 	  continue;
       }
     }
@@ -155,8 +173,8 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
   }
 }
 
-#define ALPHA 0.01
-static double pre_w;
+//#define ALPHA 0.01
+//static double pre_w;
 // When the diameter is small, the length becomes long, so the diameter isn't adopted for evaluation.
 static bool accept(const double new_ASPL, const double current_ASPL, const bool enable_fixed_temp, const double fixed_temp,
 		   const int new_total_over_length, const int current_total_over_length, const double temp,
@@ -176,16 +194,14 @@ static bool accept(const double new_ASPL, const double current_ASPL, const bool 
 
   double f = ((current_ASPL-new_ASPL)*nodes*(nodes-1)) / groups;
   double p = ((double)(current_total_over_length - new_total_over_length)) / groups;
-  double w = (p==0)? pre_w : fabs(f/p) * ALPHA + pre_w * (1-ALPHA);
-  pre_w = w;
-  double diff = f + p * w;
-  //   p *= (max_temp - temp) / (max_temp - min_temp);
+  //  double w = (p==0)? pre_w : fabs(f/p) * ALPHA + pre_w * (1-ALPHA);
+  //  pre_w = w;
+  //  double diff = f + p * w * weight;
+  // //   p *= (max_temp - temp) / (max_temp - min_temp);
 
-  //  double diff = f + p * weight;
+  double diff = f + p * weight;
   if(enable_detect_temp){
     *max_diff_energy = MAX(*max_diff_energy, -1.0 * f);
-    if(f < 0 && p > 0)
-      printf("f(%f) + p(%f) * w(%f) = %f %f\n", f, p, w, diff, exp(diff/temp));
   }
   else{
     if(diff >= 0){
@@ -237,7 +253,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 	     const bool enable_fixed_temp,  const double fixed_temp, int edge[lines][2],
 	     int *diam, double *ASPL, const int cooling_cycle, long long *total_accepts, const int width,
 	     const int based_width, const int height, const int based_height, int *length,
-	     const int low_length, const double weight, const int groups, const bool enable_restriction)
+	     const int low_length, const double weight, const int groups, const bool enable_restricted_2opt)
 {
   int degree = 2*lines/nodes, best_edge[lines][2], tmp_edge[lines][2], based_nodes = nodes/groups;
   long long ii, accepts = 0, rejects = 0;
@@ -275,7 +291,8 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 
     while(1){
       copy_edge((int *)tmp_edge, (int *)edge, lines*2);
-      exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, low_length, enable_restriction, max_temp, min_temp, temp, ii);
+      exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, low_length, enable_restricted_2opt,
+		    max_temp, min_temp, temp, ii);
       assert(check_loop(lines, tmp_edge));
       assert(check_duplicate_all_edge(lines, tmp_edge));
       assert(check_degree(nodes, lines, tmp_edge));

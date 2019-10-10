@@ -353,7 +353,7 @@ bool check_duplicate_current_edge(const int lines, const int edge[lines][2], con
 
 bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes,
 		 const int based_lines, const int height, const int width, const int groups, const int start_line,
-		 const int low_length, const bool enable_restriction, const double max_temp, const double min_temp,
+		 const int low_length, const bool enable_restricted_2opt, const double max_temp, const double min_temp,
 		 const double temp, const long long ii)
 {
   assert(groups != 1);
@@ -452,7 +452,7 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     if(e != tmp_edge[groups/2][1]) break;
   }
   
-  if(enable_restriction){
+  if(enable_restricted_2opt){
     int tmp_length = -1;
     for(int i=0;i<groups;i+=2){
       int w0 = WIDTH (tmp_edge[i][0], height);
@@ -472,7 +472,7 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
 	int h1 = HEIGHT(edge[tmp_line[i]][1], height);
 	prev_length = MAX(prev_length, abs(w0 - w1) + abs(h0 - h1));
       }
-      if(tmp_length > prev_length)
+      if(tmp_length >= prev_length)
 	return false;
     }
   }

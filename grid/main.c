@@ -10,7 +10,7 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
 		     int *random_seed, long long *ncalcs, double *max_temp, bool *enable_max_temp, double *min_temp,
 		     bool *enable_min_temp, int *groups, int *cooling_cycle, double *weight, bool *enable_hill_climbing,
 		     bool *enable_detect_temp, bool *enable_verify, bool *enable_bfs, bool *enable_halfway,
-		     double *fixed_temp, bool *enable_fixed_temp, bool *enable_restriction)
+		     double *fixed_temp, bool *enable_fixed_temp, bool *enable_restricted_2opt)
 {
   if(argc < 3)
     print_help(argv[0]);
@@ -91,7 +91,7 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
       *enable_verify = false;
       break;
     case 'R':
-      *enable_restriction = true;
+      *enable_restricted_2opt = true;
       break;
     case 'h':
     default:
@@ -291,7 +291,7 @@ static void output_params(const int degree, const int groups, const int low_leng
 			  const int cooling_cycle, const double weight, const double cooling_rate, const char *infname,
 			  const char *outfname, const bool enable_outfname, const double average_time,
 			  const bool enable_hill_climbing, const int width, const int height, const bool enable_bfs,
-			  const bool enable_restriction, const bool enable_fixed_temp, const double fixed_temp)
+			  const bool enable_restricted_2opt, const bool enable_fixed_temp, const double fixed_temp)
 			  
 {
 #ifdef NDEBUG
@@ -309,13 +309,13 @@ static void output_params(const int degree, const int groups, const int low_leng
 
   if(enable_hill_climbing == false){
     if(enable_fixed_temp){
-      if(enable_restriction)
+      if(enable_restricted_2opt)
 	PRINT_R0("Algorithm: Fixed Temperature Simulated Annealing (Restricted-2opt) : %f\n", fixed_temp);
       else
         PRINT_R0("Algorithm: Fixed Temperature Simulated Annealing (2-opt) : %f\n", fixed_temp);
     }
     else{
-      if(enable_restriction)
+      if(enable_restricted_2opt)
 	PRINT_R0("Algorithm: Simulated Annealing (Restricted-2opt)\n");
       else
 	PRINT_R0("Algorithm: Simulated Annealing (2-opt)\n");
@@ -329,7 +329,7 @@ static void output_params(const int degree, const int groups, const int low_leng
       PRINT_R0("   Groups       : %d\n", groups);
   }
   else{
-    if(enable_restriction)
+    if(enable_restricted_2opt)
       PRINT_R0("Algorithm: Hill climbing Method (Restricted-2opt)\n");
     else
       PRINT_R0("Algorithm: Hill climbing Method (2-opt)\n");
