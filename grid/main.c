@@ -157,7 +157,8 @@ static int max_node_num(const int lines, const int edge[lines*2])
 
 static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const int based_lines,
 				  const int groups, const int degree, const int nodes, const int lines,
-				  const int height, const int width, const int based_height, const bool enable_bfs)
+				  const int height, const int width, const int based_height, const bool enable_bfs,
+				  const int *rotate_hash)
 {
   for(int i=0;i<based_lines;i++)
     for(int j=0;j<2;j++)
@@ -191,7 +192,7 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
       continue;
     create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
     if(evaluation(nodes, degree, groups, (const int* restrict)adjacency,
-		  based_nodes, height, based_height, &diam, &ASPL, enable_bfs))
+		  based_nodes, height, based_height, &diam, &ASPL, enable_bfs, rotate_hash))
       break;
   }
   
@@ -453,18 +454,21 @@ int main(int argc, char *argv[])
   else if(based_width*based_height != based_nodes)
     ERROR("Not grid graph (width %d x height %d != nodes %d).\n", based_width, based_height, based_nodes);
 
+  int *rotate_hash = malloc(nodes * sizeof(int));
+  create_rotate_hash(nodes, height, width, groups, rotate_hash);
+  
   if(!enable_halfway && groups != 1)
     create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes, lines,
-			  height, width, based_height, enable_bfs);
+			  height, width, based_height, enable_bfs, rotate_hash);
 
   if(enable_verify)
     verfy_graph(nodes, lines, edge);
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
-  check_current_edge(nodes, lines, edge, low_ASPL, groups, height, based_height, enable_bfs);
+  check_current_edge(nodes, lines, edge, low_ASPL, groups, height, based_height, enable_bfs, rotate_hash);
   double average_time = estimated_elapse_time(nodes, lines, (const int (*)[2])edge,
 					      height, width, based_height, groups,
-					      low_length, enable_bfs);
+					      low_length, enable_bfs, rotate_hash);
   if(enable_hill_climbing){
     fixed_temp = max_temp = min_temp = 0.0;
     cooling_rate = 1.0;
@@ -499,7 +503,8 @@ int main(int argc, char *argv[])
 		      enable_fixed_temp, fixed_temp, edge,
 		      &diam, &ASPL, cooling_cycle, &num_accepts, width,
 		      based_width, height, based_height, &length,
-		      low_length, weight, groups, enable_restriction);
+		      low_length, weight, groups, enable_restriction,
+		      rotate_hash);
   timer_stop(TIMER_SA);
   
   if(enable_detect_temp){

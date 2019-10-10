@@ -17,11 +17,6 @@ CC=mpiicc
 CFLAGS=-axMIC-AVX512 -O3 -std=gnu99 $(DEBUG)
 OPENMP=-qopenmp
 LFLAGS=
-else ifeq ($(ENV), K)
-CC=mpifccpx
-# With "-Kfast", a value of low_ASPL may be changed. 
-CFLAGS=-D_ENV_K -O3 -Kopenmp,dalign,lib,mfunc,ns,omitfp,prefetch_conditional,rdconv -x- -noansi -Xg $(DEBUG)
-LFLAGS=
 endif
 #########################################################
 SRCS := main.c sa.c timer.c evaluation.c common.c

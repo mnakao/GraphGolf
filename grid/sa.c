@@ -253,7 +253,8 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 	     const bool enable_fixed_temp,  const double fixed_temp, int edge[lines][2],
 	     int *diam, double *ASPL, const int cooling_cycle, long long *total_accepts, const int width,
 	     const int based_width, const int height, const int based_height, int *length,
-	     const int low_length, const double weight, const int groups, const bool enable_restricted_2opt)
+	     const int low_length, const double weight, const int groups, const bool enable_restricted_2opt,
+	     const int *rotate_hash)
 {
   int degree = 2*lines/nodes, best_edge[lines][2], tmp_edge[lines][2], based_nodes = nodes/groups;
   long long ii, accepts = 0, rejects = 0;
@@ -262,7 +263,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
   evaluation(nodes, degree, groups, (const int* restrict)adjacency,
-	     based_nodes, height, based_height, diam, ASPL, enable_bfs);
+	     based_nodes, height, based_height, diam, ASPL, enable_bfs, rotate_hash);
 
   int tmp_total_over_length = 0;
   calc_length(lines, edge, height, low_length, length, &tmp_total_over_length);
@@ -299,7 +300,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
       assert(check_symmetric_edge(lines, tmp_edge, height, width, based_height, groups));
       create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
       if(evaluation(nodes, degree, groups, (const int* restrict)adjacency,
-		    based_nodes, height, based_height, &tmp_diam, &tmp_ASPL, enable_bfs)){
+		    based_nodes, height, based_height, &tmp_diam, &tmp_ASPL, enable_bfs, rotate_hash)){
 	calc_length(lines, tmp_edge, height, low_length, &tmp_length, &tmp_total_over_length);
 	break;
       }
@@ -353,7 +354,7 @@ long long sa(const int nodes, const int lines, double temp, const long long ncal
 
 double estimated_elapse_time(const int nodes, const int lines, const int edge[lines][2],
 			     const int height, const int width, const int based_height, const int groups,
-			     const int low_length, const bool enable_bfs)
+			     const int low_length, const bool enable_bfs, const int *rotate_hash)
 {
   int based_nodes = nodes / groups;
   int degree = 2 * lines / nodes;
@@ -369,7 +370,7 @@ double estimated_elapse_time(const int nodes, const int lines, const int edge[li
 		  (double)NOT_USED, (double)NOT_USED, (double)NOT_USED, (int)i);
     create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
     evaluation(nodes, degree, groups, (const int* restrict)adjacency,
-	       based_nodes, height, based_height, &diam, &ASPL, enable_bfs);
+	       based_nodes, height, based_height, &diam, &ASPL, enable_bfs, rotate_hash);
   }
   timer_stop(TIMER_ESTIMATED);
   
@@ -381,7 +382,8 @@ double estimated_elapse_time(const int nodes, const int lines, const int edge[li
 
 // This function is mainly useful when groupe is 1.
 void check_current_edge(const int nodes, const int lines, int edge[lines][2], const double low_ASPL,
-			const int groups, const int height, const int based_height, const bool enable_bfs)
+			const int groups, const int height, const int based_height, const bool enable_bfs,
+			const int *rotate_hash)
 {
   int based_nodes = nodes / groups;
   int degree = 2 * lines / nodes;
@@ -391,7 +393,7 @@ void check_current_edge(const int nodes, const int lines, int edge[lines][2], co
 
   create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
   if(! evaluation(nodes, degree, groups, (const int* restrict)adjacency,
-		  based_nodes, height, based_height, &diam, &ASPL, enable_bfs))
+		  based_nodes, height, based_height, &diam, &ASPL, enable_bfs, rotate_hash))
     ERROR("The input file has a node which is never reached by another node.\n");
 
   if(ASPL == low_ASPL)

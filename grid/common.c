@@ -498,3 +498,34 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
 
   return true;
 }
+
+void create_rotate_hash(const int nodes, const int height, const int width, const int groups,
+			int *rotate_hash)
+{
+  int based_nodes = nodes / groups;
+  
+  if(groups == 1){
+    for(int i=0;i<based_nodes;i++)
+      rotate_hash[i] = i;
+  }
+  else if(groups == 2){
+    int based_height = height / 2;
+
+    for(int i=0;i<based_nodes;i++){
+      int j = (i/based_height) * height + (i%based_height);
+      rotate_hash[j] = i;
+      rotate_hash[ROTATE(j, height, width, groups, 180)] = i + based_nodes;
+    }
+  }
+  else{
+    int based_height = height / 2;
+    
+    for(int i=0;i<based_nodes;i++){
+      int j = (i/based_height) * height + (i%based_height);
+      rotate_hash[j] = i;
+      rotate_hash[ROTATE(j, height, width, groups,  90)] = i + based_nodes;
+      rotate_hash[ROTATE(j, height, width, groups, 180)] = i + based_nodes * 2;
+      rotate_hash[ROTATE(j, height, width, groups, 270)] = i + based_nodes * 3;
+    }
+  }
+}

@@ -61,13 +61,13 @@ extern long long sa(const int nodes, const int lines, double temp, const long lo
 		    int edge[lines][2], int *diam, double *ASPL,
 		    const int cooling_cyclie, long long *num_accepts, const int width, const int based_width,
 		    const int height, const int based_height, int *length, const int low_length, const double weight,
-		    const int groups, const bool enable_restricted_2opt);
+		    const int groups, const bool enable_restricted_2opt, const int *rotate_hash);
 extern bool check_degree(const int nodes, const int lines, int edge[lines][2]);
 extern void check_current_edge(const int nodes, const int lines, int edge[lines][2], const double low_ASPL, const int groups,
-			       const int height, const int based_height, const bool enable_bfs);
+			       const int height, const int based_height, const bool enable_bfs, const int *rotate_hash);
 extern double estimated_elapse_time(const int nodes, const int lines, const int edge[lines][2],
 				    const int height, const int width, const int based_height,
-				    const int groups, const int low_length, const bool enable_bfs);
+				    const int groups, const int low_length, const bool enable_bfs, const int *rotate_hash);
 extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);
 extern bool has_duplicated_vertex(const int e00, const int e01, const int e10, const int e11);
 extern bool check_loop(const int lines, const int edge[lines][2]);
@@ -85,7 +85,8 @@ extern void timer_start(const int n);
 extern void timer_stop(const int n);
 extern double timer_read(const int n);
 extern bool evaluation(const int nodes, const int degree, const int groups, const int* restrict adjacency,
-		       const int based_nodes, const int height, const int based_height, int *diameter, double *ASPL, const bool enable_bfs);
+		       const int based_nodes, const int height, const int based_height, int *diameter, double *ASPL, const bool enable_bfs,
+		       const int *rotate_hash);
 extern void copy_edge(int *restrict buf1, const int *restrict buf2, const int n);
 extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes,
 			const int based_lines, const int height, const int width, const int groups, const int start_line,
@@ -99,4 +100,5 @@ extern int WIDTH (const int v, const int height);
 extern int HEIGHT(const int v, const int height);
 extern int ROTATE(const int v, const int height, const int width, const int groups, const int degree);
 extern void printb(const uint64_t v);
+extern void create_rotate_hash(const int nodes, const int height, const int width, const int groups, int *rotate_hash);
 #endif
