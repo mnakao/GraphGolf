@@ -41,28 +41,10 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
   assert(lines%groups == 0);
   assert(nodes%groups == 0);
 
-  int over_length_line[lines], num_of_over_length = 0;
-  for(int i=0;i<lines;i++){
-    int w0 = WIDTH (edge[i][0], height);
-    int h0 = HEIGHT(edge[i][0], height);
-    int w1 = WIDTH (edge[i][1], height);
-    int h1 = HEIGHT(edge[i][1], height);
-    int tmp_length = abs(w0 - w1) + abs(h0 - h1);
-    if(tmp_length > low_length)
-      over_length_line[num_of_over_length++] = i;
-  }
-
   while(1){
     while(1){
       tmp_line[0] = getRandom(lines);
-      if(num_of_over_length == 0)
-	tmp_line[1] = getRandom(lines);
-      else{
-	tmp_line[1] = over_length_line[getRandom(num_of_over_length)];
-	if(getRandom(2) == 0)
-	  swap(&tmp_line[0], &tmp_line[1]);
-      }
-
+      tmp_line[1] = getRandom(lines);
       if(tmp_line[0] == tmp_line[1]) continue;
       else if(has_duplicated_vertex(edge[tmp_line[0]][0], edge[tmp_line[0]][1], edge[tmp_line[1]][0], edge[tmp_line[1]][1])){
         continue;
