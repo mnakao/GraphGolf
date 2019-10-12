@@ -14,11 +14,13 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <time.h>
+#include <nmmintrin.h>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-#ifndef _KCOMPUTER
-#include <nmmintrin.h>
+#ifdef __NVCC__
+#include <cuda.h>
+#include <cuda_runtime.h>
 #endif
 
 int rank, procs, threads;
@@ -45,10 +47,11 @@ int rank, procs, threads;
 #define PRINT_ADJ(a)  do{ print_adj(nodes,  degree, a);}while(0);
 #define PRINT_EDGE(e) do{ print_edge(nodes, degree, e);}while(0)
 
-#ifdef _KCOMPUTER
-#define POPCNT(a) __builtin_popcountll(a)
+#ifdef __NVCC__
+#define POPCNT(a) __popcll(a)
 #else
 #define POPCNT(a) _mm_popcnt_u64(a)
+// POPCNT(a) __builtin_popcountll(a)
 #endif
 
 #define BFS                  0
@@ -66,6 +69,14 @@ int rank, procs, threads;
 #define ERROR(...)      do{if(rank==0) printf(__VA_ARGS__); ABORT();}while(0)
 #define EXIT(r)         do{MPI_Finalize(); exit(r);}while(0)
 
+#ifdef __C2CUDA__
+extern uint64_t *A_dev, *B_dev;
+extern uint64_t *result, *result_dev;
+extern int *adjacency_dev, *num_degrees_dev;
+#define BLOCKS   (28*16)
+#define THREADS  (64*16)  /* Must be 2^n */
+#endif
+#ifndef __NVCC__
 extern void printb(uint64_t v);
 extern void print_adj(const int nodes, const int degree, const int adj[nodes][degree]);
 extern void print_edge(const int nodes, const int degree, const int edge[nodes*degree/2][2]);
@@ -92,11 +103,6 @@ extern bool check_duplicate_current_edge(const int lines, const int tmp_lines, c
 extern void create_adj(const int nodes, const int lines, const int degree,
                              const int edge[lines][2], int adj[nodes][degree]);
 extern int getRandom(const int max);
-extern void timer_clear_all();
-extern void timer_clear(const int n);
-extern void timer_start(const int n);
-extern void timer_stop(const int n);
-extern double timer_read(const int n);
 extern bool evaluation(const int nodes, const int based_nodes, const int groups, const int lines, const int degree, 
 		       int* restrict adj, int* restrict diameter, double* restrict ASPL, const int added_centers, const int algo);
 extern int distance(int nodes, const int a, const int b, const int added_centers);
@@ -104,4 +110,14 @@ extern bool check(const int nodes, const int based_nodes, const int lines, const
 		  int edge[lines][2], const int add_degree_to_center, int* adj, const int ii);
 extern void clear_buffer(int *buffer, const int n);
 extern void clear_buffers(uint64_t* restrict A, uint64_t* restrict B, const int s);
+extern void timer_clear_all();
+extern void timer_clear(const int n);
+extern void timer_start(const int n);
+extern void timer_stop(const int n);
+extern double timer_read(const int n);
+#else
+extern "C" extern void timer_start(const int n);
+extern "C" extern void timer_stop(const int n);
 #endif
+#endif
+

@@ -1,10 +1,13 @@
-.PHONY: clean cygnus ofp K
+.PHONY: clean cygnus ofp
 DEBUG=-DNDEBUG
 #########################################################
 CC=mpicc
 CFLAGS=-std=gnu99 -O3 -Wall -mcmodel=medium -Wno-unknown-pragmas -march=native $(DEBUG)
 OPENMP=-fopenmp
 LFLAGS=-lm
+NVCC=nvcc
+NVCC_FLAG=-D__C2CUDA__
+NVCC_LDFLAG=-lcuda
 #########################################################
 ifeq ($(ENV), cygnus)
 CC=mpiicc
@@ -15,12 +18,6 @@ else ifeq ($(ENV), ofp)
 CC=mpiicc
 CFLAGS=-axMIC-AVX512 -O3 -std=gnu99 $(DEBUG)
 OPENMP=-qopenmp
-LFLAGS=
-else ifeq ($(ENV), K)
-CC=mpifccpx
-# With "-Kfast", a value of low_ASPL may be changed. 
-CFLAGS=-D_KCOMPUTER -O3 -Kdalign,lib,mfunc,ns,omitfp,prefetch_conditional,rdconv -x- -noansi -Xg $(DEBUG)
-OPENMP=-Kopenmp
 LFLAGS=
 endif
 #########################################################
@@ -50,13 +47,21 @@ timer_omp.o: timer.c common.h
 
 gg_openmp: common_omp.o sa_omp.o evaluation_omp.o main_omp.o timer_omp.o
 	$(CC) $(CFLAGS) $(OPENMP) -o $@ $^ $(LFLAGS)
+#################################################
+gg_cuda: main_cuda.o common.o sa.o timer.o matrix_cuda.o
+	$(NVCC) -O3 $^ -o $@ $(NVCC_LDFLAG) -ccbin $(CC)
 
+main_cuda.o: main.c common.h
+	$(CC) $(CFLAGS) $< -c -o $@ $(NVCC_FLAG)
+
+matrix_cuda.o: matrix.cu common.h
+	$(NVCC) -O3 $< -c -o $@ $(NVCC_FLAG) -ccbin $(CC)
+#########################################################
+cuda: gg_cuda
 openmp: gg_openmp
 all: gg openmp
-#########################################################
 clean:
 	rm -rf *.o *~
-
 clean_all: clean
 	rm -f gg gg_openmp
 ########################################################
