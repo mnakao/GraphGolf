@@ -155,8 +155,8 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
   }
 }
 
-//#define ALPHA 0.01
-//static double pre_w;
+#define ALPHA 0.01
+static double pre_w;
 // When the diameter is small, the length becomes long, so the diameter isn't adopted for evaluation.
 static bool accept(const double new_ASPL, const double current_ASPL, const bool enable_fixed_temp, const double fixed_temp,
 		   const int new_total_over_length, const int current_total_over_length, const double temp,
@@ -176,12 +176,12 @@ static bool accept(const double new_ASPL, const double current_ASPL, const bool 
 
   double f = ((current_ASPL-new_ASPL)*nodes*(nodes-1)) / groups;
   double p = ((double)(current_total_over_length - new_total_over_length)) / groups;
-  //  double w = (p==0)? pre_w : fabs(f/p) * ALPHA + pre_w * (1-ALPHA);
-  //  pre_w = w;
-  //  double diff = f + p * w * weight;
+  double w = (p==0)? pre_w : fabs(f/p) * ALPHA + pre_w * (1-ALPHA);
+  pre_w = w;
+  double diff = f + p * w * weight;
   // //   p *= (max_temp - temp) / (max_temp - min_temp);
 
-  double diff = f + p * weight;
+  //double diff = f + p * weight;
   if(enable_detect_temp){
     *max_diff_energy = MAX(*max_diff_energy, -1.0 * f);
   }
