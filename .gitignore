@@ -1,6 +1,7 @@
 opt_data
 gg
 gg_thread
+gg_cuda
 *.png
 
 # Prerequisites

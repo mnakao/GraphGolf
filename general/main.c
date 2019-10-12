@@ -1,4 +1,8 @@
 #include "common.h"
+#ifdef __C2CUDA__
+extern void init_matrix_dev(const int nodes, const int degree, const int algo);
+extern void finalize_matrix_dev();
+#endif
 
 static void print_help(char *argv)
 {
@@ -342,6 +346,12 @@ int main(int argc, char *argv[])
     ERROR("Both -H and -D cannot be used.\n");
   else if(detect_temp_flag && groups != 1)
     ERROR("When using -D option, -g must be 1.\n");
+#ifdef __C2CUDA__
+  else if(enable_bfs)
+    ERROR("CUDA version does not support BFS\n");
+  else if(added_centers)
+    ERROR("CUDA version does not support adding centers\n");
+#endif
   
   srandom(random_seed);
   int based_lines = count_lines(infname);
@@ -402,11 +412,19 @@ int main(int argc, char *argv[])
     algo = (s <= (double)MATRIX_OP_THRESHOLD)? MATRIX_OP : MATRIX_OP_MEM_SAVING;
   }
 
+#ifdef __C2CUDA__
+  init_matrix_dev(nodes, degree, algo);
+#endif
+
   if(!halfway_flag && !added_centers)
     create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes, lines, is_simple_graph, algo);
     
   if(verify_flag)
     verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
+
+#ifdef __C2CUDA__
+  init_matrix_dev(nodes, degree, algo);
+#endif
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
   if(groups == 1)
@@ -471,6 +489,9 @@ int main(int argc, char *argv[])
   if(verify_flag)
     verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
 
+#ifdef __C2CUDA__
+  finalize_matrix_dev();
+#endif
   MPI_Finalize();
   return 0;
 }
