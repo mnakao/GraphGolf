@@ -14,13 +14,14 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <time.h>
-#include <nmmintrin.h>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 #ifdef __NVCC__
 #include <cuda.h>
 #include <cuda_runtime.h>
+#else
+#include <nmmintrin.h>
 #endif
 
 int rank, procs, threads;

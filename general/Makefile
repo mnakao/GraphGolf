@@ -55,7 +55,7 @@ main_cuda.o: main.c common.h
 	$(CC) $(CFLAGS) $< -c -o $@ $(NVCC_FLAG)
 
 matrix_cuda.o: matrix.cu common.h
-	$(NVCC) -O3 $< -c -o $@ $(NVCC_FLAG) -ccbin $(CC)
+	$(NVCC) -O3 $< -c -o $@ $(NVCC_FLAG)
 #########################################################
 cuda: gg_cuda
 openmp: gg_openmp
@@ -63,7 +63,7 @@ all: gg openmp
 clean:
 	rm -rf *.o *~
 clean_all: clean
-	rm -f gg gg_openmp
+	rm -f gg gg_openmp gg_cuda
 ########################################################
 test: gg
 	rm -f result.txt
