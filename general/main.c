@@ -1,6 +1,6 @@
 #include "common.h"
 #ifdef __C2CUDA__
-extern void init_matrix_dev(const int nodes, const int degree, const int algo);
+extern void init_matrix_dev(const int nodes, const int degree, const int based_nodes, const int algo);
 extern void finalize_matrix_dev();
 #endif
 
@@ -413,7 +413,7 @@ int main(int argc, char *argv[])
   }
 
 #ifdef __C2CUDA__
-  init_matrix_dev(nodes, degree, algo);
+  init_matrix_dev(nodes, degree, based_nodes, algo);
 #endif
 
   if(!halfway_flag && !added_centers)
@@ -421,10 +421,6 @@ int main(int argc, char *argv[])
     
   if(verify_flag)
     verfy_graph(nodes, based_nodes, degree, groups, lines, edge, added_centers);
-
-#ifdef __C2CUDA__
-  init_matrix_dev(nodes, degree, algo);
-#endif
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, nodes, degree);
   if(groups == 1)

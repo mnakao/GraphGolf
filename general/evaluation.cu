@@ -142,7 +142,8 @@ extern "C" bool matrix_op_mem_saving(const int nodes, const int degree, const in
     matrix_op_init_dev <<< BLOCKS, THREADS >>> (A_dev, B_dev, based_nodes, t, CHUNK);
 
     for(kk=0;kk<nodes;kk++){
-      matrix_op_dev <<< BLOCKS, THREADS >>> (A_dev, B_dev, adjacency_dev, nodes, degree, CHUNK);
+      matrix_op_dev <<< BLOCKS, THREADS >>> (A_dev, B_dev, adjacency_dev,
+					     nodes, degree, CHUNK);
       popcnt_dev <<< BLOCKS, THREADS >>> (B_dev, nodes, CHUNK, result_dev);
       
       cudaMemcpy(result, result_dev, sizeof(uint64_t)*BLOCKS, cudaMemcpyDeviceToHost);
