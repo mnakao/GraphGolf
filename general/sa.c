@@ -417,8 +417,10 @@ long long sa(const int nodes, const int lines, const int degree, const int group
 	     const int based_nodes, long long *total_accepts, const bool is_simple_graph, const int algo)
 {
   long long ii, accepts = 0, rejects = 0;
-  int best_edge[lines][2], tmp_edge[lines][2], tmp_edge_nsg[lines][2] /* nsg = not simple graph */, kind_opt;
-  int restored_adj_value[groups*4], restored_adj_idx_y[groups*4], restored_adj_idx_x[groups*4];
+  int (*best_edge)[2]    = malloc(sizeof(int)*lines*2); // best_edge[lines][2]
+  int (*tmp_edge)[2]     = malloc(sizeof(int)*lines*2); // tmp_edge[lines][2]
+  int (*tmp_edge_nsg)[2] = malloc(sizeof(int)*lines*2); // tmp_edge_nsg[lines][2] /* nsg = not simple graph */
+  int restored_adj_value[groups*4], restored_adj_idx_y[groups*4], restored_adj_idx_x[groups*4], kind_opt;
   int restored_edge[groups*4], restored_line[groups*2];
   bool restore_flag = false;
   copy_edge((int *)best_edge, (int *)edge, lines*2);
@@ -511,7 +513,9 @@ long long sa(const int nodes, const int lines, const int degree, const int group
   *diam = best_diam;
   copy_edge((int *)edge, (int *)best_edge, lines*2);
   free(adj);
-
+  free(best_edge);
+  free(tmp_edge);
+  free(tmp_edge_nsg);
   return ii;
 }
 
