@@ -4,17 +4,18 @@ uint64_t *result, *result_dev;
 int *adjacency_dev;
 
 __global__ void matrix_op_init_dev(uint64_t* __restrict__ A, uint64_t* __restrict__ B,
-                                   const int nodes, const int t, const int chunk)
+                                   const int based_nodes, const int t, const int chunk)
 {
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
-  while (tid<UINT64_BITS*chunk && UINT64_BITS*t*chunk+tid<nodes) {
+  while (tid<UINT64_BITS*chunk && UINT64_BITS*t*chunk+tid<based_nodes) {
     unsigned int offset = (UINT64_BITS*t*chunk+tid)*chunk+tid/UINT64_BITS;
     A[offset] = B[offset] = (0x1ULL<<(tid%UINT64_BITS));
     tid += blockDim.x * gridDim.x;
   }
 }
 
-__global__ void clear_buffers_dev(uint64_t* __restrict__ A, uint64_t* __restrict__ B, const int length)
+__global__ void clear_buffers_dev(uint64_t* __restrict__ A, uint64_t* __restrict__ B,
+				  const int length)
 {
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
   while (tid<length) {
@@ -23,19 +24,9 @@ __global__ void clear_buffers_dev(uint64_t* __restrict__ A, uint64_t* __restrict
   }
 }
 
-__global__ void init_dev(uint64_t* __restrict__ A, uint64_t* __restrict__ B,
-			 const int nodes, const unsigned int elements)
-{
-  int tid = threadIdx.x + blockIdx.x * blockDim.x;
-  while (tid < nodes) {
-    unsigned int offset = tid*elements+tid/UINT64_BITS;
-    A[offset] = B[offset] = (0x1ULL << (tid%UINT64_BITS));
-    tid += blockDim.x * gridDim.x;
-  }
-}
-
-__global__ static void matrix_op_dev(const uint64_t* __restrict__ A, uint64_t* __restrict__ B, const int* __restrict__ adjacency,
-				     const int nodes, const int degree, const unsigned int elements)
+__global__ static void matrix_op_dev(const uint64_t* __restrict__ A, uint64_t* __restrict__ B,
+				     const int* __restrict__ adjacency, const int nodes,
+				     const int degree, const unsigned int elements)
 {
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -79,10 +70,11 @@ __global__ static void popcnt_dev(const uint64_t* __restrict__ B, const int node
     result[blockIdx.x] = cache[0];
 }
 
-extern "C" bool matrix_op(const int nodes, const int degree, const int* __restrict__ adjacency,
-			  const int groups, int *diameter, double *ASPL)
+extern "C" bool matrix_op(const int nodes, const int degree, const int based_nodes,
+			  const int* __restrict__ adjacency, const int groups,
+			  int *diameter, double *ASPL)
 {
-  unsigned int elements = (nodes+UINT64_BITS-1)/UINT64_BITS;
+  unsigned int elements = (based_nodes+UINT64_BITS-1)/UINT64_BITS;
   unsigned int chunk = (elements+(procs-1))/procs;
   int parsize = (elements + chunk - 1)/chunk;
 
@@ -92,9 +84,10 @@ extern "C" bool matrix_op(const int nodes, const int degree, const int* __restri
   
   for(int t=rank;t<parsize;t+=procs){
     unsigned int kk, l;
-    for(l=0; l<UINT64_BITS*chunk && UINT64_BITS*t*chunk+l<nodes; l++){}
+    for(l=0; l<UINT64_BITS*chunk && UINT64_BITS*t*chunk+l<based_nodes; l++){}
+    
     clear_buffers_dev  <<< BLOCKS, THREADS >>> (A_dev, B_dev, nodes*chunk);
-    matrix_op_init_dev <<< BLOCKS, THREADS >>> (A_dev, B_dev, nodes, t, chunk);
+    matrix_op_init_dev <<< BLOCKS, THREADS >>> (A_dev, B_dev, based_nodes, t, chunk);
   
     for(kk=0;kk<nodes;kk++){
       matrix_op_dev <<< BLOCKS, THREADS >>> (A_dev, B_dev, adjacency_dev,
@@ -113,7 +106,7 @@ extern "C" bool matrix_op(const int nodes, const int degree, const int* __restri
       A_dev = B_dev;
       B_dev = tmp;
     
-      sum += ((double)nodes * l - num);
+      sum += ((double)nodes * l - num) * groups;
     }
     *diameter = MAX(*diameter, kk+1);
   }
@@ -130,11 +123,12 @@ extern "C" bool matrix_op(const int nodes, const int degree, const int* __restri
   return true;
 }
 
-extern "C" bool matrix_op_mem_saving(const int nodes, const int degree, const int* __restrict__ adjacency,
+extern "C" bool matrix_op_mem_saving(const int nodes, const int degree, const int based_nodes,
+				     const int* __restrict__ adjacency,
 				     const int groups, int *diameter, double *ASPL)
 {
-  unsigned int elements = (nodes+UINT64_BITS-1)/UINT64_BITS;
-  int parsize = (elements + CHUNK - 1)/CHUNK;
+  unsigned int elements = (based_nodes+UINT64_BITS-1)/UINT64_BITS;
+  int parsize = (elements+(CHUNK-1))/CHUNK;
 
   double sum = 0.0;
   *diameter = 1;
@@ -142,9 +136,10 @@ extern "C" bool matrix_op_mem_saving(const int nodes, const int degree, const in
 
   for(int t=rank;t<parsize;t+=procs){
     unsigned int kk, l;
-    for(l=0; l<UINT64_BITS*CHUNK && UINT64_BITS*t*CHUNK+l<nodes; l++){}
+    for(l=0; l<UINT64_BITS*CHUNK && UINT64_BITS*t*CHUNK+l<based_nodes; l++){}
+    
     clear_buffers_dev  <<< BLOCKS, THREADS >>> (A_dev, B_dev, nodes*CHUNK);
-    matrix_op_init_dev <<< BLOCKS, THREADS >>> (A_dev, B_dev, nodes, t, CHUNK);
+    matrix_op_init_dev <<< BLOCKS, THREADS >>> (A_dev, B_dev, based_nodes, t, CHUNK);
 
     for(kk=0;kk<nodes;kk++){
       matrix_op_dev <<< BLOCKS, THREADS >>> (A_dev, B_dev, adjacency_dev, nodes, degree, CHUNK);
@@ -162,7 +157,7 @@ extern "C" bool matrix_op_mem_saving(const int nodes, const int degree, const in
       A_dev = B_dev;
       B_dev = tmp;
 
-      sum += ((double)nodes * l - num);
+      sum += ((double)nodes * l - num) * groups;
     }
     *diameter = MAX(*diameter, kk+1);
   }
@@ -179,13 +174,14 @@ extern "C" bool matrix_op_mem_saving(const int nodes, const int degree, const in
   return true;
 }
 
-extern "C" void init_matrix_dev(const int nodes, const int degree, const int algo)
+extern "C" void init_matrix_dev(const int nodes, const int degree, const int based_nodes,
+				const int algo)
 {
   cuInit(0);
   int gpus = -1;
   cudaGetDeviceCount(&gpus);
   cudaSetDevice(rank%gpus);
-  unsigned int elements = (nodes+UINT64_BITS-1)/UINT64_BITS;
+  unsigned int elements = (based_nodes+UINT64_BITS-1)/UINT64_BITS;
   size_t s = (algo == MATRIX_OP)? (elements+procs-1)/procs : CHUNK;
   s *= nodes * sizeof(uint64_t);
 
@@ -212,9 +208,10 @@ extern "C" bool evaluation(const int nodes, const int based_nodes, const int gro
   timer_start(TIMER_APSP);
   bool ret;
   if(algo == MATRIX_OP)
-    ret = matrix_op(nodes, degree, adjacency, groups, diameter, ASPL);
+    ret = matrix_op(nodes, degree, based_nodes, adjacency, groups, diameter, ASPL);
   else // algo == MATRIX_OP_MEM_SAVING
-    ret = matrix_op_mem_saving(nodes, degree, adjacency, groups, diameter, ASPL);
+    ret = matrix_op_mem_saving(nodes, degree, based_nodes, adjacency, groups, diameter, ASPL);
+  
   timer_stop(TIMER_APSP);
   return ret;
 }

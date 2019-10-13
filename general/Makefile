@@ -48,13 +48,13 @@ timer_omp.o: timer.c common.h
 gg_openmp: common_omp.o sa_omp.o evaluation_omp.o main_omp.o timer_omp.o
 	$(CC) $(CFLAGS) $(OPENMP) -o $@ $^ $(LFLAGS)
 #################################################
-gg_cuda: main_cuda.o common.o sa.o timer.o matrix_cuda.o
+gg_cuda: main_cuda.o common.o sa.o timer.o evaluation_cuda.o
 	$(NVCC) -O3 $^ -o $@ $(NVCC_LDFLAG) -ccbin $(CC)
 
 main_cuda.o: main.c common.h
 	$(CC) $(CFLAGS) $< -c -o $@ $(NVCC_FLAG)
 
-matrix_cuda.o: matrix.cu common.h
+evaluation_cuda.o: evaluation.cu common.h
 	$(NVCC) -O3 $< -c -o $@ $(NVCC_FLAG)
 #########################################################
 cuda: gg_cuda
