@@ -1,4 +1,4 @@
-.PHONY: clean cygnus ofp K
+.PHONY: clean cygnus ofp
 DEBUG=-DNDEBUG
 #DEBUG=-D_DEBUG_MSG
 #########################################################
