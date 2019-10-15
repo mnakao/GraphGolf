@@ -326,8 +326,6 @@ static void output_params(const int degree, const int groups, const int low_leng
     PRINT_R0("   Cooling Cycle: %d\n", cooling_cycle);
     PRINT_R0("   Cooling Rate : %f\n", cooling_rate);
     PRINT_R0("   Weight       : %f\n", weight);
-    if(groups != 1)
-      PRINT_R0("   Groups       : %d\n", groups);
   }
   else{
     if(enable_restricted_2opt)
@@ -336,6 +334,8 @@ static void output_params(const int degree, const int groups, const int low_leng
       PRINT_R0("Algorithm: Hill climbing Method (2-opt)\n");
   }
 
+  if(groups != 1)
+    PRINT_R0("   Groups       : %d\n", groups);
   PRINT_R0("Num. of Calulations: %lld\n", ncalcs);
   PRINT_R0("   Average APSP time    : %f sec.\n", average_time);
   PRINT_R0("   Estimated elapse time: %f sec.\n", average_time * ncalcs);
