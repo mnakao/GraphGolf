@@ -115,7 +115,7 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 	tmp_length = MAX(tmp_length, abs(w0 - w1) + abs(h0 - h1));
       }
       double alpha = 1.0 - (max_temp-temp)/(max_temp-min_temp);
-      int threshold = (int)((height+width-low_length)*alpha) + low_length;
+      int threshold = (int)((height+width-2-low_length)*alpha) + low_length;
       if(tmp_length > threshold){
 	int prev_length = -1;
 	for(int i=0;i<2;i++){
@@ -156,7 +156,7 @@ static void exchange_edge(const int nodes, const int lines, const int degree, in
 }
 
 #define ALPHA 0.01
-static double pre_w;
+static double pre_s = 0;
 // When the diameter is small, the length becomes long, so the diameter isn't adopted for evaluation.
 static bool accept(const double new_ASPL, const double current_ASPL, const bool enable_fixed_temp, const double fixed_temp,
 		   const int new_total_over_length, const int current_total_over_length, const double temp,
@@ -164,26 +164,15 @@ static bool accept(const double new_ASPL, const double current_ASPL, const bool 
 		   double *max_diff_energy, long long *total_accepts, long long *accepts, long long *rejects,
 		   const double max_temp, const double min_temp, const double weight, const int groups, const long long ii)
 {
-  //  if(new_length < current_length){
-  //    *accepts += 1;
-  //    if(ii > SKIP_ACCEPTS) *total_accepts +=1;
-  //    return true;
-  //  }
-  //  else if(new_length > current_length){
-  //    *rejects += 1;
-  //    return false;
-  //  }
-
   double f = ((current_ASPL-new_ASPL)*nodes*(nodes-1)) / groups;
   double p = ((double)(current_total_over_length - new_total_over_length)) / groups;
-  double w = (p==0)? pre_w : fabs(f/p) * ALPHA + pre_w * (1-ALPHA);
-  pre_w = w;
-  double diff = f + p * w * weight;
-  // //   p *= (max_temp - temp) / (max_temp - min_temp);
+  double s = (p==0)? pre_s : fabs(f/p) * ALPHA + pre_s * (1-ALPHA);
+  pre_s = s;
+  double diff = f + p * s * weight;
 
-  //double diff = f + p * weight;
   if(enable_detect_temp){
-    *max_diff_energy = MAX(*max_diff_energy, -1.0 * f);
+    if(ii > DEFAULT_NCALCS-DETECT_TEMP_NCALCS)
+      *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);
   }
   else{
     if(diff >= 0){

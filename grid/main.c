@@ -376,7 +376,7 @@ int main(int argc, char *argv[])
   int namelen, diam = 0, low_diam = 0, random_seed = 0, cooling_cycle = 1;
   int based_width = 0, based_height = 0, width = 0, height = 0;
   int length = -1, low_length = NOT_DEFINED, groups = 1;
-  long long ncalcs = 10000, num_accepts = 0;
+  long long ncalcs = DEFAULT_NCALCS, num_accepts = 0;
   double ASPL = 0, low_ASPL = 0, cooling_rate = 0, weight = 1.0;
   double max_temp = 100.0, min_temp = 0.217147, fixed_temp = 0, max_diff_energy = 0;
   FILE *fp = NULL;
@@ -408,7 +408,9 @@ int main(int argc, char *argv[])
   else if(enable_fixed_temp && min_temp > fixed_temp)
     ERROR("The value in -F (%f) must be less than min_temp in -c (%f)\n",
 	  fixed_temp, min_temp);
-  
+  else if(enable_detect_temp && ncalcs != DEFAULT_NCALCS)
+    ERROR("When -D is used, -n must be %d\n", DEFAULT_NCALCS);
+
   srandom(random_seed);
   int based_lines = count_lines(infname);
   int lines       = (enable_halfway)? based_lines : based_lines * groups;

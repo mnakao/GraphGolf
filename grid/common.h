@@ -44,6 +44,8 @@ int rank, procs, threads;
 #define MAX_FILENAME_LENGTH 255
 #define NUM_OF_PROGRESS     100
 #define SKIP_ACCEPTS        10000
+#define DEFAULT_NCALCS      10000
+#define DETECT_TEMP_NCALCS  100
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define ABORT()        do{MPI_Abort(MPI_COMM_WORLD, 1); exit(1);}while(0)
