@@ -12,7 +12,6 @@ static bool confirm_dist(const int v, const int w, const int width, const int he
   return ((dx + dy) <= r);  
 }
 
-/* execute two-toggle operation */
 static void two_toggle_operation(const int width, const int height, const int d, const int r,
 				 const int E, int list_E[])
 {
@@ -423,8 +422,8 @@ int main(int argc, char *argv[])
   else if(enable_fixed_temp && min_temp > fixed_temp)
     ERROR("The value in -F (%f) must be less than min_temp in -c (%f)\n",
 	  fixed_temp, min_temp);
-  else if(enable_infname && (width == 0 || height == 0 || degree == 0))
-    ERROR("Set -W and -H and -D");
+  else if(!enable_infname && (width == 0 || height == 0 || degree == 0))
+    ERROR("Set -W, -H, and -D\n");
 
   if(enable_detect_temp)
     ncalcs = DEFAULT_NCALCS;
