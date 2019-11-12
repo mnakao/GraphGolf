@@ -1,18 +1,16 @@
 #include "common.h"
 
-static bool confirm_dist(const int v, const int w, const int width, const int height, const int r)
+static bool confirm_dist(const int v, const int w, const int height, const int r)
 {
-  int vx = v % width; int vy = v / width;
-  int wx = w % width; int wy = w / width;
-  int dx = vx - wx;   int dy = vy - wy;
-  
-  if( dx < 0 ) dx *= -1;
-  if( dy < 0 ) dy *= -1;
-
-  return ((dx + dy) <= r);  
+  int w0 = WIDTH (v, height);
+  int h0 = HEIGHT(v, height);
+  int w1 = WIDTH (w, height);
+  int h1 = HEIGHT(w, height);
+  int distance = abs(w0 - w1) + abs(h0 - h1);
+  return (distance <= r);
 }
 
-static void two_toggle_operation(const int width, const int height, const int d, const int r,
+static void two_toggle_operation(const int height, const int d, const int r,
 				 const int E, int list_E[])
 {
   int e1, e2, new_e1_v, new_e1_w, new_e2_v, new_e2_w;
@@ -25,11 +23,11 @@ static void two_toggle_operation(const int width, const int height, const int d,
     } while( e1 == e2 );
     int e1_v = list_E[2*e1]; int e1_w = list_E[2*e1+1];
     int e2_v = list_E[2*e2]; int e2_w = list_E[2*e2+1];
-    if(confirm_dist(e1_v, e2_v, width, height, r) && confirm_dist(e1_w, e2_w, width, height, r)){
+    if(confirm_dist(e1_v, e2_v, height, r) && confirm_dist(e1_w, e2_w, height, r)){
       new_e1_v = e1_v;  new_e1_w = e2_v;
       new_e2_v = e1_w;  new_e2_w = e2_w;
     }
-    else if(confirm_dist(e1_v, e2_w, width, height, r) && confirm_dist(e1_w, e2_v, width, height, r)){
+    else if(confirm_dist(e1_v, e2_w, height, r) && confirm_dist(e1_w, e2_v, height, r)){
       new_e1_v = e1_v;  new_e1_w = e2_w;
       new_e2_v = e1_w;  new_e2_w = e2_v;
     }
@@ -45,31 +43,36 @@ static void two_toggle_operation(const int width, const int height, const int d,
 static void create_lattice(const int lines, int edge[lines*2], const int width, const int height,
 			   const int degree, const int low_length, const int random_seed)
 {
+  for(int i=0;i<lines*2;i++)
+    edge[i] = -1;
+  
   // Inherited from http://research.nii.ac.jp/graphgolf/c/create-lattice.c
   int nodes = width * height, eid = 0;
-  for(int y=0;y<height;y++){
-    for(int x=0;x<width/2;x++){
+  for(int x=0;x<width/2;x++){
+    for(int y=0;y<height;y++){
       for(int k=0;k<degree;k++){
-        edge[2*eid]   = y*width + 2*x;
-        edge[2*eid+1] = y*width + 2*x+1;
+	edge[2*eid]   = y + 2 * x * height;
+	edge[2*eid+1] = edge[2*eid] + height;
         eid++;
       }
     }
   }
 
   if(width%2 == 1){
-    for(int y=0;y<width/2;y++){
+    for(int y=0;y<height/2;y++){
       for(int k=0;k<degree;k++){
-        edge[2*eid]   = width*2*y + width-1;
-        edge[2*eid+1] = width*(2*y+1) + width-1;
+	edge[2*eid]   = (width - 1) * height + y*2;
+	edge[2*eid+1] = edge[2*eid] + 1;
         eid++;
       }
     }
 
     /* add self-loop */
-    for(int k=0;k<degree/2;k++){
-      edge[2*eid] = edge[2*eid+1] = nodes - 1;
-      eid++;
+    if(height%2 == 1){
+      for(int k=0;k<degree/2;k++){
+	edge[2*eid] = edge[2*eid+1] = nodes - 1;
+	eid++;
+      }
     }
   }
 
@@ -78,27 +81,24 @@ static void create_lattice(const int lines, int edge[lines*2], const int width, 
   int diam;
   double ASPL;
   create_rotate_hash(nodes, height, width, 1, rotate_hash);
-
   while(1){
-    two_toggle_operation(width, height, degree, low_length, lines, edge);
+    two_toggle_operation(height, degree, low_length, lines, edge);
     create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
     if(evaluation(nodes, degree, 1, (const int* restrict)adjacency,
-    		  nodes, height, height, &diam, &ASPL, true, rotate_hash))
+  		  nodes, height, height, &diam, &ASPL, true, rotate_hash))
       break;
   }
-
+  
   free(adjacency);
   free(rotate_hash);
-  
-  /* output edges */
-  //  for(eid=0;eid<lines;eid++){
-  //    int x1 = edge[2*eid]   % width;
-  //    int y1 = edge[2*eid]   / width;
-  //    int x2 = edge[2*eid+1] % width;
-  //    int y2 = edge[2*eid+1] / width;
-  //    printf("%u,%u %u,%u\n", x1, y1, x2, y2);
-  //  }
-  //  EXIT(0);
+
+  //  for(int i=0;i<lines;i++)
+  //    printf("%d,%d %d,%d\n",
+  //  	   WIDTH (edge[i*2],   height),
+  //  	   HEIGHT(edge[i*2],   height),
+  //  	   WIDTH (edge[i*2+1], height),
+  //  	   HEIGHT(edge[i*2+1], height));
+  //    EXIT(0);
 }
 
 static void print_help(char *argv)
@@ -447,7 +447,18 @@ int main(int argc, char *argv[])
     based_height = height;
     based_width  = width;
   }
-  
+
+  // check distance
+  for(int i=0;i<lines;i++){
+      int w0 = WIDTH (edge[i][0], height);
+      int h0 = HEIGHT(edge[i][0], height);
+      int w1 = WIDTH (edge[i][1], height);
+      int h1 = HEIGHT(edge[i][1], height);
+      int tmp_length = abs(w0 - w1) + abs(h0 - h1);
+      if(tmp_length > low_length)
+	ERROR("Distance is over\n");
+  }
+
   if(nodes <= degree)
     ERROR("n is too small. nodes = %d degree = %d\n", nodes, degree);
   else if(based_width*based_height != based_nodes)
