@@ -101,6 +101,7 @@ static bool bfs(const int nodes, const int degree, const int adjacency[nodes][de
       
       sum += (distance[i] + 1) * groups;
     }
+    if(reached == false) break;
   }
   
   free(bitmap);

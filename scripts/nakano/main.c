@@ -41,11 +41,9 @@ static void two_toggle_operation(const int height, const int d, const int r,
 }
 
 static void create_lattice(const int lines, int edge[lines*2], const int width, const int height,
-			   const int degree, const int low_length, const int random_seed)
+			   const int degree, const int low_length, const int random_seed,
+			   const long long ncalcs)
 {
-  for(int i=0;i<lines*2;i++)
-    edge[i] = -1;
-  
   // Inherited from http://research.nii.ac.jp/graphgolf/c/create-lattice.c
   int nodes = width * height, eid = 0;
   for(int x=0;x<width/2;x++){
@@ -61,7 +59,7 @@ static void create_lattice(const int lines, int edge[lines*2], const int width, 
   if(width%2 == 1){
     for(int y=0;y<height/2;y++){
       for(int k=0;k<degree;k++){
-	edge[2*eid]   = (width - 1) * height + y*2;
+	edge[2*eid]   = (width - 1) * height + 2 * y;
 	edge[2*eid+1] = edge[2*eid] + 1;
         eid++;
       }
@@ -80,25 +78,30 @@ static void create_lattice(const int lines, int edge[lines*2], const int width, 
   int *rotate_hash = malloc(nodes * sizeof(int));
   int diam;
   double ASPL;
+  long long num = 0;
   create_rotate_hash(nodes, height, width, 1, rotate_hash);
   while(1){
     two_toggle_operation(height, degree, low_length, lines, edge);
     create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
     if(evaluation(nodes, degree, 1, (const int* restrict)adjacency,
-  		  nodes, height, height, &diam, &ASPL, true, rotate_hash))
+      		  nodes, height, height, &diam, &ASPL, true, rotate_hash))
       break;
+    else if(num > ncalcs/(2*lines))
+      ERROR("Cannot create initial file\n");
+    else
+      num++;
   }
   
   free(adjacency);
   free(rotate_hash);
-
-  //  for(int i=0;i<lines;i++)
-  //    printf("%d,%d %d,%d\n",
-  //  	   WIDTH (edge[i*2],   height),
-  //  	   HEIGHT(edge[i*2],   height),
-  //  	   WIDTH (edge[i*2+1], height),
-  //  	   HEIGHT(edge[i*2+1], height));
-  //    EXIT(0);
+  /*
+    for(int i=0;i<lines;i++)
+      printf("%d,%d %d,%d\n",
+    	   WIDTH (edge[i*2],   height),
+    	   HEIGHT(edge[i*2],   height),
+    	   WIDTH (edge[i*2+1], height),
+    	   HEIGHT(edge[i*2+1], height));*/
+  //  EXIT(0);
 }
 
 static void print_help(char *argv)
@@ -442,7 +445,7 @@ int main(int argc, char *argv[])
     degree = 2 * lines / nodes;
   }
   else{
-    create_lattice(lines, (int *)edge, width, height, degree, low_length, random_seed);
+    create_lattice(lines, (int *)edge, width, height, degree, low_length, random_seed, ncalcs);
     based_nodes  = nodes = width  *height;
     based_height = height;
     based_width  = width;
