@@ -451,6 +451,17 @@ int main(int argc, char *argv[])
     based_width  = width;
   }
 
+  // For some reason, if there is no code below, it may end in error.
+  int n[nodes];
+  for(int i=0;i<nodes;i++)
+    n[i] = 0;
+
+  for(int i=0;i<lines;i++){
+    n[edge[i][0]]++;
+    n[edge[i][1]]++;
+  }
+  //
+
   // check distance
   for(int i=0;i<lines;i++){
       int w0 = WIDTH (edge[i][0], height);
