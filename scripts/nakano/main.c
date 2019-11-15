@@ -97,7 +97,6 @@ static void create_lattice(const int lines, int edge[lines*2], const int width, 
   free(adjacency);
   free(rotate_hash);
   free(tmp_edge);
-  
   /*  for(int i=0;i<lines;i++)
     printf("%d,%d %d,%d\n",
     	   WIDTH (edge[i*2],   height),
@@ -274,41 +273,42 @@ static int dist(const int x1, const int y1, const int x2, const int y2)
 static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int m, const int n,
 				     const int degree, const int length)
 {
-  int mn = m * n;
-  int maxhop = MAX((m+n-2)/length,log(mn/degree)/log(degree-1)-1)+2;
-  double sum = 0, current = degree;
-  double moore[maxhop+1], hist[maxhop+1], mh[maxhop+1];
-
-  for(int i=0;i<=maxhop;i++)
-    moore[i] = hist[i] = 0;
-
+  int moore[m*n], hist[m*n], mh[m*n];
+  int mn = m * n, current = degree, ii;
+  double sum = 0;
+  
   moore[0] = 1;
   moore[1] = degree + 1;
-  for(int i=2;i<=maxhop;i++){
+  for(ii=2;;ii++){
     current = current * (degree - 1);
-    moore[i] = moore[i-1] + current;
-    if(moore[i] > mn)
-      moore[i] = mn;
+    moore[ii] = moore[ii-1] + current;
+    if(moore[ii] >= mn){
+      moore[ii] = mn;
+      break;
+    }
   }
 
+  int maxhop = MAX((m+n-2+(length-1))/length, ii);
+  for(int i=ii+1;i<=maxhop;i++)
+    moore[i] = mn;
+    
   for(int i=0;i<m;i++){
     for(int j=0;j<n;j++){
       for(int k=0;k<=maxhop;k++)
-        hist[k]=0;
-
+	hist[k] = 0;
+      
       for (int i2=0;i2<m;i2++)
-        for(int j2=0;j2<n;j2++)
-          hist[(dist(i,j,i2,j2)+length-1)/length]++;
-
+	for(int j2=0;j2<n;j2++)
+	  hist[(dist(i,j,i2,j2)+length-1)/length]++;
+	
       for(int k=1;k<=maxhop;k++)
-        hist[k] += hist[k-1];
-
+	hist[k] += hist[k-1];
+	
       for(int k=0;k<=maxhop;k++)
-        mh[k] = MIN(hist[k], moore[k]);
-
-      for(int k=1;k<=maxhop;k++){
-        sum += (double)(mh[k] - mh[k-1]) * k;
-      }
+	mh[k] = MIN(hist[k], moore[k]);
+	
+      for(int k=1;k<=maxhop;k++)
+	sum += (double)(mh[k] - mh[k-1]) * k;
     }
   }
 
@@ -406,9 +406,9 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &procs);
   MPI_Get_processor_name(hostname, &namelen);
-  //  PRINT_R0("Run on %s\n", hostname);
-  //  time_t t = time(NULL);
-  //  PRINT_R0("%s---\n", ctime(&t));
+  PRINT_R0("Run on %s\n", hostname);
+  time_t t = time(NULL);
+  PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
   set_args(argc, argv, infname, &low_length, outfname, &enable_outfname, &random_seed,
@@ -473,7 +473,6 @@ int main(int argc, char *argv[])
 
   int *rotate_hash = malloc(nodes * sizeof(int));
   create_rotate_hash(nodes, height, width, groups, rotate_hash);
-
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
   check_current_edge(nodes, lines, edge, low_ASPL, groups, height, based_height, enable_bfs, rotate_hash);
   double average_time = estimated_elapse_time(nodes, lines, (const int (*)[2])edge,

@@ -236,31 +236,32 @@ static int dist(const int x1, const int y1, const int x2, const int y2)
   return(abs(x1 - x2) + abs(y1 - y2));
 }
 
-// This function is inherited from "http://research.nii.ac.jp/graphgolf/pl/lower-lattice.pl".
 static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int m, const int n,
-				     const int degree, const int length)
+                                     const int degree, const int length)
 {
-  int mn = m * n;
-  int maxhop = MAX((m+n-2)/length,log(mn/degree)/log(degree-1)-1)+2;
-  double sum = 0, current = degree;
-  double moore[maxhop+1], hist[maxhop+1], mh[maxhop+1];
-
-  for(int i=0;i<=maxhop;i++)
-    moore[i] = hist[i] = 0;
+  int moore[m*n], hist[m*n], mh[m*n];
+  int mn = m * n, current = degree, ii;
+  double sum = 0;
 
   moore[0] = 1;
   moore[1] = degree + 1;
-  for(int i=2;i<=maxhop;i++){
+  for(ii=2;;ii++){
     current = current * (degree - 1);
-    moore[i] = moore[i-1] + current;
-    if(moore[i] > mn)
-      moore[i] = mn;
+    moore[ii] = moore[ii-1] + current;
+    if(moore[ii] >= mn){
+      moore[ii] = mn;
+      break;
+    }
   }
+
+  int maxhop = MAX((m+n-2+(length-1))/length, ii);
+  for(int i=ii+1;i<=maxhop;i++)
+    moore[i] = mn;
 
   for(int i=0;i<m;i++){
     for(int j=0;j<n;j++){
       for(int k=0;k<=maxhop;k++)
-        hist[k]=0;
+        hist[k] = 0;
 
       for (int i2=0;i2<m;i2++)
         for(int j2=0;j2<n;j2++)
@@ -272,9 +273,8 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
       for(int k=0;k<=maxhop;k++)
         mh[k] = MIN(hist[k], moore[k]);
 
-      for(int k=1;k<=maxhop;k++){
+      for(int k=1;k<=maxhop;k++)
         sum += (double)(mh[k] - mh[k-1]) * k;
-      }
     }
   }
 

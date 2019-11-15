@@ -98,4 +98,7 @@ extern int HEIGHT(const int v, const int height);
 extern int ROTATE(const int v, const int height, const int width, const int groups, const int degree);
 extern void printb(const uint64_t v);
 extern void create_rotate_hash(const int nodes, const int height, const int width, const int groups, int *rotate_hash);
+extern bool bfs(const int nodes, const int degree, const int adjacency[nodes][degree],
+		const int based_nodes, const int height, const int based_height, const int groups,
+		int *diameter, double *ASPL, int *num);
 #endif
