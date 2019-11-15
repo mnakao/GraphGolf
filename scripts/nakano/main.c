@@ -1,41 +1,41 @@
 #include "common.h"
 
-static bool confirm_dist(const int v, const int w, const int height, const int r)
+static bool confirm_dist(const int v, const int w, const int height, const int low_length)
 {
   int w0 = WIDTH (v, height);
   int h0 = HEIGHT(v, height);
   int w1 = WIDTH (w, height);
   int h1 = HEIGHT(w, height);
   int distance = abs(w0 - w1) + abs(h0 - h1);
-  return (distance <= r);
+  return (distance <= low_length);
 }
 
-static void two_toggle_operation(const int height, const int d, const int r,
-				 const int E, int list_E[])
+static void two_toggle_operation(const int height, const int low_length,
+				 const int lines, int* edge)
 {
-  int e1, e2, new_e1_v, new_e1_w, new_e2_v, new_e2_w;
-  unsigned int round = 0;
+  int round = 0;
 
-  while(round < 2*E){
+  while(round < 2*lines){
+    int e1, e2, new_e1_v, new_e1_w, new_e2_v, new_e2_w;
     do{
-      e1 = random() % E;
-      e2 = random() % E;
+      e1 = random() % lines;
+      e2 = random() % lines;
     } while( e1 == e2 );
-    int e1_v = list_E[2*e1]; int e1_w = list_E[2*e1+1];
-    int e2_v = list_E[2*e2]; int e2_w = list_E[2*e2+1];
-    if(confirm_dist(e1_v, e2_v, height, r) && confirm_dist(e1_w, e2_w, height, r)){
+    int e1_v = edge[2*e1]; int e1_w = edge[2*e1+1];
+    int e2_v = edge[2*e2]; int e2_w = edge[2*e2+1];
+    if(confirm_dist(e1_v, e2_v, height, low_length) && confirm_dist(e1_w, e2_w, height, low_length)){
       new_e1_v = e1_v;  new_e1_w = e2_v;
       new_e2_v = e1_w;  new_e2_w = e2_w;
     }
-    else if(confirm_dist(e1_v, e2_w, height, r) && confirm_dist(e1_w, e2_v, height, r)){
+    else if(confirm_dist(e1_v, e2_w, height, low_length) && confirm_dist(e1_w, e2_v, height, low_length)){
       new_e1_v = e1_v;  new_e1_w = e2_w;
       new_e2_v = e1_w;  new_e2_w = e2_v;
     }
     else{
       continue;
     }
-    list_E[2*e1] = new_e1_v;  list_E[2*e1+1] = new_e1_w;
-    list_E[2*e2] = new_e2_v;  list_E[2*e2+1] = new_e2_w;
+    edge[2*e1] = new_e1_v;  edge[2*e1+1] = new_e1_w;
+    edge[2*e2] = new_e2_v;  edge[2*e2+1] = new_e2_w;
     round++;
   }
 }
@@ -81,7 +81,7 @@ static void create_lattice(const int lines, int edge[lines*2], const int width, 
   long long num = 0;
   create_rotate_hash(nodes, height, width, 1, rotate_hash);
   while(1){
-    two_toggle_operation(height, degree, low_length, lines, edge);
+    two_toggle_operation(height, low_length, lines, edge);
     create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
     if(evaluation(nodes, degree, 1, (const int* restrict)adjacency,
       		  nodes, height, height, &diam, &ASPL, true, rotate_hash))
