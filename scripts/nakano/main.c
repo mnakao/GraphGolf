@@ -13,9 +13,7 @@ static bool confirm_dist(const int v, const int w, const int height, const int l
 static void two_toggle_operation(const int height, const int low_length,
 				 const int lines, int* edge)
 {
-  int round = 0;
-
-  while(round < 2*lines){
+  while(1){
     int e1, e2, new_e1_v, new_e1_w, new_e2_v, new_e2_w;
     do{
       e1 = random() % lines;
@@ -36,7 +34,7 @@ static void two_toggle_operation(const int height, const int low_length,
     }
     edge[2*e1] = new_e1_v;  edge[2*e1+1] = new_e1_w;
     edge[2*e2] = new_e2_v;  edge[2*e2+1] = new_e2_w;
-    round++;
+    break;
   }
 }
 
@@ -76,32 +74,38 @@ static void create_lattice(const int lines, int edge[lines*2], const int width, 
 
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   int *rotate_hash = malloc(nodes * sizeof(int));
-  int diam;
+  int diam, num, tmp_num = nodes;
   double ASPL;
-  long long num = 0;
   create_rotate_hash(nodes, height, width, 1, rotate_hash);
+  int *tmp_edge = malloc(lines*2*sizeof(int));
   while(1){
-    two_toggle_operation(height, low_length, lines, edge);
-    create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
-    if(evaluation(nodes, degree, 1, (const int* restrict)adjacency,
-      		  nodes, height, height, &diam, &ASPL, true, rotate_hash))
+    memcpy(tmp_edge, edge, sizeof(int)*lines*2);
+    two_toggle_operation(height, low_length, lines, tmp_edge);
+    create_adjacency(nodes, lines, degree, (int (*)[2])tmp_edge, adjacency);
+    if(bfs(nodes, degree, (int (*)[degree])adjacency, nodes, height,
+	   height, 1, &diam, &ASPL, &num)){
+      memcpy(edge, tmp_edge, sizeof(int)*lines*2);
       break;
-    else if(num > ncalcs/(2*lines))
-      ERROR("Cannot create initial file\n");
-    else
-      num++;
+    }
+    else{
+      if(num <= tmp_num){
+	tmp_num = num;
+	memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+      }
+    }
   }
-  
   free(adjacency);
   free(rotate_hash);
-  /*
-    for(int i=0;i<lines;i++)
-      printf("%d,%d %d,%d\n",
+  free(tmp_edge);
+  
+  /*  for(int i=0;i<lines;i++)
+    printf("%d,%d %d,%d\n",
     	   WIDTH (edge[i*2],   height),
     	   HEIGHT(edge[i*2],   height),
     	   WIDTH (edge[i*2+1], height),
-    	   HEIGHT(edge[i*2+1], height));*/
-  //  EXIT(0);
+    	   HEIGHT(edge[i*2+1], height));
+	   EXIT(0);
+  */
 }
 
 static void print_help(char *argv)
@@ -402,9 +406,9 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &procs);
   MPI_Get_processor_name(hostname, &namelen);
-  PRINT_R0("Run on %s\n", hostname);
-  time_t t = time(NULL);
-  PRINT_R0("%s---\n", ctime(&t));
+  //  PRINT_R0("Run on %s\n", hostname);
+  //  time_t t = time(NULL);
+  //  PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
   set_args(argc, argv, infname, &low_length, outfname, &enable_outfname, &random_seed,

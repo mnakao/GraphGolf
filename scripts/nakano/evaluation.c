@@ -61,9 +61,9 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
 }
 #endif
 
-static bool bfs(const int nodes, const int degree, const int adjacency[nodes][degree],
-		const int based_nodes, const int height, const int based_height, const int groups,
-		int *diameter, double *ASPL)
+bool bfs(const int nodes, const int degree, const int adjacency[nodes][degree],
+	 const int based_nodes, const int height, const int based_height, const int groups,
+	 int *diameter, double *ASPL, int *num)
 {
   char *bitmap  = malloc(sizeof(char) * nodes);
   int *frontier = malloc(sizeof(int)  * nodes);
@@ -72,7 +72,7 @@ static bool bfs(const int nodes, const int degree, const int adjacency[nodes][de
   bool reached  = true;
   double sum    = 0.0;
   *diameter     = 0;
-
+  *num = 0;
   for(int s=rank;s<based_nodes;s+=procs){
     int s1 = (s/based_height) * height + (s%based_height);
     int num_frontier = 1, level = 0;
@@ -96,8 +96,10 @@ static bool bfs(const int nodes, const int degree, const int adjacency[nodes][de
 
     for(int i=0;i<nodes;i++){
       if(i == s1) continue;
-      if(bitmap[i] == NOT_VISITED)
+      if(bitmap[i] == NOT_VISITED){
         reached = false;
+	(*num)++;
+      }
       
       sum += (distance[i] + 1) * groups;
     }
@@ -198,9 +200,10 @@ bool evaluation(const int nodes, const int degree, const int groups,
   timer_start(TIMER_APSP);
 
   bool flag;
+  int not_used;
   if(enable_bfs)
     flag = bfs(nodes, degree, (int (*)[degree])adjacency, based_nodes, height, 
-	       based_height, groups, diameter, ASPL);
+	       based_height, groups, diameter, ASPL, &not_used);
   else
     flag = matrix_op(nodes, degree, adjacency, based_nodes, height,
 		     based_height, groups, diameter, ASPL, rotate_hash);
