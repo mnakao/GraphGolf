@@ -204,11 +204,9 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   free(adjacency);
 }
 
-static void verfy_graph(const int nodes, const int lines, const int edge[lines][2],
-			const bool enable_verify)
+static void verfy_graph(const int nodes, const int lines, const int edge[lines][2])
 {
-  if(enable_verify) 
-    PRINT_R0("Verifing a regular graph... ");
+  PRINT_R0("Verifing a regular graph... ");
   
   int n[nodes];
   for(int i=0;i<nodes;i++)
@@ -219,9 +217,6 @@ static void verfy_graph(const int nodes, const int lines, const int edge[lines][
     n[edge[i][1]]++;
   }
 
-  //  For some reason, if there is no code above, it may end in error.
-  if(!enable_verify) return;
-  
   int degree = 2 * lines / nodes;
   for(int i=0;i<nodes;i++)
     if(degree != n[i])
@@ -468,7 +463,8 @@ int main(int argc, char *argv[])
     create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes, lines,
 			  height, width, based_height, enable_bfs, rotate_hash);
 
-  verfy_graph(nodes, lines, edge, enable_verify);
+  if(enable_verify)
+    verfy_graph(nodes, lines, edge);
 
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
   check_current_edge(nodes, lines, edge, low_ASPL, groups, height, based_height, enable_bfs, rotate_hash);
@@ -539,7 +535,8 @@ int main(int argc, char *argv[])
   }
 
   check_length(lines, height, low_length, edge);
-  verfy_graph(nodes, lines, edge, enable_verify);
+  if(enable_verify)
+    verfy_graph(nodes, lines, edge);
 
   MPI_Finalize();
   return 0;
