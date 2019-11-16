@@ -89,10 +89,12 @@ extern bool evaluation(const int nodes, const int degree, const int groups, cons
 extern void copy_edge(int *restrict buf1, const int *restrict buf2, const int n);
 extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes,
 			const int based_lines, const int height, const int width, const int groups, const int start_line,
-			const int low_length, const double max_temp, const double min_temp, const double temp, const long long ii);
+			const int low_length, const long long ii);
 extern void output_edge(const int lines, const int edge[lines*2], const int height);
 extern bool check_symmetric_edge(const int lines, const int edge[lines][2], const int height, const int width,
 				 const int based_height, const int groups);
+extern void exchange_edge(const int nodes, const int lines, const int degree, int edge[lines][2],
+			  const int height, const int width, const int groups, const int low_length, const long long ii);
 //extern bool check_vector(const int groups, const int lines, const int height, const int edge[lines][2]);
 extern int WIDTH (const int v, const int height);
 extern int HEIGHT(const int v, const int height);

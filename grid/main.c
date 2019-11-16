@@ -260,7 +260,7 @@ static void create_lattice(const int nodes, const int lines, const int width, co
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
   int min_num = simple_bfs(nodes, degree, adjacency);
-  
+
   while(1){
     memcpy(tmp_edge, edge, sizeof(int)*lines*2);
     simple_exchange_edge(height, low_length, lines, tmp_edge);
@@ -272,12 +272,17 @@ static void create_lattice(const int nodes, const int lines, const int width, co
     }
     else{
       if(tmp_num <= min_num){
-        min_num = tmp_num;
-        memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+	min_num = tmp_num;
+	memcpy(edge, tmp_edge, sizeof(int)*lines*2);
       }
     }
   }
   free(tmp_edge);
+  free(adjacency);
+  //  for(int i=0;i<lines;i++)
+  //    printf("%d,%d %d,%d\n", WIDTH(edge[i*2], height), HEIGHT(edge[i*2], height),
+  //	   WIDTH(edge[i*2+1], height), HEIGHT(edge[i*2+1], height));
+  //EXIT(0);
 }
 
 static int count_lines(const char *fname)
@@ -337,7 +342,8 @@ static int max_node_num(const int lines, const int edge[lines*2])
 
 static void create_symmetric_edge(int *edge, const int based_nodes, const int based_lines,
 				  const int groups, const int degree, const int nodes, const int lines,
-				  const int height, const int width, const int based_height)
+				  const int height, const int width, const int based_height,
+				  const int low_length)
 {
   for(int i=0;i<based_lines;i++)
     for(int j=0;j<2;j++)
@@ -362,14 +368,10 @@ static void create_symmetric_edge(int *edge, const int based_nodes, const int ba
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
   int min_num = simple_bfs(nodes, degree, adjacency);
-  
+
   while(1){
-    int start_line = getRandom(lines);
     memcpy(tmp_edge, edge, sizeof(int)*lines*2);
-    if(! edge_1g_opt((int (*)[2])tmp_edge, nodes, lines, degree, based_nodes, based_lines, height, width,
-                     groups, start_line, NOT_USED, (double)NOT_USED, (double)NOT_USED,
-                     (double)NOT_USED, NOT_USED))
-      continue;
+    exchange_edge(nodes, lines, degree, (int (*)[2])tmp_edge, height, width, groups, low_length, 0);
     create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
     int tmp_num = simple_bfs(nodes, degree, adjacency);
     if(tmp_num == 0){
@@ -383,7 +385,7 @@ static void create_symmetric_edge(int *edge, const int based_nodes, const int ba
       }
     }
   }
-  
+  free(tmp_edge);
   free(adjacency);
 }
 
@@ -537,8 +539,8 @@ int main(int argc, char *argv[])
   bool enable_hill_climbing = false, enable_detect_temp = false, enable_bfs = false, enable_halfway = false;
   char hostname[MPI_MAX_PROCESSOR_NAME];
   char infname[MAX_FILENAME_LENGTH] = {NOT_C_DEFINED}, outfname[MAX_FILENAME_LENGTH] = {NOT_C_DEFINED};
-  int random_seed = 0, cooling_cycle = 1, groups = 1, namelen;
-  int based_lines, lines, based_width, based_height, based_nodes, nodes, *edge;
+  int random_seed = 0, cooling_cycle = 1, groups = 1;
+  int namelen, based_lines, lines, based_width, based_height, based_nodes, nodes, *edge;
   int diam = NOT_N_DEFINED, low_diam = NOT_N_DEFINED, degree = NOT_N_DEFINED;
   int width = NOT_N_DEFINED, height = NOT_N_DEFINED, low_length = NOT_N_DEFINED;
   long long ncalcs = DEFAULT_NCALCS, num_accepts = 0;
@@ -550,9 +552,9 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &procs);
   MPI_Get_processor_name(hostname, &namelen);
-  PRINT_R0("Run on %s\n", hostname);
-  time_t t = time(NULL);
-  PRINT_R0("%s---\n", ctime(&t));
+  //  PRINT_R0("Run on %s\n", hostname);
+  //  time_t t = time(NULL);
+  //  PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
   set_args(argc, argv, infname, &low_length, outfname, &random_seed, &ncalcs, &max_temp,
@@ -571,9 +573,9 @@ int main(int argc, char *argv[])
   else if(enable_hill_climbing && enable_max_temp)        ERROR("Both -Y and -w cannot be used.\n");
   else if(enable_hill_climbing && enable_min_temp)        ERROR("Both -Y and -c cannot be used.\n");
   else if(enable_hill_climbing && enable_detect_temp)     ERROR("Both -Y and -d cannot be used.\n");
-  else if(enable_detect_temp && ncalcs != DEFAULT_NCALCS) ERROR("When -D is used, -n must be %d\n", DEFAULT_NCALCS);
+  else if(enable_detect_temp && ncalcs != DEFAULT_NCALCS) ERROR("When -d is used, -n must be %d\n", DEFAULT_NCALCS);
   else if(!enable_infname && !enable_whd)                 ERROR("Must set -f or \"-W and -H and -D\"\n");
-  else if(enable_halfway && !enable_infname)              ERROR("Must set both -M or -f\n");
+  else if(enable_halfway && !enable_infname)              ERROR("Must set both -M and -f\n");
   if(!enable_max_temp) max_temp = 100.0;
   if(!enable_min_temp) min_temp = 0.217147;
   if(max_temp == min_temp)                                ERROR("The same values in -w and -c.\n");
@@ -634,28 +636,33 @@ int main(int argc, char *argv[])
       based_width  = width/2;
       based_height = height/2;
     }
-    create_lattice(based_nodes, based_lines, based_width, based_height, degree, low_length, edge);
   }
   
   if(groups == 4 && (based_width != based_height))
     ERROR("When g = 4, width(%d) must be equal to height(%d).\n", based_width, based_height);
-  else if(based_nodes%groups != 0)
-    ERROR("based_nodes must be divisible by groups\n");
-  else if(based_lines%groups != 0)
-     ERROR("based_lines must be divisible by groups\n");
-  
-  if(nodes <= degree)
+  else if(groups == 4 && width%2 != 0 && height%2 != 0)
+    ERROR("When g = 4, width(%d) and height(%d) are divisible by 2.\n", width, height);
+  else if(groups == 2 && height%2 != 0)
+    ERROR("When g = 2, height(%d) os divisible by 2.\n", height);
+  else if(nodes%groups != 0)
+    ERROR("nodes(%d) must be divisible by groups(%d)\n", nodes, groups);
+  else if(lines%groups != 0)
+    ERROR("lines(%d) must be divisible by groups(%d)\n", lines, groups);
+  else if(nodes <= degree)
     ERROR("n is too small. nodes = %d degree = %d\n", nodes, degree);
   else if(based_width*based_height != based_nodes)
     ERROR("Not grid graph (width %d x height %d != nodes %d).\n", based_width, based_height, based_nodes);
 
+  if(!enable_infname)
+    create_lattice(based_nodes, based_lines, based_width, based_height, degree, low_length, edge);
+    
   int *rotate_hash = malloc(nodes * sizeof(int));
   create_rotate_hash(nodes, height, width, groups, rotate_hash);
   
   if(!enable_halfway && groups != 1)
     create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes,
-			  lines, height, width, based_height);
-
+			  lines, height, width, based_height, low_length);
+  // kokomade check shita
   verfy_graph(nodes, lines, edge);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
   check_current_edge(nodes, lines, edge, low_ASPL, groups, height, based_height, enable_bfs, rotate_hash);
