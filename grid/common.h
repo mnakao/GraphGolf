@@ -22,7 +22,8 @@
 int rank, procs, threads;
 #define VISITED         1
 #define NOT_VISITED     0
-#define NOT_DEFINED    -1
+#define NOT_N_DEFINED  -1
+#define NOT_C_DEFINED '\n'
 #define NUM_TIMERS      4
 #define TIMER_SA        0
 #define TIMER_ESTIMATED 1
@@ -56,18 +57,14 @@ int rank, procs, threads;
 #define OUTPUT_EDGE()  do{output_edge(lines, edge, height);}while(0)
 
 extern void swap(int *a, int *b);
-extern long long sa(const int nodes, const int lines, double temp, const long long ncalcs,
-		    const double cooling_rate, const int low_diam, const double low_ASPL, const bool enable_bfs, 
-		    const bool enable_hill_climbing, const bool enable_detect_temp, double *max_diff_energy,
-		    const double max_temp, const double min_temp, const bool enable_fixed_temp, const double fixed_temp,
-		    int edge[lines][2], int *diam, double *ASPL,
-		    const int cooling_cyclie, long long *num_accepts, const int width, const int based_width,
-		    const int height, const int based_height, int *length, const int low_length, const double weight,
-		    const int groups, const bool enable_restricted_2opt, const int *rotate_hash);
-extern bool check_degree(const int nodes, const int lines, int edge[lines][2]);
-extern void check_current_edge(const int nodes, const int lines, int edge[lines][2], const double low_ASPL, const int groups,
+extern long long sa(const int nodes, const int lines, const long long ncalcs, const double cooling_rate, const int low_diam,
+		    const double low_ASPL, const bool enable_bfs, const bool enable_hill_climbing, const bool enable_detect_temp,
+		    double *max_diff_energy, const double max_temp, const double min_temp, const double fixed_temp, int edge[lines*2],
+		    int *diam, double *ASPL, const int cooling_cyclie, long long *num_accepts, const int width, const int based_width,
+		    const int height, const int based_height, const int low_length, const int groups, const int *rotate_hash);
+extern void check_current_edge(const int nodes, const int lines, const int edge[lines*2], const double low_ASPL, const int groups,
 			       const int height, const int based_height, const bool enable_bfs, const int *rotate_hash);
-extern double estimated_elapse_time(const int nodes, const int lines, const int edge[lines][2],
+extern double estimated_elapse_time(const int nodes, const int lines, const int edge[lines*2],
 				    const int height, const int width, const int based_height,
 				    const int groups, const int low_length, const bool enable_bfs, const int *rotate_hash);
 extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);
@@ -92,9 +89,8 @@ extern bool evaluation(const int nodes, const int degree, const int groups, cons
 extern void copy_edge(int *restrict buf1, const int *restrict buf2, const int n);
 extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes,
 			const int based_lines, const int height, const int width, const int groups, const int start_line,
-			const int low_length, const bool enable_restricted_2opt, const double max_temp, const double min_temp,
-			const double temp, const long long ii);
-extern void output_edge(const int lines, const int edge[lines][2], const int height);
+			const int low_length, const double max_temp, const double min_temp, const double temp, const long long ii);
+extern void output_edge(const int lines, const int edge[lines*2], const int height);
 extern bool check_symmetric_edge(const int lines, const int edge[lines][2], const int height, const int width,
 				 const int based_height, const int groups);
 //extern bool check_vector(const int groups, const int lines, const int height, const int edge[lines][2]);

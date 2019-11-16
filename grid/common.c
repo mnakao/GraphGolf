@@ -76,71 +76,6 @@ int ROTATE(const int v, const int height, const int width,
   }
 }
 
-bool check_degree(const int nodes, const int lines, int edge[lines][2])
-{
-  int n[nodes];
-  for(int i=0;i<nodes;i++)
-    n[i] = 0;
-  
-  for(int i=0;i<lines;i++){
-    n[edge[i][0]]++;
-    n[edge[i][1]]++;
-  }
-  
-  int degree = 2 * lines / nodes;
-  for(int i=0;i<nodes;i++)
-    if(degree != n[i])
-      return false;
-
-  return true;
-}
-
-/*
-// diameter is not implemented
-bool check_vector(const int groups, const int lines, const int height, const int edge[lines][2])
-{
-  if(groups == 1) return true;
-  
-  int based_lines = lines/groups;
-  int vec_w[lines], vec_h[lines];
-  for(int i=0;i<lines;i++){
-    vec_w[i] = WIDTH (edge[i][0], height) - WIDTH (edge[i][1], height);
-    vec_h[i] = HEIGHT(edge[i][0], height) - HEIGHT(edge[i][1], height);
-  }
-
-  if(groups == 2){
-    for(int i=0;i<based_lines;i++)
-      if(!(vec_w[i] == -1 * vec_w[based_lines+i] && vec_h[i] == -1 * vec_h[based_lines+i]))
-	return false;
-  }
-  else{ // groups == 4
-    for(int i=0;i<based_lines;i++){
-      if(!(vec_w[i] == -1 * vec_h[based_lines+i] && vec_h[i] == vec_w[based_lines+i])){
-	printf("%d,%d %d,%d\n", WIDTH (edge[i][0], height),HEIGHT(edge[i][0], height),WIDTH (edge[i][1], height),HEIGHT(edge[i][1], height));
-	printf("%d,%d %d,%d\n", WIDTH (edge[based_lines+i][0], height),HEIGHT(edge[based_lines+i][0], height),
-	       WIDTH (edge[based_lines+i][1], height),HEIGHT(edge[based_lines+i][1], height));
-	printf("A\n");
-        return false;
-      }
-      if(!(vec_w[i] == -1 * vec_w[based_lines*2+i] && vec_h[i] == -1 * vec_h[based_lines*2+i])){
-	printf("%d,%d %d,%d\n", WIDTH (edge[i][0], height),HEIGHT(edge[i][0], height),WIDTH (edge[i][1], height),HEIGHT(edge[i][1], height));
-	printf("%d,%d %d,%d\n", WIDTH (edge[based_lines*2+i][0], height),HEIGHT(edge[based_lines*2+i][0], height),
-               WIDTH (edge[based_lines*2+i][1], height),HEIGHT(edge[based_lines*2+i][1], height));
-	printf("B\n");
-	return false;
-      }
-      if(!(vec_w[i] == vec_h[based_lines*3+i] && vec_h[i] == -1 * vec_w[based_lines*3+i])){
-	printf("%d %d : %d %d\n", vec_w[i], vec_w[based_lines+i], vec_h[i], vec_h[based_lines+i]);
-	printf("C\n");
-        return false;
-      }
-    }
-  }
-  
-  return true;
-}
-*/
-
 bool check_symmetric_edge(const int lines, const int edge[lines][2], const int height,
 			  const int width, const int based_height, const int groups)
 {
@@ -216,11 +151,11 @@ bool check_symmetric_edge(const int lines, const int edge[lines][2], const int h
   return true;
 }
 
-void output_edge(const int lines, const int edge[lines][2], const int height)
+void output_edge(const int lines, const int edge[lines*2], const int height)
 {
   for(int i=0;i<lines;i++)
-    printf("%d,%d %d,%d\n", WIDTH(edge[i][0], height), HEIGHT(edge[i][0], height),
-	   WIDTH(edge[i][1], height), HEIGHT(edge[i][1], height));
+    printf("%d,%d %d,%d\n", WIDTH(edge[i*2], height), HEIGHT(edge[i*2], height),
+	   WIDTH(edge[i*2+1], height), HEIGHT(edge[i*2+1], height));
 }
 
 void copy_edge(int *restrict buf1, const int *restrict buf2, const int n)
@@ -353,8 +288,7 @@ bool check_duplicate_current_edge(const int lines, const int edge[lines][2], con
 
 bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes,
 		 const int based_lines, const int height, const int width, const int groups, const int start_line,
-		 const int low_length, const bool enable_restricted_2opt, const double max_temp, const double min_temp,
-		 const double temp, const long long ii)
+		 const int low_length, const double max_temp, const double min_temp, const double temp, const long long ii)
 {
   assert(groups != 1);
   
@@ -363,18 +297,6 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     int t = start_line + based_lines * i;
     tmp_line[i] = (t < lines)? t : t - lines;
   }
-#ifdef _DEBUG_MSG
-  printf("edge_1g_opt: ii = %lld\n", ii);
-  for(int i=0;i<groups;i++)
-    printf("line[%d] = %d\n", i, tmp_line[i]);
-
-  for(int i=0;i<groups;i++)
-    printf("Before: %d,%d-%d,%d\n",
-	   WIDTH (edge[tmp_line[i]][0], height),
-  	   HEIGHT(edge[tmp_line[i]][0], height),
-  	   WIDTH (edge[tmp_line[i]][1], height),
-  	   HEIGHT(edge[tmp_line[i]][1], height));
-#endif
 
   if(edge[tmp_line[0]][0] == edge[tmp_line[groups-1]][1] ||
      edge[tmp_line[0]][1] == edge[tmp_line[groups-1]][0])  // A cycle is composed of four edges.
@@ -452,29 +374,13 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     if(e != tmp_edge[groups/2][1]) break;
   }
   
-  if(enable_restricted_2opt){
-    int tmp_length = -1;
-    for(int i=0;i<groups;i+=2){
-      int w0 = WIDTH (tmp_edge[i][0], height);
-      int h0 = HEIGHT(tmp_edge[i][0], height);
-      int w1 = WIDTH (tmp_edge[i][1], height);
-      int h1 = HEIGHT(tmp_edge[i][1], height);
-      tmp_length = MAX(tmp_length, abs(w0 - w1) + abs(h0 - h1));
-    }
-    double alpha = 1.0 - (max_temp-temp)/(max_temp-min_temp);
-    int threshold = (int)((height+width-low_length)*alpha) + low_length;
-    if(tmp_length > threshold){
-      int prev_length = -1;
-      for(int i=0;i<groups;i+=2){
-	int w0 = WIDTH (edge[tmp_line[i]][0], height);
-	int h0 = HEIGHT(edge[tmp_line[i]][0], height);
-	int w1 = WIDTH (edge[tmp_line[i]][1], height);
-	int h1 = HEIGHT(edge[tmp_line[i]][1], height);
-	prev_length = MAX(prev_length, abs(w0 - w1) + abs(h0 - h1));
-      }
-      if(tmp_length > prev_length)
-	return false;
-    }
+  for(int i=0;i<groups;i+=2){
+    int w0 = WIDTH (tmp_edge[i][0], height);
+    int h0 = HEIGHT(tmp_edge[i][0], height);
+    int w1 = WIDTH (tmp_edge[i][1], height);
+    int h1 = HEIGHT(tmp_edge[i][1], height);
+    if(abs(w0 - w1) + abs(h0 - h1) > low_length)
+      return false;
   }
   
   if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups, 
@@ -487,15 +393,6 @@ bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int deg
     edge[tmp_line[i]][1] = tmp_edge[i][1];
   }
   
-#ifdef _DEBUG_MSG
-  for(int i=0;i<groups;i++)
-    printf("After : %d,%d-%d,%d\n",
-  	   WIDTH (edge[tmp_line[i]][0], height),
-  	   HEIGHT(edge[tmp_line[i]][0], height),
-  	   WIDTH (edge[tmp_line[i]][1], height),
-  	   HEIGHT(edge[tmp_line[i]][1], height));
-#endif
-
   return true;
 }
 
