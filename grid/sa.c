@@ -11,13 +11,11 @@ static void print_result_header()
   PRINT_R0("Cur. Dia. GAP    Best Dia. GAP    Accept Rate\n");
 }
 
-static void print_results(const long long num, const double temp, 
+static void print_results(const long long num, const double temp, const bool enable_fixed_temp,
 			  const double current_ASPL, const double best_ASPL, const double low_ASPL,
 			  const int current_diam,    const int best_diam,    const int low_diam,
 			  const double fixed_temp,   const long long accepts, const long long rejects)
 {
-  bool enable_fixed_temp = (fixed_temp == NOT_N_DEFINED);
-  
   if(enable_fixed_temp)
     PRINT_R0("%8lld\t%f\t", num, fixed_temp);
   else
@@ -30,6 +28,116 @@ static void print_results(const long long num, const double temp,
   else
     PRINT_R0("-\n");
 }  
+
+static bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes,
+			const int based_lines, const int height, const int width, const int groups, const int start_line,
+			const int low_length, const long long ii)
+{
+  assert(groups != 1);
+
+  int tmp_line[groups], tmp_edge[groups][2], pattern;
+  for(int i=0;i<groups;i++){
+    int t = start_line + based_lines * i;
+    tmp_line[i] = (t < lines)? t : t - lines;
+  }
+
+  if(edge[tmp_line[0]][0] == edge[tmp_line[groups-1]][1] ||
+     edge[tmp_line[0]][1] == edge[tmp_line[groups-1]][0])  // A cycle is composed of four edges.
+    return false;
+
+  int s = edge[tmp_line[0]][0];
+  int e = edge[tmp_line[groups/2]][1];
+  while(1){
+    pattern = getRandom(groups+1);
+    if(groups == 2){
+      if(pattern != groups){
+        tmp_edge[0][0] = s;
+        tmp_edge[1][0] = ROTATE(s, height, width, groups, 180);
+
+        if(pattern == 0){
+          tmp_edge[0][1] = e;
+          tmp_edge[1][1] = ROTATE(e, height, width, groups, 180);
+        }
+        else{ // pattern == 1
+          tmp_edge[0][1] = ROTATE(e, height, width, groups, 180);
+          tmp_edge[1][1] = e;
+        }
+      }
+      else{ // pattern == groups
+        tmp_edge[0][0] = s;
+        tmp_edge[0][1] = ROTATE(s, height, width, groups, 180);
+        tmp_edge[1][0] = ROTATE(e, height, width, groups, 180);
+        tmp_edge[1][1] = e;
+      }
+    }
+    else{ // groups == 4
+      if(pattern != groups){
+        tmp_edge[0][0] = s;
+        tmp_edge[1][0] = ROTATE(s, height, width, groups, 90);
+        tmp_edge[2][0] = ROTATE(s, height, width, groups, 180);
+        tmp_edge[3][0] = ROTATE(s, height, width, groups, 270);
+
+        if(pattern == 0){
+          tmp_edge[0][1] = e;
+          tmp_edge[1][1] = ROTATE(e, height, width, groups, 90);
+          tmp_edge[2][1] = ROTATE(e, height, width, groups, 180);
+          tmp_edge[3][1] = ROTATE(e, height, width, groups, 270);
+        }
+        else if(pattern == 1){
+          tmp_edge[0][1] = ROTATE(e, height, width, groups, 270);
+          tmp_edge[1][1] = e;
+          tmp_edge[2][1] = ROTATE(e, height, width, groups, 90);
+          tmp_edge[3][1] = ROTATE(e, height, width, groups, 180);
+        }
+        else if(pattern == 2){
+          tmp_edge[0][1] = ROTATE(e, height, width, groups, 180);
+          tmp_edge[1][1] = ROTATE(e, height, width, groups, 270);
+          tmp_edge[2][1] = e;
+          tmp_edge[3][1] = ROTATE(e, height, width, groups, 90);
+        }
+        else{ // pattern == 3
+	  tmp_edge[0][1] = ROTATE(e, height, width, groups, 90);
+          tmp_edge[1][1] = ROTATE(e, height, width, groups, 180);
+          tmp_edge[2][1] = ROTATE(e, height, width, groups, 270);
+          tmp_edge[3][1] = e;
+        }
+      }
+      else{ // pattern == groups
+        tmp_edge[0][0] = s;
+        tmp_edge[0][1] = ROTATE(s, height, width, groups, 180);
+        tmp_edge[1][0] = ROTATE(s, height, width, groups, 90);
+        tmp_edge[1][1] = ROTATE(s, height, width, groups, 270);
+        //
+        tmp_edge[2][0] = e;
+        tmp_edge[2][1] = ROTATE(e, height, width, groups, 180);
+        tmp_edge[3][0] = ROTATE(e, height, width, groups, 90);
+        tmp_edge[3][1] = ROTATE(e, height, width, groups, 270);
+      }
+    }
+    if(e != tmp_edge[groups/2][1]) break;
+  }
+
+  for(int i=0;i<groups;i+=2){
+    int w0 = WIDTH (tmp_edge[i][0], height);
+    int h0 = HEIGHT(tmp_edge[i][0], height);
+    int w1 = WIDTH (tmp_edge[i][1], height);
+    int h1 = HEIGHT(tmp_edge[i][1], height);
+    if(abs(w0 - w1) + abs(h0 - h1) > low_length)
+      return false;
+  }
+
+  if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups,
+                                   (const int (*)[2])tmp_edge, tmp_line,
+                                   groups, D_1G_OPT, (pattern==groups)))
+     return false;
+
+  for(int i=0;i<groups;i++){
+    edge[tmp_line[i]][0] = tmp_edge[i][0];
+    edge[tmp_line[i]][1] = tmp_edge[i][1];
+  }
+
+  return true;
+}
 
 void exchange_edge(const int nodes, const int lines, const int degree, int edge[lines][2],
 		   const int height, const int width, const int groups, const int low_length, const long long ii)
@@ -121,31 +229,40 @@ void exchange_edge(const int nodes, const int lines, const int degree, int edge[
   }
 }
 
-static bool accept(const double new_ASPL, const double current_ASPL, const double fixed_temp,
-		   const double temp, const int nodes, const int degree, const bool enable_hill_climbing,
-		   const bool enable_detect_temp, double *max_diff_energy, long long *total_accepts,
+static bool accept(const double new_ASPL, const double current_ASPL, const int new_diam, const int current_diam,
+		   const double fixed_temp, const double temp, const int nodes, const int degree,
+		   const bool enable_hill_climbing, const bool enable_detect_temp, double *max_diff_energy, long long *total_accepts,
 		   long long *accepts, long long *rejects, const double max_temp, const double min_temp,
-		   const int groups, const long long ii)
+		   const int groups, const bool enable_fixed_temp, const long long ii)
 {
   double diff = ((current_ASPL-new_ASPL)*nodes*(nodes-1)) / groups;
 
   if(enable_detect_temp){
-    if(ii > DEFAULT_NCALCS-DETECT_TEMP_NCALCS)
-      *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);
+    *max_diff_energy = MAX(*max_diff_energy, -1.0 * diff);
   }
   else{
-    if(diff >= 0){
+    if(new_diam < current_diam){
       *accepts += 1;
       if(ii > SKIP_ACCEPTS) *total_accepts +=1;
       return true;
     }
-    if(enable_hill_climbing){ // Only accept when new_ASPL <= current_ASPL.
+    else if(new_diam > current_diam){
       *rejects += 1;
       return false;
     }
+    else{ //  new_diam == current_diam
+      if(diff >= 0){
+	*accepts += 1;
+	if(ii > SKIP_ACCEPTS) *total_accepts +=1;
+	return true;
+      }
+      if(enable_hill_climbing){ // Only accept when new_ASPL <= current_ASPL.
+	*rejects += 1;
+	return false;
+      }
+    }
   }
 
-  bool enable_fixed_temp = (fixed_temp == NOT_N_DEFINED);
   double v = (enable_fixed_temp)? exp(diff/fixed_temp) : exp(diff/temp);
 
   if(v > uniform_rand()){
@@ -159,25 +276,25 @@ static bool accept(const double new_ASPL, const double current_ASPL, const doubl
   }
 }
 
-long long sa(const int nodes, const int lines, const long long ncalcs, const double cooling_rate,
+long long sa(const int nodes, const int lines, const int degree, const int based_nodes, const long long ncalcs, const double cooling_rate,
 	     const int low_diam,  const double low_ASPL, const bool enable_bfs, const bool enable_hill_climbing,
 	     const bool enable_detect_temp, double *max_diff_energy, const double max_temp, const double min_temp,
 	     const double fixed_temp, int edge[lines*2], int *diam, double *ASPL, const int cooling_cycle,
 	     long long *total_accepts, const int width, const int based_width, const int height, const int based_height,
-	     const int low_length, const int groups, const int *rotate_hash)
+	     const int low_length, const int groups, const int *rotate_hash, const bool enable_fixed_temp)
 {
-  int degree = 2*lines/nodes, best_edge[lines][2], tmp_edge[lines][2], based_nodes = nodes/groups;
   long long ii, accepts = 0, rejects = 0;
   double temp = max_temp;
-
-  // Create adjacency matrix
+  int (*best_edge)[2] = malloc(sizeof(int)*lines*2);
+  int (*tmp_edge)[2]  = malloc(sizeof(int)*lines*2);
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
+  
   create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
   evaluation(nodes, degree, groups, (const int* restrict)adjacency,
 	     based_nodes, height, based_height, diam, ASPL, enable_bfs, rotate_hash);
 
-  double current_ASPL = *ASPL,   best_ASPL   = *ASPL,   tmp_ASPL;
-  int current_diam    = *diam,   best_diam   = *diam,   tmp_diam;
+  double current_ASPL = *ASPL, best_ASPL = *ASPL, tmp_ASPL;
+  int current_diam    = *diam, best_diam = *diam, tmp_diam;
   int print_interval  = (ncalcs/NUM_OF_PROGRESS == 0)? 1 : ncalcs/NUM_OF_PROGRESS;
   copy_edge((int *)best_edge, (int *)edge, lines*2);
     
@@ -186,10 +303,8 @@ long long sa(const int nodes, const int lines, const long long ncalcs, const dou
 
   for(ii=0;ii<ncalcs;ii++){
     if(ii % print_interval == 0 && !enable_detect_temp){
-      print_results(ii, temp,
-		    current_ASPL,   best_ASPL,   low_ASPL,
-		    current_diam,   best_diam,   low_diam,
-		    fixed_temp,	    accepts,     rejects);
+      print_results(ii, temp, enable_fixed_temp, current_ASPL, best_ASPL,low_ASPL,
+		    current_diam, best_diam, low_diam, fixed_temp, accepts, rejects);
       accepts = 0;
       rejects = 0;
     }
@@ -197,29 +312,29 @@ long long sa(const int nodes, const int lines, const long long ncalcs, const dou
     while(1){
       copy_edge((int *)tmp_edge, (int *)edge, lines*2);
       exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, low_length, ii);
+      create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
       if(evaluation(nodes, degree, groups, (const int* restrict)adjacency,
 		    based_nodes, height, based_height, &tmp_diam, &tmp_ASPL, enable_bfs, rotate_hash))
 	break;
     }
 
-    if(accept(tmp_ASPL, current_ASPL, fixed_temp, temp, nodes, degree,
-	      enable_hill_climbing, enable_detect_temp, max_diff_energy,
-	      total_accepts, &accepts, &rejects, max_temp, min_temp, groups, ii)){
-      current_ASPL   = tmp_ASPL;
-      current_diam   = tmp_diam;
+    if(accept(tmp_ASPL, current_ASPL, tmp_diam, current_diam, fixed_temp, temp, nodes, degree,
+	      enable_hill_climbing, enable_detect_temp, max_diff_energy, total_accepts,
+	      &accepts, &rejects, max_temp, min_temp, groups, enable_fixed_temp, ii)){
+      current_ASPL = tmp_ASPL;
+      current_diam = tmp_diam;
       copy_edge((int *)edge, (int *)tmp_edge, lines*2);
       if((best_diam > tmp_diam) ||
 	 (best_diam == tmp_diam && best_ASPL > tmp_ASPL)){
 	copy_edge((int *)best_edge, (int *)edge, lines*2);
-	best_diam   = tmp_diam;
-	best_ASPL   = tmp_ASPL;
+	best_diam = tmp_diam;
+	best_ASPL = tmp_ASPL;
       }
 
       if(best_diam == low_diam && best_ASPL == low_ASPL){
 	if(!enable_detect_temp){
-	  print_results(ii, temp, current_ASPL, best_ASPL, low_ASPL,
-			current_diam, best_diam, low_diam,
-			fixed_temp, accepts, rejects);
+	  print_results(ii, temp, enable_fixed_temp, current_ASPL, best_ASPL, low_ASPL,
+			current_diam, best_diam, low_diam, fixed_temp, accepts, rejects);
 	  PRINT_R0("---\nFound optimum solution.\n");
 	}
 	break;
@@ -233,6 +348,9 @@ long long sa(const int nodes, const int lines, const long long ncalcs, const dou
   *ASPL   = best_ASPL;
   *diam   = best_diam;
   copy_edge((int *)edge, (int *)best_edge, lines*2);
+  
+  free(best_edge);
+  free(tmp_edge);
   free(adjacency);
 
   return ii;
@@ -267,12 +385,12 @@ double estimated_elapse_time(const int nodes, const int lines, const int edge[li
 
 // This function is mainly useful when groupe is 1.
 void check_current_edge(const int nodes, const int lines, const int edge[lines*2], const double low_ASPL,
-			const int groups, const int height, const int based_height, const bool enable_bfs,
-			const int *rotate_hash)
+			const int low_diam, const int groups, const int height, const int based_height,
+			const bool enable_bfs, const int *rotate_hash)
 {
   int based_nodes = nodes / groups;
   int degree = 2 * lines / nodes;
-  int diam;    // Not use
+  int diam;
   double ASPL;
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
 
@@ -281,7 +399,7 @@ void check_current_edge(const int nodes, const int lines, const int edge[lines*2
 		  based_nodes, height, based_height, &diam, &ASPL, enable_bfs, rotate_hash))
     ERROR("The input file has a node which is never reached by another node.\n");
 
-  if(ASPL == low_ASPL)
+  if(diam == low_diam && ASPL == low_ASPL)
     END("The input file has already optimum solution.\n");
 
   free(adjacency);

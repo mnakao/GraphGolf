@@ -66,7 +66,7 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
     case 'c':
       *min_temp = atof(optarg);
       if(*min_temp <= 0)
-        ERROR("MIN value > 0\n");
+        ERROR("-c value > 0\n");
       break;
     case 'g':
       *groups = atoi(optarg);
@@ -389,7 +389,8 @@ static void create_symmetric_edge(int *edge, const int based_nodes, const int ba
   free(adjacency);
 }
 
-static void verfy_graph(const int nodes, const int lines, const int edge[lines*2])
+static void verfy_graph(const int nodes, const int lines, const int edge[lines*2],
+			const int height, const int low_length)
 {
   PRINT_R0("Verifing a regular graph... ");
   
@@ -407,6 +408,17 @@ static void verfy_graph(const int nodes, const int lines, const int edge[lines*2
     if(degree != n[i])
       ERROR("NG\nNot regular graph. degree = %d n[%d] = %d.\n", degree, i, n[i]);
 
+  for(int i=0;i<lines;i++){
+    int w0 = WIDTH (edge[i*2  ], height);
+    int h0 = HEIGHT(edge[i*2  ], height);
+    int w1 = WIDTH (edge[i*2+1], height);
+    int h1 = HEIGHT(edge[i*2+1], height);
+    int distance = abs(w0 - w1) + abs(h0 - h1);
+    if(distance > low_length)
+      ERROR("Over length in line %d: %d,%d %d,%d : length = %d, distance = %d\n",
+	    i+1, w0, h0, w1, h1, low_length, distance);
+  }
+  
   PRINT_R0("OK\n");
 }
 
@@ -470,7 +482,8 @@ static void output_params(const int degree, const int groups, const int low_leng
 			  const double max_temp, const double min_temp, const long long ncalcs,
 			  const int cooling_cycle, const double cooling_rate, const char *infname,
 			  const char *outfname, const double average_time, const bool enable_hill_climbing,
-			  const int width, const int height, const bool enable_bfs, const double fixed_temp)
+			  const int width, const int height, const bool enable_bfs, const bool enable_fixed_temp,
+			  const double fixed_temp)
 			  
 {
 #ifdef NDEBUG
@@ -489,10 +502,10 @@ static void output_params(const int degree, const int groups, const int low_leng
   if(enable_hill_climbing)
     PRINT_R0("Algorithm: Hill climbing Method\n");
   else{
-    if(fixed_temp == NOT_N_DEFINED)
-      PRINT_R0("Algorithm: Simulated Annealing\n");
-    else
+    if(enable_fixed_temp)
       PRINT_R0("Algorithm: Fixed Temperature Simulated Annealing : %f\n", fixed_temp);
+    else
+      PRINT_R0("Algorithm: Simulated Annealing\n");
     
     PRINT_R0("   MAX Temperature: %f\n", max_temp);
     PRINT_R0("   MIN Temperature: %f\n", min_temp);
@@ -520,20 +533,6 @@ static void output_file(FILE *fp, const int lines, const int height, const int e
 	    WIDTH(edge[i*2+1], height), HEIGHT(edge[i*2+1], height));
 }
 
-static void check_length(const int lines, const int height, const int length, const int edge[lines*2])
-{
-  for(int i=0;i<lines;i++){
-    int w0 = WIDTH (edge[i*2  ], height);
-    int h0 = HEIGHT(edge[i*2  ], height);
-    int w1 = WIDTH (edge[i*2+1], height);
-    int h1 = HEIGHT(edge[i*2+1], height);
-    int distance = abs(w0 - w1) + abs(h0 - h1);
-    if(distance > length)
-      printf("Over length in line %d: %d,%d %d,%d : length = %d, distance = %d\n",
-	     i+1, w0, h0, w1, h1, length, distance);
-  }
-}
-
 int main(int argc, char *argv[])
 {
   bool enable_hill_climbing = false, enable_detect_temp = false, enable_bfs = false, enable_halfway = false;
@@ -541,20 +540,20 @@ int main(int argc, char *argv[])
   char infname[MAX_FILENAME_LENGTH] = {NOT_C_DEFINED}, outfname[MAX_FILENAME_LENGTH] = {NOT_C_DEFINED};
   int random_seed = 0, cooling_cycle = 1, groups = 1;
   int namelen, based_lines, lines, based_width, based_height, based_nodes, nodes, *edge;
-  int diam = NOT_N_DEFINED, low_diam = NOT_N_DEFINED, degree = NOT_N_DEFINED;
+  int diam  = NOT_N_DEFINED, degree = NOT_N_DEFINED, low_diam   = NOT_N_DEFINED;
   int width = NOT_N_DEFINED, height = NOT_N_DEFINED, low_length = NOT_N_DEFINED;
   long long ncalcs = DEFAULT_NCALCS, num_accepts = 0;
-  double ASPL = NOT_N_DEFINED, low_ASPL = NOT_N_DEFINED, cooling_rate = NOT_N_DEFINED, max_diff_energy = NOT_N_DEFINED;
-  double max_temp = NOT_N_DEFINED, min_temp = NOT_N_DEFINED, fixed_temp = NOT_N_DEFINED;
+  double ASPL     = NOT_N_DEFINED, low_ASPL = NOT_N_DEFINED, cooling_rate = NOT_N_DEFINED, max_diff_energy = NOT_N_DEFINED;
+  double max_temp = NOT_N_DEFINED, min_temp = NOT_N_DEFINED, fixed_temp   = NOT_N_DEFINED;
   FILE *fp = NULL;
   
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &procs);
   MPI_Get_processor_name(hostname, &namelen);
-  //  PRINT_R0("Run on %s\n", hostname);
-  //  time_t t = time(NULL);
-  //  PRINT_R0("%s---\n", ctime(&t));
+  PRINT_R0("Run on %s\n", hostname);
+  time_t t = time(NULL);
+  PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
   set_args(argc, argv, infname, &low_length, outfname, &random_seed, &ncalcs, &max_temp,
@@ -562,23 +561,24 @@ int main(int argc, char *argv[])
 	   &enable_bfs, &enable_halfway, &fixed_temp, &width, &height, &degree);
 
   // Set other arguments
-  bool enable_max_temp = (max_temp    != NOT_N_DEFINED);
-  bool enable_min_temp = (min_temp    != NOT_N_DEFINED);
-  bool enable_infname  = (infname[0]  != NOT_C_DEFINED);
-  bool enable_outfname = (outfname[0] != NOT_C_DEFINED);
-  bool enable_whd      = (width != NOT_N_DEFINED && height != NOT_N_DEFINED && degree != NOT_N_DEFINED);
+  bool enable_max_temp   = (max_temp    != NOT_N_DEFINED);
+  bool enable_min_temp   = (min_temp    != NOT_N_DEFINED);
+  bool enable_fixed_temp = (fixed_temp  != NOT_N_DEFINED);
+  bool enable_infname    = (infname[0]  != NOT_C_DEFINED);
+  bool enable_outfname   = (outfname[0] != NOT_C_DEFINED);
+  bool enable_whd        = (width != NOT_N_DEFINED && height != NOT_N_DEFINED && degree != NOT_N_DEFINED);
   
   // Check arguments
   if(low_length == NOT_N_DEFINED)                         ERROR("Must need -R\n");
   else if(enable_hill_climbing && enable_max_temp)        ERROR("Both -Y and -w cannot be used.\n");
   else if(enable_hill_climbing && enable_min_temp)        ERROR("Both -Y and -c cannot be used.\n");
   else if(enable_hill_climbing && enable_detect_temp)     ERROR("Both -Y and -d cannot be used.\n");
-  else if(enable_detect_temp && ncalcs != DEFAULT_NCALCS) ERROR("When -d is used, -n must be %d\n", DEFAULT_NCALCS);
   else if(!enable_infname && !enable_whd)                 ERROR("Must set -f or \"-W and -H and -D\"\n");
   else if(enable_halfway && !enable_infname)              ERROR("Must set both -M and -f\n");
   if(!enable_max_temp) max_temp = 100.0;
   if(!enable_min_temp) min_temp = 0.217147;
   if(max_temp == min_temp)                                ERROR("The same values in -w and -c.\n");
+  if(enable_detect_temp) ncalcs = DEFAULT_DETECT_NCALS;
   
   srandom(random_seed);
   if(enable_infname){
@@ -632,7 +632,7 @@ int main(int argc, char *argv[])
       based_width  = width;
       based_height = height/2;
     }
-    else{ //  if(groups == 4){
+    else{ // groups == 4
       based_width  = width/2;
       based_height = height/2;
     }
@@ -647,25 +647,23 @@ int main(int argc, char *argv[])
   else if(nodes%groups != 0)
     ERROR("nodes(%d) must be divisible by groups(%d)\n", nodes, groups);
   else if(lines%groups != 0)
-    ERROR("lines(%d) must be divisible by groups(%d)\n", lines, groups);
-  else if(nodes <= degree)
-    ERROR("n is too small. nodes = %d degree = %d\n", nodes, degree);
+    ERROR("(nodes*degree/2) must be divisible by groups(%d)\n", groups);
   else if(based_width*based_height != based_nodes)
     ERROR("Not grid graph (width %d x height %d != nodes %d).\n", based_width, based_height, based_nodes);
 
   if(!enable_infname)
     create_lattice(based_nodes, based_lines, based_width, based_height, degree, low_length, edge);
-    
+  
   int *rotate_hash = malloc(nodes * sizeof(int));
   create_rotate_hash(nodes, height, width, groups, rotate_hash);
   
   if(!enable_halfway && groups != 1)
     create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes,
 			  lines, height, width, based_height, low_length);
-  // kokomade check shita
-  verfy_graph(nodes, lines, edge);
+
+  verfy_graph(nodes, lines, edge, height, low_length);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
-  check_current_edge(nodes, lines, edge, low_ASPL, groups, height, based_height, enable_bfs, rotate_hash);
+  check_current_edge(nodes, lines, edge, low_ASPL, low_diam, groups, height, based_height, enable_bfs, rotate_hash);
   double average_time = estimated_elapse_time(nodes, lines, edge, height, width, based_height, groups,
 					      low_length, enable_bfs, rotate_hash);
   if(enable_hill_climbing){
@@ -673,7 +671,7 @@ int main(int argc, char *argv[])
     cooling_rate = 1.0;
   }
   else{
-    cooling_rate = (max_temp != min_temp)? pow(min_temp/max_temp, (double)cooling_cycle/ncalcs) : 1.0;
+    cooling_rate = pow(min_temp/max_temp, (double)cooling_cycle/ncalcs);
   }
 
   if(enable_outfname && rank == 0){
@@ -687,15 +685,15 @@ int main(int argc, char *argv[])
 
   output_params(degree, groups, low_length, random_seed, max_temp, min_temp, ncalcs,
 		cooling_cycle, cooling_rate, infname, outfname, average_time,
-		enable_hill_climbing, width, height, enable_bfs, fixed_temp);
+		enable_hill_climbing, width, height, enable_bfs, enable_fixed_temp, fixed_temp);
 
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
-  long long step = sa(nodes, lines, ncalcs, cooling_rate, low_diam, low_ASPL, enable_bfs,
+  long long step = sa(nodes, lines, degree, based_nodes, ncalcs, cooling_rate, low_diam, low_ASPL, enable_bfs,
 		      enable_hill_climbing, enable_detect_temp, &max_diff_energy, max_temp,
 		      min_temp, fixed_temp, edge, &diam, &ASPL, cooling_cycle, &num_accepts, width,
-		      based_width, height, based_height, low_length, groups, rotate_hash);
+		      based_width, height, based_height, low_length, groups, rotate_hash, enable_fixed_temp);
   timer_stop(TIMER_SA);
   
   if(enable_detect_temp){
@@ -723,8 +721,7 @@ int main(int argc, char *argv[])
     fclose(fp);
   }
 
-  check_length(lines, height, low_length, edge);
-  verfy_graph(nodes, lines, edge);
+  verfy_graph(nodes, lines, edge, height, low_length);
 
   MPI_Finalize();
   return 0;

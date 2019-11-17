@@ -42,11 +42,11 @@ int rank, procs, threads;
 #define CHUNK               64 /* (multiple of sizeof(uint64_t)*8 for AVX-512) */
 #define ESTIMATED_TIMES      5
 
-#define MAX_FILENAME_LENGTH 255
-#define NUM_OF_PROGRESS     100
-#define SKIP_ACCEPTS        10000
-#define DEFAULT_NCALCS      10000
-#define DETECT_TEMP_NCALCS  100
+#define MAX_FILENAME_LENGTH  255
+#define NUM_OF_PROGRESS      100
+#define SKIP_ACCEPTS         10000
+#define DEFAULT_NCALCS       10000
+#define DEFAULT_DETECT_NCALS 100
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define ABORT()        do{MPI_Abort(MPI_COMM_WORLD, 1); exit(1);}while(0)
@@ -57,12 +57,12 @@ int rank, procs, threads;
 #define OUTPUT_EDGE()  do{output_edge(lines, edge, height);}while(0)
 
 extern void swap(int *a, int *b);
-extern long long sa(const int nodes, const int lines, const long long ncalcs, const double cooling_rate, const int low_diam,
+extern long long sa(const int nodes, const int lines, const int degree, const int based_nodes, const long long ncalcs, const double cooling_rate, const int low_diam,
 		    const double low_ASPL, const bool enable_bfs, const bool enable_hill_climbing, const bool enable_detect_temp,
 		    double *max_diff_energy, const double max_temp, const double min_temp, const double fixed_temp, int edge[lines*2],
 		    int *diam, double *ASPL, const int cooling_cyclie, long long *num_accepts, const int width, const int based_width,
-		    const int height, const int based_height, const int low_length, const int groups, const int *rotate_hash);
-extern void check_current_edge(const int nodes, const int lines, const int edge[lines*2], const double low_ASPL, const int groups,
+		    const int height, const int based_height, const int low_length, const int groups, const int *rotate_hash, const bool enable_fixed_temp);
+extern void check_current_edge(const int nodes, const int lines, const int edge[lines*2], const double low_ASPL, const int low_diam, const int groups,
 			       const int height, const int based_height, const bool enable_bfs, const int *rotate_hash);
 extern double estimated_elapse_time(const int nodes, const int lines, const int edge[lines*2],
 				    const int height, const int width, const int based_height,
@@ -87,9 +87,6 @@ extern bool evaluation(const int nodes, const int degree, const int groups, cons
 		       const int based_nodes, const int height, const int based_height, int *diameter, double *ASPL, const bool enable_bfs,
 		       const int *rotate_hash);
 extern void copy_edge(int *restrict buf1, const int *restrict buf2, const int n);
-extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const int degree, const int based_nodes,
-			const int based_lines, const int height, const int width, const int groups, const int start_line,
-			const int low_length, const long long ii);
 extern void output_edge(const int lines, const int edge[lines*2], const int height);
 extern bool check_symmetric_edge(const int lines, const int edge[lines][2], const int height, const int width,
 				 const int based_height, const int groups);
