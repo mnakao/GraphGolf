@@ -191,14 +191,14 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
 
 bool evaluation(const int nodes, const int degree, const int groups,
 		const int* restrict adjacency, const int based_nodes,
-		const int height, const int based_height,
-		int *diameter, double *ASPL, const bool enable_bfs, const int* rotate_hash)
+		const int height, const int based_height, int *diameter, 
+		double *ASPL, const bool enable_bfs, const int* rotate_hash)
 {
   timer_start(TIMER_APSP);
 
   bool flag;
   if(enable_bfs)
-    flag = bfs(nodes, degree, (int (*)[degree])adjacency, based_nodes, height, 
+    flag = bfs(nodes, degree, (const int (*)[degree])adjacency, based_nodes, height, 
 	       based_height, groups, diameter, ASPL);
   else
     flag = matrix_op(nodes, degree, adjacency, based_nodes, height,

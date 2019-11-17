@@ -189,7 +189,7 @@ static int top_down_step(const int nodes, const int num_frontier, const int degr
 }
 #endif
 
-static int simple_bfs(const int nodes, const int degree, const int adjacency[nodes][degree])
+static int simple_bfs(const int nodes, const int degree, int *adjacency)
 {
   char *bitmap  = malloc(sizeof(char) * nodes);
   int *frontier = malloc(sizeof(int)  * nodes);
@@ -204,7 +204,7 @@ static int simple_bfs(const int nodes, const int degree, const int adjacency[nod
 
   while(1){
     num_frontier = top_down_step(nodes, num_frontier, degree,
-				 (int *)adjacency, frontier, next, bitmap);
+				 adjacency, frontier, next, bitmap);
     if(num_frontier == 0) break;
     
     int *tmp = frontier;
@@ -259,13 +259,13 @@ static void create_lattice(const int nodes, const int lines, const int width, co
   int *tmp_edge = malloc(lines*2*sizeof(int));
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
-  int min_num = simple_bfs(nodes, degree, adjacency);
+  int min_num = simple_bfs(nodes, degree, (int *)adjacency);
 
   while(1){
     memcpy(tmp_edge, edge, sizeof(int)*lines*2);
     simple_exchange_edge(height, low_length, lines, tmp_edge);
     create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
-    int tmp_num = simple_bfs(nodes, degree, adjacency);
+    int tmp_num = simple_bfs(nodes, degree, (int *)adjacency);
     if(tmp_num == 0){
       memcpy(edge, tmp_edge, sizeof(int)*lines*2);
       break;
@@ -367,13 +367,13 @@ static void create_symmetric_edge(int *edge, const int based_nodes, const int ba
   int *tmp_edge = malloc(lines*2*sizeof(int));
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
-  int min_num = simple_bfs(nodes, degree, adjacency);
+  int min_num = simple_bfs(nodes, degree, (int *)adjacency);
 
   while(1){
     memcpy(tmp_edge, edge, sizeof(int)*lines*2);
     exchange_edge(nodes, lines, degree, (int (*)[2])tmp_edge, height, width, groups, low_length, 0);
     create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
-    int tmp_num = simple_bfs(nodes, degree, adjacency);
+    int tmp_num = simple_bfs(nodes, degree, (int *)adjacency);
     if(tmp_num == 0){
       memcpy(edge, tmp_edge, sizeof(int)*lines*2);
       break;
