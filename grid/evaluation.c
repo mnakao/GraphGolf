@@ -198,7 +198,7 @@ bool evaluation(const int nodes, const int degree, const int groups,
 
   bool flag;
   if(enable_bfs)
-    flag = bfs(nodes, degree, (int (*)[degree])adjacency, based_nodes, height, 
+    flag = bfs(nodes, degree, (const int (*)[degree])adjacency, based_nodes, height, 
 	       based_height, groups, diameter, ASPL);
   else
     flag = matrix_op(nodes, degree, adjacency, based_nodes, height,
