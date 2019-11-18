@@ -102,6 +102,16 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
   }
 }
 
+static int count_loop(const int lines, const int *edge)
+{
+  int num = 0;
+  for(int i=0;i<lines;i++)
+    if(edge[i*2] == edge[i*2+1])
+      num++;
+
+  return num;
+}
+
 static bool confirm_dist(const int v, const int w, const int height, const int low_length)
 {
   int w0 = WIDTH (v, height);
@@ -255,11 +265,31 @@ static void create_lattice(const int nodes, const int lines, const int width, co
       }
     }
   }
-  
+
+  for(int i=0;i<lines;i++)
+    simple_exchange_edge(height, low_length, lines, edge);
+
   int *tmp_edge = malloc(lines*2*sizeof(int));
+  int min_num   = count_loop(lines, edge);
+  while(1){
+    memcpy(tmp_edge, edge, sizeof(int)*lines*2);
+    simple_exchange_edge(height, low_length, lines, tmp_edge);
+    int tmp_num = count_loop(lines, tmp_edge);
+    if(tmp_num == 0){
+      memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+      break;
+    }
+    else{
+      if(tmp_num <= min_num){
+        min_num = tmp_num;
+        memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+      }
+    }
+  }
+
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
-  int min_num = simple_bfs(nodes, degree, (int *)adjacency);
+  min_num = simple_bfs(nodes, degree, (int *)adjacency);
 
   while(1){
     memcpy(tmp_edge, edge, sizeof(int)*lines*2);
@@ -279,6 +309,9 @@ static void create_lattice(const int nodes, const int lines, const int width, co
   }
   free(tmp_edge);
   free(adjacency);
+
+  // Note: Init graph may have loops and duplicate edges.
+  
   //  for(int i=0;i<lines;i++)
   //    printf("%d,%d %d,%d\n", WIDTH(edge[i*2], height), HEIGHT(edge[i*2], height),
   //	   WIDTH(edge[i*2+1], height), HEIGHT(edge[i*2+1], height));
