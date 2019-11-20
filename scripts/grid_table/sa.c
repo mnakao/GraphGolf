@@ -52,66 +52,66 @@ static bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const 
     if(groups == 2){
       if(pattern != groups){
         tmp_edge[0][0] = s;
-        tmp_edge[1][0] = ROTATE(s, height, width, groups, 180);
+        tmp_edge[1][0] = ROTATE(s, nodes, groups, 180);
 
         if(pattern == 0){
           tmp_edge[0][1] = e;
-          tmp_edge[1][1] = ROTATE(e, height, width, groups, 180);
+          tmp_edge[1][1] = ROTATE(e, nodes, groups, 180);
         }
         else{ // pattern == 1
-          tmp_edge[0][1] = ROTATE(e, height, width, groups, 180);
+          tmp_edge[0][1] = ROTATE(e, nodes, groups, 180);
           tmp_edge[1][1] = e;
         }
       }
       else{ // pattern == groups
         tmp_edge[0][0] = s;
-        tmp_edge[0][1] = ROTATE(s, height, width, groups, 180);
-        tmp_edge[1][0] = ROTATE(e, height, width, groups, 180);
+        tmp_edge[0][1] = ROTATE(s, nodes, groups, 180);
+        tmp_edge[1][0] = ROTATE(e, nodes, groups, 180);
         tmp_edge[1][1] = e;
       }
     }
     else{ // groups == 4
       if(pattern != groups){
         tmp_edge[0][0] = s;
-        tmp_edge[1][0] = ROTATE(s, height, width, groups, 90);
-        tmp_edge[2][0] = ROTATE(s, height, width, groups, 180);
-        tmp_edge[3][0] = ROTATE(s, height, width, groups, 270);
+        tmp_edge[1][0] = ROTATE(s, nodes, groups, 90);
+        tmp_edge[2][0] = ROTATE(s, nodes, groups, 180);
+        tmp_edge[3][0] = ROTATE(s, nodes, groups, 270);
 
         if(pattern == 0){
           tmp_edge[0][1] = e;
-          tmp_edge[1][1] = ROTATE(e, height, width, groups, 90);
-          tmp_edge[2][1] = ROTATE(e, height, width, groups, 180);
-          tmp_edge[3][1] = ROTATE(e, height, width, groups, 270);
+          tmp_edge[1][1] = ROTATE(e, nodes, groups, 90);
+          tmp_edge[2][1] = ROTATE(e, nodes, groups, 180);
+          tmp_edge[3][1] = ROTATE(e, nodes, groups, 270);
         }
         else if(pattern == 1){
-          tmp_edge[0][1] = ROTATE(e, height, width, groups, 270);
+          tmp_edge[0][1] = ROTATE(e, nodes, groups, 270);
           tmp_edge[1][1] = e;
-          tmp_edge[2][1] = ROTATE(e, height, width, groups, 90);
-          tmp_edge[3][1] = ROTATE(e, height, width, groups, 180);
+          tmp_edge[2][1] = ROTATE(e, nodes, groups, 90);
+          tmp_edge[3][1] = ROTATE(e, nodes, groups, 180);
         }
         else if(pattern == 2){
-          tmp_edge[0][1] = ROTATE(e, height, width, groups, 180);
-          tmp_edge[1][1] = ROTATE(e, height, width, groups, 270);
+          tmp_edge[0][1] = ROTATE(e, nodes, groups, 180);
+          tmp_edge[1][1] = ROTATE(e, nodes, groups, 270);
           tmp_edge[2][1] = e;
-          tmp_edge[3][1] = ROTATE(e, height, width, groups, 90);
+          tmp_edge[3][1] = ROTATE(e, nodes, groups, 90);
         }
         else{ // pattern == 3
-	  tmp_edge[0][1] = ROTATE(e, height, width, groups, 90);
-          tmp_edge[1][1] = ROTATE(e, height, width, groups, 180);
-          tmp_edge[2][1] = ROTATE(e, height, width, groups, 270);
+	  tmp_edge[0][1] = ROTATE(e, nodes, groups, 90);
+          tmp_edge[1][1] = ROTATE(e, nodes, groups, 180);
+          tmp_edge[2][1] = ROTATE(e, nodes, groups, 270);
           tmp_edge[3][1] = e;
         }
       }
       else{ // pattern == groups
         tmp_edge[0][0] = s;
-        tmp_edge[0][1] = ROTATE(s, height, width, groups, 180);
-        tmp_edge[1][0] = ROTATE(s, height, width, groups, 90);
-        tmp_edge[1][1] = ROTATE(s, height, width, groups, 270);
+        tmp_edge[0][1] = ROTATE(s, nodes, groups, 180);
+        tmp_edge[1][0] = ROTATE(s, nodes, groups, 90);
+        tmp_edge[1][1] = ROTATE(s, nodes, groups, 270);
         //
         tmp_edge[2][0] = e;
-        tmp_edge[2][1] = ROTATE(e, height, width, groups, 180);
-        tmp_edge[3][0] = ROTATE(e, height, width, groups, 90);
-        tmp_edge[3][1] = ROTATE(e, height, width, groups, 270);
+        tmp_edge[2][1] = ROTATE(e, nodes, groups, 180);
+        tmp_edge[3][0] = ROTATE(e, nodes, groups, 90);
+        tmp_edge[3][1] = ROTATE(e, nodes, groups, 270);
       }
     }
     if(e != tmp_edge[groups/2][1]) break;
@@ -281,7 +281,7 @@ long long sa(const int nodes, const int lines, const int degree, const int based
 	     const bool enable_detect_temp, double *max_diff_energy, const double max_temp, const double min_temp,
 	     const double fixed_temp, int edge[lines*2], int *diam, double *ASPL, const int cooling_cycle,
 	     long long *total_accepts, const int width, const int based_width, const int height, const int based_height,
-	     const int low_length, const int groups, const int *rotate_hash, const bool enable_fixed_temp)
+	     const int low_length, const int groups, const bool enable_fixed_temp)
 {
   long long ii, accepts = 0, rejects = 0;
   double temp = max_temp;
@@ -291,7 +291,7 @@ long long sa(const int nodes, const int lines, const int degree, const int based
   
   create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
   evaluation(nodes, degree, groups, (const int* restrict)adjacency,
-	     based_nodes, height, based_height, diam, ASPL, enable_bfs, rotate_hash);
+	     based_nodes, height, based_height, diam, ASPL, enable_bfs);
 
   double current_ASPL = *ASPL, best_ASPL = *ASPL, tmp_ASPL;
   int current_diam    = *diam, best_diam = *diam, tmp_diam;
@@ -314,7 +314,7 @@ long long sa(const int nodes, const int lines, const int degree, const int based
       exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, low_length, ii);
       create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
       if(evaluation(nodes, degree, groups, (const int* restrict)adjacency,
-		    based_nodes, height, based_height, &tmp_diam, &tmp_ASPL, enable_bfs, rotate_hash))
+		    based_nodes, height, based_height, &tmp_diam, &tmp_ASPL, enable_bfs))
 	break;
     }
 
@@ -358,7 +358,7 @@ long long sa(const int nodes, const int lines, const int degree, const int based
 
 double estimated_elapse_time(const int nodes, const int lines, const int edge[lines*2],
 			     const int height, const int width, const int based_height, const int groups,
-			     const int low_length, const bool enable_bfs, const int *rotate_hash)
+			     const int low_length, const bool enable_bfs)
 {
   int based_nodes = nodes / groups;
   int degree = 2 * lines / nodes;
@@ -373,7 +373,7 @@ double estimated_elapse_time(const int nodes, const int lines, const int edge[li
     exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, low_length, i);
     create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
     evaluation(nodes, degree, groups, (const int* restrict)adjacency,
-	       based_nodes, height, based_height, &diam, &ASPL, enable_bfs, rotate_hash);
+	       based_nodes, height, based_height, &diam, &ASPL, enable_bfs);
   }
   timer_stop(TIMER_ESTIMATED);
   
@@ -386,7 +386,7 @@ double estimated_elapse_time(const int nodes, const int lines, const int edge[li
 // This function is mainly useful when groupe is 1.
 void check_current_edge(const int nodes, const int lines, const int edge[lines*2], const double low_ASPL,
 			const int low_diam, const int groups, const int height, const int based_height,
-			const bool enable_bfs, const int *rotate_hash)
+			const bool enable_bfs)
 {
   int based_nodes = nodes / groups;
   int degree = 2 * lines / nodes;
@@ -396,7 +396,7 @@ void check_current_edge(const int nodes, const int lines, const int edge[lines*2
 
   create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
   if(! evaluation(nodes, degree, groups, (const int* restrict)adjacency,
-		  based_nodes, height, based_height, &diam, &ASPL, enable_bfs, rotate_hash))
+		  based_nodes, height, based_height, &diam, &ASPL, enable_bfs))
     ERROR("The input file has a node which is never reached by another node.\n");
 
   if(diam == low_diam && ASPL == low_ASPL)

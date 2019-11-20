@@ -312,11 +312,6 @@ static void create_lattice(const int nodes, const int lines, const int width, co
   }
   free(tmp_edge);
   free(adjacency);
-
-  //  for(int i=0;i<lines;i++)
-  //    printf("%d,%d %d,%d\n", WIDTH(edge[i*2], height), HEIGHT(edge[i*2], height),
-  //	   WIDTH(edge[i*2+1], height), HEIGHT(edge[i*2+1], height));
-  //EXIT(0);
 }
 
 static int count_lines(const char *fname)
@@ -377,23 +372,19 @@ static int max_node_num(const int lines, const int edge[lines*2])
 static void create_symmetric_edge(int *edge, const int based_nodes, const int based_lines,
 				  const int groups, const int degree, const int nodes, const int lines,
 				  const int height, const int width, const int based_height,
-				  const int low_length)
+				  const int based_width, const int low_length)
 {
-  for(int i=0;i<based_lines;i++)
-    for(int j=0;j<2;j++)
-      edge[i*2+j] = WIDTH(edge[i*2+j], based_height) * height + HEIGHT(edge[i*2+j], based_height);
-
   if(groups == 2){
     for(int i=0;i<based_lines;i++)
       for(int j=0;j<2;j++)
-        edge[(based_lines+i)*2+j] = ROTATE(edge[i*2+j], height, width, groups, 180);
+	edge[(based_lines+i)*2+j] = ROTATE(edge[i*2+j], nodes, groups, 180);
   }
   else if(groups == 4){
     for(int i=0;i<based_lines;i++){
       for(int j=0;j<2;j++){
-	edge[(based_lines  +i)*2+j] = ROTATE(edge[i*2+j], height, width, groups, 90);
-	edge[(based_lines*2+i)*2+j] = ROTATE(edge[i*2+j], height, width, groups, 180);
-	edge[(based_lines*3+i)*2+j] = ROTATE(edge[i*2+j], height, width, groups, 270);
+	edge[(based_lines  +i)*2+j] = ROTATE(edge[i*2+j], nodes, groups,  90);
+	edge[(based_lines*2+i)*2+j] = ROTATE(edge[i*2+j], nodes, groups, 180);
+	edge[(based_lines*3+i)*2+j] = ROTATE(edge[i*2+j], nodes, groups, 270);
       }
     }
   }
@@ -560,11 +551,15 @@ static void output_params(const int degree, const int groups, const int low_leng
   PRINT_R0("---\n");
 }
 
-static void output_file(FILE *fp, const int lines, const int height, const int edge[lines*2])
+static void output_file(FILE *fp, const int lines, const int height, const int width,
+			const int groups, const int edge[lines*2])
 {
+  int t[height*width];
+  create_rotate_table(height, width, groups, t);
+  
   for(int i=0;i<lines;i++)
-    fprintf(fp, "%d,%d %d,%d\n", WIDTH(edge[i*2], height), HEIGHT(edge[i*2], height),
-	    WIDTH(edge[i*2+1], height), HEIGHT(edge[i*2+1], height));
+    fprintf(fp, "%d,%d %d,%d\n", WIDTH(t[edge[i*2]], height), HEIGHT(t[edge[i*2]], height),
+	    WIDTH(t[edge[i*2+1]], height), HEIGHT(t[edge[i*2+1]], height));
 }
 
 int main(int argc, char *argv[])
@@ -585,9 +580,9 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &procs);
   MPI_Get_processor_name(hostname, &namelen);
-  PRINT_R0("Run on %s\n", hostname);
-  time_t t = time(NULL);
-  PRINT_R0("%s---\n", ctime(&t));
+  //  PRINT_R0("Run on %s\n", hostname);
+  //  time_t t = time(NULL);
+  //  PRINT_R0("%s---\n", ctime(&t));
 
   // Set arguments
   set_args(argc, argv, infname, &low_length, outfname, &random_seed, &ncalcs, &max_temp,
@@ -601,18 +596,18 @@ int main(int argc, char *argv[])
   bool enable_infname    = (infname[0]  != NOT_C_DEFINED);
   bool enable_outfname   = (outfname[0] != NOT_C_DEFINED);
   bool enable_whd        = (width != NOT_N_DEFINED && height != NOT_N_DEFINED && degree != NOT_N_DEFINED);
-  
-  // Check arguments
-  if(low_length == NOT_N_DEFINED)                         ERROR("Must need -R\n");
-  else if(enable_hill_climbing && enable_max_temp)        ERROR("Both -Y and -w cannot be used.\n");
-  else if(enable_hill_climbing && enable_min_temp)        ERROR("Both -Y and -c cannot be used.\n");
-  else if(enable_hill_climbing && enable_detect_temp)     ERROR("Both -Y and -d cannot be used.\n");
-  else if(!enable_infname && !enable_whd)                 ERROR("Must set -f or \"-W and -H and -D\"\n");
-  else if(enable_halfway && !enable_infname)              ERROR("Must set both -M and -f\n");
   if(!enable_max_temp) max_temp = 100.0;
   if(!enable_min_temp) min_temp = 0.217147;
-  if(max_temp == min_temp)                                ERROR("The same values in -w and -c.\n");
   if(enable_detect_temp) ncalcs = DEFAULT_DETECT_NCALS;
+  
+  // Check arguments
+  if(low_length == NOT_N_DEFINED)                     ERROR("Must need -R\n");
+  else if(enable_hill_climbing && enable_max_temp)    ERROR("Both -Y and -w cannot be used.\n");
+  else if(enable_hill_climbing && enable_min_temp)    ERROR("Both -Y and -c cannot be used.\n");
+  else if(enable_hill_climbing && enable_detect_temp) ERROR("Both -Y and -d cannot be used.\n");
+  else if(!enable_infname && !enable_whd)             ERROR("Must set -f or \"-W and -H and -D\"\n");
+  else if(enable_halfway && !enable_infname)          ERROR("Must set both -M and -f\n");
+  else if(max_temp == min_temp)                       ERROR("The same values in -w and -c.\n");
   
   srandom(random_seed);
   if(enable_infname){
@@ -688,18 +683,15 @@ int main(int argc, char *argv[])
   if(!enable_infname)
     create_lattice(based_nodes, based_lines, based_width, based_height, degree, low_length, edge);
   
-  int *rotate_hash = malloc(nodes * sizeof(int));
-  create_rotate_hash(nodes, height, width, groups, rotate_hash);
-  
   if(!enable_halfway && groups != 1)
     create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes,
-			  lines, height, width, based_height, low_length);
+			  lines, height, width, based_height, based_width, low_length);
 
   verfy_graph(nodes, lines, edge, height, low_length);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
-  check_current_edge(nodes, lines, edge, low_ASPL, low_diam, groups, height, based_height, enable_bfs, rotate_hash);
+  check_current_edge(nodes, lines, edge, low_ASPL, low_diam, groups, height, based_height, enable_bfs);
   double average_time = estimated_elapse_time(nodes, lines, edge, height, width, based_height, groups,
-					      low_length, enable_bfs, rotate_hash);
+					      low_length, enable_bfs);
   if(enable_hill_climbing){
     fixed_temp = max_temp = min_temp = 0.0;
     cooling_rate = 1.0;
@@ -727,7 +719,7 @@ int main(int argc, char *argv[])
   long long step = sa(nodes, lines, degree, based_nodes, ncalcs, cooling_rate, low_diam, low_ASPL, enable_bfs,
 		      enable_hill_climbing, enable_detect_temp, &max_diff_energy, max_temp,
 		      min_temp, fixed_temp, edge, &diam, &ASPL, cooling_cycle, &num_accepts, width,
-		      based_width, height, based_height, low_length, groups, rotate_hash, enable_fixed_temp);
+		      based_width, height, based_height, low_length, groups, enable_fixed_temp);
   timer_stop(TIMER_SA);
   
   if(enable_detect_temp){
@@ -751,7 +743,7 @@ int main(int argc, char *argv[])
     PRINT_R0("Accept rate: %f (= %lld/%lld)\n",
 	     (double)num_accepts/(ncalcs-SKIP_ACCEPTS), num_accepts, ncalcs-SKIP_ACCEPTS);
   if(rank == 0 && enable_outfname){
-    output_file(fp, lines, height, edge);
+    output_file(fp, lines, height, width, groups, edge);
     fclose(fp);
   }
 

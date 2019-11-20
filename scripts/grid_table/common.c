@@ -51,104 +51,17 @@ int HEIGHT(const int v, const int height)
   return v%height;
 }
 
-int ROTATE(const int v, const int height, const int width,
-	   const int groups, const int degree)
+int ROTATE(const int v, const int nodes, const int groups, const int degree)
 {
   if(groups != 2 && groups != 4)
     ERROR("Invalid groups\n");
 
-  int w = WIDTH (v, height);
-  int h = HEIGHT(v, height);
-  if(groups == 2){
-    if(degree != 180)
-       ERROR("Invalid degree\n");
-    
-    // degree == 180
-    return (width-w-1)*height + (height-h-1);
-  }
-  else{ // groups == 4
-    if(degree != 90 && degree != 180 && degree != 270)
-      ERROR("Invalid degree\n");
-    
-    if(degree == 90)       return h*height + (height-w-1);
-    else if(degree == 180) return (height-w-1)*height + (height-h-1);
-    else                   return (height-h-1)*height + w; // degree == 270
-  }
-}
-
-bool check_symmetric_edge(const int lines, const int edge[lines][2], const int height,
-			  const int width, const int based_height, const int groups)
-{
-  assert(lines%groups == 0);
-  int tmp_edge[2], based_lines = lines / groups;
-
-  if(groups == 2){
-    for(int i=0;i<based_lines;i++){
-      for(int j=0;j<2;j++)
-	tmp_edge[j] = ROTATE(edge[i][j], height, width, groups, 180);
-      
-      if(!has_duplicated_edge(edge[based_lines+i][0], edge[based_lines+i][1], tmp_edge[0], tmp_edge[1]))
-	if(!( WIDTH (edge[based_lines+i][0], height) + WIDTH (edge[based_lines+i][1], height) == (width-1) &&
-              HEIGHT(edge[based_lines+i][0], height) + HEIGHT(edge[based_lines+i][1], height) == (height-1))){
-	  printf("i=%d: %d,%d-%d,%d %d,%d-%d,%d\n", i,
-                 WIDTH(edge[based_lines+i][0], height), HEIGHT(edge[based_lines+i][0], height),
-                 WIDTH(edge[based_lines+i][1], height), HEIGHT(edge[based_lines+i][1], height),
-                 WIDTH(tmp_edge[0], height), HEIGHT(tmp_edge[0], height),
-                 WIDTH(tmp_edge[1], height), HEIGHT(tmp_edge[1], height));
-	  return false;
-	}
-    }
-  }
-  else if(groups == 4){
-    // 90 degrees
-    for(int i=0;i<based_lines;i++){
-      for(int j=0;j<2;j++)
-	tmp_edge[j] = ROTATE(edge[i][j], height, width, groups, 90);
-      if(!has_duplicated_edge(tmp_edge[0], tmp_edge[1], edge[based_lines+i][0], edge[based_lines+i][1])){
-	if(!( WIDTH (edge[based_lines+i][0], height) + WIDTH (edge[based_lines+i][1], height) == (width-1) &&
-	      HEIGHT(edge[based_lines+i][0], height) + HEIGHT(edge[based_lines+i][1], height) == (height-1))){
-	  printf("A i=%d: %d,%d-%d,%d %d,%d-%d,%d\n", i,
-		 WIDTH(edge[based_lines+i][0], height), HEIGHT(edge[based_lines+i][0], height),
-		 WIDTH(edge[based_lines+i][1], height), HEIGHT(edge[based_lines+i][1], height),
-		 WIDTH(tmp_edge[0], height), HEIGHT(tmp_edge[0], height),
-		 WIDTH(tmp_edge[1], height), HEIGHT(tmp_edge[1], height));
-	  return false;
-	}
-      }
-
-      // 180 degrees
-      for(int j=0;j<2;j++)
-	tmp_edge[j] = ROTATE(edge[i][j], height, width, groups, 180);
-      if(!has_duplicated_edge(tmp_edge[0], tmp_edge[1], edge[based_lines*2+i][0], edge[based_lines*2+i][1])){
-	if(!( WIDTH (edge[based_lines*2+i][0], height) + WIDTH (edge[based_lines*2+i][1], height) == (width-1) &&
-	      HEIGHT(edge[based_lines*2+i][0], height) + HEIGHT(edge[based_lines*2+i][1], height) == (height-1))){
-	  printf("B i=%d: %d,%d-%d,%d %d,%d-%d,%d\n", i, 
-		 WIDTH(edge[based_lines*2+i][0], height), HEIGHT(edge[based_lines*2+i][0], height),
-		 WIDTH(edge[based_lines*2+i][1], height), HEIGHT(edge[based_lines*2+i][1], height),
-		 WIDTH(tmp_edge[0], height), HEIGHT(tmp_edge[0], height),
-		 WIDTH(tmp_edge[1], height), HEIGHT(tmp_edge[1], height));
-	  return false;
-	}
-      }
-
-      // 270 degrees
-      for(int j=0;j<2;j++)
-	tmp_edge[j] = ROTATE(edge[i][j], height, width, groups, 270);
-      if(!has_duplicated_edge(tmp_edge[0], tmp_edge[1], edge[based_lines*3+i][0], edge[based_lines*3+i][1])){
-	if(!( WIDTH (edge[based_lines*3+i][0], height) + WIDTH (edge[based_lines*3+i][1], height) == (width-1) &&
-	      HEIGHT(edge[based_lines*3+i][0], height) + HEIGHT(edge[based_lines*3+i][1], height) == (height-1))){
-	  printf("C i=%d: %d,%d-%d,%d %d,%d-%d,%d\n", i,
-		 WIDTH(edge[based_lines*3+i][0], height), HEIGHT(edge[based_lines*3+i][0], height),
-		 WIDTH(edge[based_lines*3+i][1], height), HEIGHT(edge[based_lines*3+i][1], height),
-		 WIDTH(tmp_edge[0], height), HEIGHT(tmp_edge[0], height),
-		 WIDTH(tmp_edge[1], height), HEIGHT(tmp_edge[1], height));
-	  return false;
-	}
-      }
-    }
-  }
+  if((groups == 2 && degree != 180) || 
+     (groups == 4 && (degree != 90 && degree != 180 && degree != 270)))
+    ERROR("Invalid degree\n");
   
-  return true;
+  int new_v = v + (nodes*degree/360);
+  return (new_v < nodes)? new_v : new_v - nodes;
 }
 
 void output_edge(const int lines, const int edge[lines*2], const int height)
@@ -286,33 +199,34 @@ bool check_duplicate_current_edge(const int lines, const int edge[lines][2], con
   return flag;
 }
 
-void create_rotate_hash(const int nodes, const int height, const int width, const int groups,
-			int *rotate_hash)
+void create_rotate_table(const int height, const int width, const int groups, int *table)
 {
+  int nodes = height * width;
   int based_nodes = nodes / groups;
+  int based_height = height / 2;
   
   if(groups == 1){
     for(int i=0;i<based_nodes;i++)
-      rotate_hash[i] = i;
+      table[i] = i;
   }
   else if(groups == 2){
-    int based_height = height / 2;
-
     for(int i=0;i<based_nodes;i++){
       int j = (i/based_height) * height + (i%based_height);
-      rotate_hash[j] = i;
-      rotate_hash[ROTATE(j, height, width, groups, 180)] = i + based_nodes;
+      int w = WIDTH (j, height);
+      int h = HEIGHT(j, height);
+      table[i] = j;
+      table[i+based_nodes] = (width-w-1)*height + (height-h-1);
     }
   }
   else{
-    int based_height = height / 2;
-    
     for(int i=0;i<based_nodes;i++){
       int j = (i/based_height) * height + (i%based_height);
-      rotate_hash[j] = i;
-      rotate_hash[ROTATE(j, height, width, groups,  90)] = i + based_nodes;
-      rotate_hash[ROTATE(j, height, width, groups, 180)] = i + based_nodes * 2;
-      rotate_hash[ROTATE(j, height, width, groups, 270)] = i + based_nodes * 3;
+      int w = WIDTH (j, height);
+      int h = HEIGHT(j, height);
+      table[i] = j;
+      table[i+based_nodes  ] = h*height + (height-w-1);
+      table[i+based_nodes*2] = (height-w-1)*height + (height-h-1);
+      table[i+based_nodes*3] = (height-h-1)*height + w; 
     }
   }
 }

@@ -74,14 +74,13 @@ static bool bfs(const int nodes, const int degree, const int adjacency[nodes][de
   *diameter     = 0;
 
   for(int s=rank;s<based_nodes;s+=procs){
-    int s1 = (s/based_height) * height + (s%based_height);
     int num_frontier = 1, level = 0;
     for(int i=0;i<nodes;i++)
       bitmap[i] = NOT_VISITED;
     
-    frontier[0]  = s1;
-    distance[s1] = level;
-    bitmap[s1]   = VISITED;
+    frontier[0] = s;
+    distance[s] = level;
+    bitmap[s]   = VISITED;
     
     while(1){
       num_frontier = top_down_step(level++, nodes, num_frontier, degree,
@@ -95,7 +94,7 @@ static bool bfs(const int nodes, const int degree, const int adjacency[nodes][de
     *diameter = MAX(*diameter, level-1);
 
     for(int i=0;i<nodes;i++){
-      if(i == s1) continue;
+      if(i == s) continue;
       if(bitmap[i] == NOT_VISITED)
         reached = false;
       
@@ -121,7 +120,7 @@ static bool bfs(const int nodes, const int degree, const int adjacency[nodes][de
 
 static bool matrix_op(const int nodes, const int degree, const int* restrict adjacency,
                       const int based_nodes, const int height, const int based_height,
-		      const int groups, int *diameter, double *ASPL, const int* rotate_hash)
+		      const int groups, int *diameter, double *ASPL)
 {
   unsigned int elements = (based_nodes+(UINT64_BITS-1))/UINT64_BITS;
   unsigned int chunk    = (elements+(procs-1))/procs;
@@ -145,12 +144,10 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
 #pragma omp parallel for
 #endif
       for(int i=0;i<nodes;i++){
-	int ii = rotate_hash[i];
         for(int j=0;j<degree;j++){
           int n = *(adjacency + i * degree + j);  // int n = adjacency[i][j];
-	  int nn = rotate_hash[n];
           for(int k=0;k<chunk;k++)
-            B[ii*chunk+k] |= A[nn*chunk+k];
+            B[i*chunk+k] |= A[n*chunk+k];
         }
       }
 
@@ -192,7 +189,7 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
 bool evaluation(const int nodes, const int degree, const int groups,
 		const int* restrict adjacency, const int based_nodes,
 		const int height, const int based_height, int *diameter, 
-		double *ASPL, const bool enable_bfs, const int* rotate_hash)
+		double *ASPL, const bool enable_bfs)
 {
   timer_start(TIMER_APSP);
 
@@ -202,7 +199,7 @@ bool evaluation(const int nodes, const int degree, const int groups,
 	       based_height, groups, diameter, ASPL);
   else
     flag = matrix_op(nodes, degree, adjacency, based_nodes, height,
-		     based_height, groups, diameter, ASPL, rotate_hash);
+		     based_height, groups, diameter, ASPL);
 
   timer_stop(TIMER_APSP);
   return flag;
