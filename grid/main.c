@@ -358,7 +358,7 @@ static void read_file_lattice(int *edge, int *w, int *h, const char *fname)
   int i = 0;
   while(fscanf(fp, "%d,%d %d,%d", &n[0], &n[1], &n[2], &n[3]) != EOF){
     edge[i*2  ] = n[0] * (*h) + n[1];
-    edge[i+2+1] = n[2] * (*h) + n[3];
+    edge[i*2+1] = n[2] * (*h) + n[3];
     i++;
   }
 
@@ -621,7 +621,7 @@ int main(int argc, char *argv[])
     edge        = malloc(sizeof(int)*lines*2); // int edge[lines][2];
     read_file_lattice(edge, &based_width, &based_height, infname);
     based_nodes = max_node_num(based_lines, (int *)edge) + 1;
-    
+
     if(enable_halfway){
       based_nodes /= groups;
       based_lines /= groups;
@@ -687,7 +687,7 @@ int main(int argc, char *argv[])
 
   if(!enable_infname)
     create_lattice(based_nodes, based_lines, based_width, based_height, degree, low_length, edge);
-  
+
   int *rotate_hash = malloc(nodes * sizeof(int));
   create_rotate_hash(nodes, height, width, groups, rotate_hash);
   

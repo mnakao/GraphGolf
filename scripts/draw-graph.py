@@ -46,7 +46,7 @@ def main():
 		layout = grid_layout(g)
 	plt.figure(figsize=(args.s,args.s))
         nx.draw(g, with_labels=args.n, node_size=node_size, linewidths=0, alpha=1, node_color='#000000', edge_color='#000000', pos=layout)
-#        nx.draw(g, with_labels=args.n, node_size=node_size, linewidths=0, alpha=0.5, node_color='#3399ff', edge_color='#666666', pos=layout)
+#        nx.draw(g, with_labels=args.n, node_size=node_size, linewidths=0, alpha=0.5, node_color='#3399ff', edge_color='#666666', pos=layout, width=2)
 #	plt.xlim(-1.03, 1.03)
 #	plt.ylim(-1.03, 1.03)
 	plt.draw()
