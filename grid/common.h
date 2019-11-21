@@ -93,6 +93,7 @@ extern bool check_symmetric_edge(const int lines, const int edge[lines][2], cons
 extern void exchange_edge(const int nodes, const int lines, const int degree, int edge[lines][2],
 			  const int height, const int width, const int groups, const int low_length, const long long ii);
 //extern bool check_vector(const int groups, const int lines, const int height, const int edge[lines][2]);
+extern int DISTANCE(const int v, const int w, const int height);
 extern int WIDTH (const int v, const int height);
 extern int HEIGHT(const int v, const int height);
 extern int ROTATE(const int v, const int height, const int width, const int groups, const int degree);

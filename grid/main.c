@@ -114,12 +114,7 @@ static int count_loop(const int lines, const int *edge)
 
 static bool confirm_dist(const int v, const int w, const int height, const int low_length)
 {
-  int w0 = WIDTH (v, height);
-  int h0 = HEIGHT(v, height);
-  int w1 = WIDTH (w, height);
-  int h1 = HEIGHT(w, height);
-  int distance = abs(w0 - w1) + abs(h0 - h1);
-  return (distance <= low_length);
+  return (DISTANCE(v, w, height) <= low_length);
 }
 
 static void simple_exchange_edge(const int height, const int low_length, const int lines, int* edge)
@@ -443,14 +438,9 @@ static void verfy_graph(const int nodes, const int lines, const int edge[lines*2
       ERROR("NG\nNot regular graph. degree = %d n[%d] = %d.\n", degree, i, n[i]);
 
   for(int i=0;i<lines;i++){
-    int w0 = WIDTH (edge[i*2  ], height);
-    int h0 = HEIGHT(edge[i*2  ], height);
-    int w1 = WIDTH (edge[i*2+1], height);
-    int h1 = HEIGHT(edge[i*2+1], height);
-    int distance = abs(w0 - w1) + abs(h0 - h1);
-    if(distance > low_length)
-      ERROR("Over length in line %d: %d,%d %d,%d : length = %d, distance = %d\n",
-	    i+1, w0, h0, w1, h1, low_length, distance);
+    if(DISTANCE(edge[i*2], edge[i*2+1], height) > low_length)
+      ERROR("Over length in line %d: length = %d, distance = %d\n",
+	    i+1, low_length, DISTANCE(edge[i*2], edge[i*2+1], height));
   }
   
   PRINT_R0("OK\n");

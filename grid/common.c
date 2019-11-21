@@ -41,6 +41,15 @@ int getRandom(const int max)
   return (int)(random()*((double)max)/(1.0+RAND_MAX));
 }
 
+int DISTANCE(const int v, const int w, const int height)
+{
+  int w0 = WIDTH (v, height);
+  int h0 = HEIGHT(v, height);
+  int w1 = WIDTH (w, height);
+  int h1 = HEIGHT(w, height);
+  return abs(w0 - w1) + abs(h0 - h1);
+}
+
 int WIDTH(const int v, const int height)
 {
   return v/height;
