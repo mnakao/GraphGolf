@@ -118,7 +118,7 @@ static bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const 
   }
 
   for(int i=0;i<groups;i+=2)
-    if(DISTANCE(tmp_edge[i][0], tmp_edge[i][1], height > low_length))
+    if(DISTANCE(tmp_edge[i][0], tmp_edge[i][1], height) > low_length)
       return false;
 
   if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups,
