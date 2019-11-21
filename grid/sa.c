@@ -117,14 +117,9 @@ static bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const 
     if(e != tmp_edge[groups/2][1]) break;
   }
 
-  for(int i=0;i<groups;i+=2){
-    int w0 = WIDTH (tmp_edge[i][0], height);
-    int h0 = HEIGHT(tmp_edge[i][0], height);
-    int w1 = WIDTH (tmp_edge[i][1], height);
-    int h1 = HEIGHT(tmp_edge[i][1], height);
-    if(abs(w0 - w1) + abs(h0 - h1) > low_length)
+  for(int i=0;i<groups;i+=2)
+    if(DISTANCE(tmp_edge[i][0], tmp_edge[i][1], height > low_length))
       return false;
-  }
 
   if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups,
                                    (const int (*)[2])tmp_edge, tmp_line,
@@ -150,6 +145,7 @@ void exchange_edge(const int nodes, const int lines, const int degree, int edge[
     while(1){
       tmp_line[0] = getRandom(lines);
       tmp_line[1] = getRandom(lines);
+      
       if(tmp_line[0] == tmp_line[1]) continue;
       else if(has_duplicated_vertex(edge[tmp_line[0]][0], edge[tmp_line[0]][1], edge[tmp_line[1]][0], edge[tmp_line[1]][1])){
         continue;
@@ -195,14 +191,9 @@ void exchange_edge(const int nodes, const int lines, const int degree, int edge[
     }
 
     bool flag = false;
-    for(int i=0;i<2;i++){
-      int w0 = WIDTH (tmp_edge[i][0], height);
-      int h0 = HEIGHT(tmp_edge[i][0], height);
-      int w1 = WIDTH (tmp_edge[i][1], height);
-      int h1 = HEIGHT(tmp_edge[i][1], height);
-      if(abs(w0 - w1) + abs(h0 - h1) > low_length)
+    for(int i=0;i<2;i++)
+      if(DISTANCE(tmp_edge[i][0], tmp_edge[i][1], height) > low_length)
 	flag = true;
-    }
 
     if(flag) continue;
     if(!check_duplicate_tmp_edge(D_2G_OPT, groups, tmp_edge))
