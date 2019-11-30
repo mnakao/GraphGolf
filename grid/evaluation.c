@@ -146,7 +146,7 @@ static bool matrix_op(const int nodes, const int max_degree, const int* restrict
 #endif
       for(int i=0;i<nodes;i++){
 	int ii = rotate_hash[i];
-        for(int j=0;j<degree[ii];j++){
+        for(int j=0;j<degree[i];j++){
           int n = *(adjacency + i * max_degree + j);  // int n = adjacency[i][j];
 	  int nn = rotate_hash[n];
           for(int k=0;k<chunk;k++)

@@ -126,15 +126,14 @@ static bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const 
                                    groups, D_1G_OPT, (pattern==groups)))
      return false;
 
-  for(int i=0;i<groups;i++){
-    edge[tmp_line[i]][0] = tmp_edge[i][0];
-    edge[tmp_line[i]][1] = tmp_edge[i][1];
-  }
+  for(int i=0;i<groups;i++)
+    for(int j=0;j<2;j++)
+    edge[tmp_line[i]][j] = tmp_edge[i][j];
 
   return true;
 }
 
-void exchange_edge(const int nodes, const int lines, const int max_degree, int *degree, int edge[lines][2],
+void exchange_edge(const int nodes, const int lines, const int max_degree, const int *degree, int edge[lines][2],
 		   const int height, const int width, const int groups, const int low_length, const long long ii)
 {
   int tmp_line[groups*2], based_lines = lines/groups, based_nodes = nodes/groups;
@@ -147,6 +146,7 @@ void exchange_edge(const int nodes, const int lines, const int max_degree, int *
       tmp_line[1] = getRandom(lines);
       
       if(tmp_line[0] == tmp_line[1]) continue;
+      else if(edge[tmp_line[0]][0] == NO_EDGE || edge[tmp_line[1]][0] == NO_EDGE) continue;
       else if(has_duplicated_vertex(edge[tmp_line[0]][0], edge[tmp_line[0]][1], edge[tmp_line[1]][0], edge[tmp_line[1]][1])){
         continue;
       }
@@ -173,49 +173,123 @@ void exchange_edge(const int nodes, const int lines, const int max_degree, int *
       else
         continue;
     }
-
+    
     for(int i=1;i<groups;i++){
       tmp_line[i*2  ] = tmp_line[0] + based_lines * i;
       tmp_line[i*2+1] = tmp_line[1] + based_lines * i;
       if(tmp_line[i*2  ] >= lines) tmp_line[i*2  ] -= lines;
       if(tmp_line[i*2+1] >= lines) tmp_line[i*2+1] -= lines;
     }
-
-    int r = getRandom(2), tmp_edge[groups*2][2];
-    for(int i=0;i<groups;i++){
-      for(int j=0;j<2;j++){
-	tmp_edge[i*2  ][j] = edge[tmp_line[i*2  ]][j];
-	tmp_edge[i*2+1][j] = edge[tmp_line[i*2+1]][j];
+    
+    int r = getRandom(3);
+    if(r == 0){ // Exchange edge
+      int tmp_edge[groups*2][2];
+      for(int i=0;i<groups;i++){
+	for(int j=0;j<2;j++){
+	  tmp_edge[i*2  ][j] = edge[tmp_line[i*2  ]][j];
+	  tmp_edge[i*2+1][j] = edge[tmp_line[i*2+1]][j];
+	}
+	swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][0]);
       }
-      swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][r]);
+
+      bool flag = false;
+      for(int i=0;i<2;i++)
+	if(DISTANCE(tmp_edge[i][0], tmp_edge[i][1], height) > low_length)
+	  flag = true;
+
+      if(flag){
+	for(int i=0;i<groups;i++){
+	  for(int j=0;j<2;j++){
+	    tmp_edge[i*2  ][j] = edge[tmp_line[i*2  ]][j];
+	    tmp_edge[i*2+1][j] = edge[tmp_line[i*2+1]][j];
+	  }
+	  swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][1]);
+	}
+	
+	flag = false;
+	for(int i=0;i<2;i++)
+	  if(DISTANCE(tmp_edge[i][0], tmp_edge[i][1], height) > low_length)
+	    flag = true;
+      }
+      
+      if(flag) continue;
+      else if(!check_duplicate_tmp_edge(D_2G_OPT, groups, tmp_edge))
+	continue;
+      else if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups*2, 
+					    (const int (*)[2])tmp_edge, tmp_line, groups, D_2G_OPT, false))
+	continue;
+
+      for(int i=0;i<groups;i++){
+	for(int j=0;j<2;j++){
+	  edge[tmp_line[i*2  ]][j] = tmp_edge[i*2  ][j];
+	  edge[tmp_line[i*2+1]][j] = tmp_edge[i*2+1][j];
+	}
+      }
     }
-
-    bool flag = false;
-    for(int i=0;i<2;i++)
-      if(DISTANCE(tmp_edge[i][0], tmp_edge[i][1], height) > low_length)
-	flag = true;
-
-    if(flag) continue;
-    if(!check_duplicate_tmp_edge(D_2G_OPT, groups, tmp_edge))
-      continue;
-    else if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups*2, 
-					  (const int (*)[2])tmp_edge, tmp_line, groups, D_2G_OPT, false))
-      continue;
-
-    for(int i=0;i<groups;i++){
-      for(int j=0;j<2;j++){
-	edge[tmp_line[i*2  ]][j] = tmp_edge[i*2  ][j];
-	edge[tmp_line[i*2+1]][j] = tmp_edge[i*2+1][j];
+    else if(r == 1){ // Delete edge
+      if(degree[edge[tmp_line[0]][0]] > 1 && degree[edge[tmp_line[0]][1]] > 1){
+	for(int i=0;i<groups;i++){
+	  edge[tmp_line[i*2]][0] = NO_EDGE;
+	  edge[tmp_line[i*2]][1] = NO_EDGE;
+	}
       }
+      else if(degree[edge[tmp_line[1]][0]] > 1 && degree[edge[tmp_line[1]][1]] > 1){
+	for(int i=0;i<groups;i++){
+	  edge[tmp_line[i*2+1]][0] = NO_EDGE;
+	  edge[tmp_line[i*2+1]][1] = NO_EDGE;
+	}
+      }
+      else{
+	continue;
+      }
+    }
+    else{ // Add edge
+      int tmp_edge[groups][2];
+      int e0_v = edge[tmp_line[0]][0]; int e0_w = edge[tmp_line[0]][1];
+      int e1_v = edge[tmp_line[1]][0]; int e1_w = edge[tmp_line[1]][1];
+      if(degree[e0_v] < max_degree && degree[e1_v] < max_degree && DISTANCE(e0_v, e1_v, height) <= low_length){
+	for(int i=0;i<groups;i++){
+	  tmp_edge[i][0] = edge[tmp_line[i*2  ]][0];
+	  tmp_edge[i][1] = edge[tmp_line[i*2+1]][0];
+	}
+      }
+      else if(degree[e0_w] < max_degree && degree[e1_w] < max_degree && DISTANCE(e0_w, e1_w, height) <= low_length){
+	for(int i=0;i<groups;i++){
+	  tmp_edge[i][0] = edge[tmp_line[i*2  ]][1];
+	  tmp_edge[i][1] = edge[tmp_line[i*2+1]][1];
+	}
+      }
+      else if(degree[e0_v] < max_degree && degree[e1_w] < max_degree && DISTANCE(e0_v, e1_w, height) <= low_length){
+	for(int i=0;i<groups;i++){
+	  tmp_edge[i][0] = edge[tmp_line[i*2  ]][0];
+	  tmp_edge[i][1] = edge[tmp_line[i*2+1]][1];
+	}
+      }
+      else if(degree[e0_w] < max_degree && degree[e1_v] < max_degree && DISTANCE(e0_w, e1_v, height) <= low_length){
+	for(int i=0;i<groups;i++){
+	  tmp_edge[i][0] = edge[tmp_line[i*2  ]][1];
+	  tmp_edge[i][1] = edge[tmp_line[i*2+1]][0];
+	}
+      }
+      else{
+	continue;
+      }
+      
+      if(!check_duplicate_tmp_edge(D_1G_OPT, groups, tmp_edge)) continue;
+      if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups,
+				       (const int (*)[2])tmp_edge, tmp_line, groups, D_1G_OPT, false))
+	continue;
 
-#ifdef _DEBUG_MSG
-       printf("After : %d,%d-%d,%d %d,%d-%d,%d\n",
-	      WIDTH(edge[tmp_line[i*2  ]][0], height), HEIGHT(edge[tmp_line[i*2  ]][0], height),
-	      WIDTH(edge[tmp_line[i*2  ]][1], height), HEIGHT(edge[tmp_line[i*2  ]][1], height),
-	      WIDTH(edge[tmp_line[i*2+1]][0], height), HEIGHT(edge[tmp_line[i*2+1]][0], height),
-	      WIDTH(edge[tmp_line[i*2+1]][1], height), HEIGHT(edge[tmp_line[i*2+1]][1], height));
-#endif
-     }
+      // search NO_EDGE
+      int n = 0;
+      for(int i=0;i<based_lines;i++)
+	if(edge[i][0] == NO_EDGE)
+	  n = i;
+      
+      for(int i=0;i<groups;i++)
+	for(int j=0;j<2;j++)
+	  edge[n+based_lines*i][j] = tmp_edge[i][j];
+    }
     break;
   }
 }
@@ -281,7 +355,7 @@ long long sa(const int nodes, const int lines, const int max_degree, int *degree
   int (*tmp_edge)[2]  = malloc(sizeof(int)*lines*2);
   int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
   
-  create_adjacency(nodes, lines, max_degree, (const int (*)[2])edge, adjacency);
+  create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])edge, adjacency);
   evaluation(nodes, max_degree, degree, groups, (const int* restrict)adjacency,
 	     based_nodes, height, based_height, diam, ASPL, enable_bfs, rotate_hash);
 
@@ -303,8 +377,25 @@ long long sa(const int nodes, const int lines, const int max_degree, int *degree
 
     while(1){
       copy_edge((int *)tmp_edge, (int *)edge, lines*2);
+      create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])tmp_edge, adjacency);
       exchange_edge(nodes, lines, max_degree, degree, tmp_edge, height, width, groups, low_length, ii);
-      create_adjacency(nodes, lines, max_degree, (const int (*)[2])tmp_edge, adjacency);
+      create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])tmp_edge, adjacency);
+      /*
+      printf("--- %lld\n", ii);
+      for(int j=0;j<lines;j++){
+	printf("%d %d\n", edge[j*2], edge[j*2+1]);
+	if((edge[j*2] == NO_EDGE && edge[j*2+1] != NO_EDGE) || (edge[j*2] != NO_EDGE && edge[j*2+1] == NO_EDGE))
+	  EXIT(0);
+      }
+      printf("---\n");
+      for(int j=0;j<nodes;j++){
+	printf("[%d] ", j);
+	for(int i=0;i<degree[j];i++){
+	  printf("%2d ", adjacency[j][i]);
+	}
+	printf("\n");
+      }
+      */
       if(evaluation(nodes, max_degree, degree, groups, (const int* restrict)adjacency,
 		    based_nodes, height, based_height, &tmp_diam, &tmp_ASPL, enable_bfs, rotate_hash))
 	break;
@@ -362,7 +453,7 @@ double estimated_elapse_time(const int nodes, const int lines, const int max_deg
   for(int i=0;i<ESTIMATED_TIMES;i++){
     copy_edge((int *)tmp_edge, edge, lines*2);
     exchange_edge(nodes, lines, max_degree, degree, tmp_edge, height, width, groups, low_length, i);
-    create_adjacency(nodes, lines, max_degree, (const int (*)[2])tmp_edge, adjacency);
+    create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])tmp_edge, adjacency);
     evaluation(nodes, max_degree, degree, groups, (const int* restrict)adjacency,
 	       based_nodes, height, based_height, &diam, &ASPL, enable_bfs, rotate_hash);
   }
@@ -384,7 +475,7 @@ void check_current_edge(const int nodes, const int lines, const int max_degree, 
   double ASPL;
   int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
 
-  create_adjacency(nodes, lines, max_degree, (const int (*)[2])edge, adjacency);
+  create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])edge, adjacency);
   if(! evaluation(nodes, max_degree, degree, groups, (const int* restrict)adjacency,
 		  based_nodes, height, based_height, &diam, &ASPL, enable_bfs, rotate_hash))
     ERROR("The input file has a node which is never reached by another node.\n");

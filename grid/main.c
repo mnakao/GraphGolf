@@ -123,8 +123,8 @@ static void simple_exchange_edge(const int height, const int low_length, const i
   while(1){
     int e1, e2, new_e1_v, new_e1_w, new_e2_v, new_e2_w;
     do{
-      e1 = random() % lines;
-      e2 = random() % lines;
+      e1 = getRandom(lines);
+      e2 = getRandom(lines);
     } while( e1 == e2 );
     int e1_v = edge[e1*2]; int e1_w = edge[e1*2+1];
     int e2_v = edge[e2*2]; int e2_w = edge[e2*2+1];
@@ -231,7 +231,7 @@ static int simple_bfs(const int nodes, const int max_degree, const int *degree, 
 
 // Inherited from http://research.nii.ac.jp/graphgolf/c/create-lattice.c
 static void create_lattice(const int nodes, const int lines, const int width, const int height,
-			   const int max_degree, const int *degree, const int low_length, int edge[lines*2])
+			   const int max_degree, int *degree, const int low_length, int edge[lines*2])
 {
   int i = 0;
   for(int x=0;x<width/2;x++){
@@ -287,13 +287,13 @@ static void create_lattice(const int nodes, const int lines, const int width, co
   // Make an unconnected graph a connected graph
   // Note that the connected graph after this operation may have loops.
   int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
-  create_adjacency(nodes, lines, max_degree, (const int (*)[2])edge, adjacency);
+  create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])edge, adjacency);
   min_num = simple_bfs(nodes, max_degree, degree, (int *)adjacency);
 
   while(1){
     memcpy(tmp_edge, edge, sizeof(int)*lines*2);
     simple_exchange_edge(height, low_length, lines, tmp_edge);
-    create_adjacency(nodes, lines, max_degree, (const int (*)[2])tmp_edge, adjacency);
+    create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])tmp_edge, adjacency);
     int tmp_num = simple_bfs(nodes, max_degree, degree, (int *)adjacency);
     if(tmp_num == 0){
       memcpy(edge, tmp_edge, sizeof(int)*lines*2);
@@ -396,13 +396,13 @@ static void create_symmetric_edge(int *edge, const int based_nodes, const int ba
 
   int *tmp_edge = malloc(lines*2*sizeof(int));
   int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
-  create_adjacency(nodes, lines, max_degree, (const int (*)[2])edge, adjacency);
+  create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])edge, adjacency);
   int min_num = simple_bfs(nodes, max_degree, degree, (int *)adjacency);
 
   while(1){
     memcpy(tmp_edge, edge, sizeof(int)*lines*2);
     exchange_edge(nodes, lines, max_degree, degree, (int (*)[2])tmp_edge, height, width, groups, low_length, 0);
-    create_adjacency(nodes, lines, max_degree, (const int (*)[2])tmp_edge, adjacency);
+    create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])tmp_edge, adjacency);
     int tmp_num = simple_bfs(nodes, max_degree, degree, (int *)adjacency);
     if(tmp_num == 0){
       memcpy(edge, tmp_edge, sizeof(int)*lines*2);
@@ -638,8 +638,6 @@ int main(int argc, char *argv[])
     based_lines = lines / groups;
     edge        = malloc(sizeof(int)*lines*2); // int edge[lines][2];
     degree      = malloc(sizeof(int)*nodes);   // int degree[nodes];
-    for(int i=0;i<nodes;i++)
-      degree[i] = max_degree;
     
     if(groups == 1){
       based_width  = width;

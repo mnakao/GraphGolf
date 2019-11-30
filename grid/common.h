@@ -75,7 +75,7 @@ extern bool check_duplicate_tmp_edge(const int g_opt, const int groups, int tmp_
 extern bool check_duplicate_current_edge(const int lines, const int edge[lines][2], const int tmp_lines,
 					 const int tmp_edge[tmp_lines][2], const int tmp_line[2],
 					 const int groups, const int g_opt, const bool is_center);
-extern void create_adjacency(const int nodes, const int lines, const int max_degree,
+extern void create_adjacency(const int nodes, const int lines, const int max_degree, int* restrict degree,
                              const int edge[lines][2], int adjacency[nodes][max_degree]);
 extern int getRandom(const int max);
 extern void timer_clear_all();
@@ -90,7 +90,7 @@ extern void copy_edge(int *restrict buf1, const int *restrict buf2, const int n)
 extern void output_edge(const int lines, const int edge[lines*2], const int height);
 extern bool check_symmetric_edge(const int lines, const int edge[lines][2], const int height, const int width,
 				 const int based_height, const int groups);
-extern void exchange_edge(const int nodes, const int lines, const int max_degree, int *degree, int edge[lines][2],
+extern void exchange_edge(const int nodes, const int lines, const int max_degree, const int *degree, int edge[lines][2],
 			  const int height, const int width, const int groups, const int low_length, const long long ii);
 extern int DISTANCE(const int v, const int w, const int height);
 extern int WIDTH (const int v, const int height);
