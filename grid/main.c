@@ -102,6 +102,7 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
   }
 }
 
+// The "edge" does not have NO_EDGE
 static int count_loop(const int lines, const int *edge)
 {
   int num = 0;
@@ -146,7 +147,7 @@ static void simple_exchange_edge(const int height, const int low_length, const i
 
 #ifdef _OPENMP
 static int top_down_step(const int nodes, const int num_frontier, const int max_degree,
-			 const int* restrict adjacency, int* restrict frontier,
+			 const int* degree, const int* restrict adjacency, int* restrict frontier,
 			 int* restrict next, char* restrict bitmap)
 {
   int count = 0;
@@ -157,7 +158,7 @@ static int top_down_step(const int nodes, const int num_frontier, const int max_
 #pragma omp for nowait
      for(int i=0;i<num_frontier;i++){
        int v = frontier[i];
-       for(int j=0;j<max_degree;j++){
+       for(int j=0;j<degree[v];j++){
          int n = *(adjacency + v * max_degree + j);  // adjacency[v][j];
 	 if(bitmap[n] == NOT_VISITED){
            bitmap[n] = VISITED;
@@ -175,13 +176,13 @@ static int top_down_step(const int nodes, const int num_frontier, const int max_
 }
 #else
 static int top_down_step(const int nodes, const int num_frontier, const int max_degree,
-			 const int* restrict adjacency, int* restrict frontier,
+			 const int *degree, const int* restrict adjacency, int* restrict frontier,
                          int* restrict next, char* restrict bitmap)
 {
   int count = 0;
   for(int i=0;i<num_frontier;i++){
     int v = frontier[i];
-    for(int j=0;j<max_degree;j++){
+    for(int j=0;j<degree[v];j++){
       int n = *(adjacency + v * max_degree + j);  // int n = adjacency[v][j];
       if(bitmap[n] == NOT_VISITED){
         bitmap[n] = VISITED;
@@ -194,7 +195,7 @@ static int top_down_step(const int nodes, const int num_frontier, const int max_
 }
 #endif
 
-static int simple_bfs(const int nodes, const int max_degree, int *adjacency)
+static int simple_bfs(const int nodes, const int max_degree, const int *degree, int *adjacency)
 {
   char *bitmap  = malloc(sizeof(char) * nodes);
   int *frontier = malloc(sizeof(int)  * nodes);
@@ -208,7 +209,7 @@ static int simple_bfs(const int nodes, const int max_degree, int *adjacency)
   bitmap[root] = VISITED;
 
   while(1){
-    num_frontier = top_down_step(nodes, num_frontier, max_degree,
+    num_frontier = top_down_step(nodes, num_frontier, max_degree, degree,
 				 adjacency, frontier, next, bitmap);
     if(num_frontier == 0) break;
     
@@ -230,7 +231,7 @@ static int simple_bfs(const int nodes, const int max_degree, int *adjacency)
 
 // Inherited from http://research.nii.ac.jp/graphgolf/c/create-lattice.c
 static void create_lattice(const int nodes, const int lines, const int width, const int height,
-			   const int max_degree, const int low_length, int edge[lines*2])
+			   const int max_degree, const int *degree, const int low_length, int edge[lines*2])
 {
   int i = 0;
   for(int x=0;x<width/2;x++){
@@ -287,13 +288,13 @@ static void create_lattice(const int nodes, const int lines, const int width, co
   // Note that the connected graph after this operation may have loops.
   int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
   create_adjacency(nodes, lines, max_degree, (const int (*)[2])edge, adjacency);
-  min_num = simple_bfs(nodes, max_degree, (int *)adjacency);
+  min_num = simple_bfs(nodes, max_degree, degree, (int *)adjacency);
 
   while(1){
     memcpy(tmp_edge, edge, sizeof(int)*lines*2);
     simple_exchange_edge(height, low_length, lines, tmp_edge);
     create_adjacency(nodes, lines, max_degree, (const int (*)[2])tmp_edge, adjacency);
-    int tmp_num = simple_bfs(nodes, max_degree, (int *)adjacency);
+    int tmp_num = simple_bfs(nodes, max_degree, degree, (int *)adjacency);
     if(tmp_num == 0){
       memcpy(edge, tmp_edge, sizeof(int)*lines*2);
       break;
@@ -396,13 +397,13 @@ static void create_symmetric_edge(int *edge, const int based_nodes, const int ba
   int *tmp_edge = malloc(lines*2*sizeof(int));
   int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
   create_adjacency(nodes, lines, max_degree, (const int (*)[2])edge, adjacency);
-  int min_num = simple_bfs(nodes, max_degree, (int *)adjacency);
+  int min_num = simple_bfs(nodes, max_degree, degree, (int *)adjacency);
 
   while(1){
     memcpy(tmp_edge, edge, sizeof(int)*lines*2);
     exchange_edge(nodes, lines, max_degree, degree, (int (*)[2])tmp_edge, height, width, groups, low_length, 0);
     create_adjacency(nodes, lines, max_degree, (const int (*)[2])tmp_edge, adjacency);
-    int tmp_num = simple_bfs(nodes, max_degree, (int *)adjacency);
+    int tmp_num = simple_bfs(nodes, max_degree, degree, (int *)adjacency);
     if(tmp_num == 0){
       memcpy(edge, tmp_edge, sizeof(int)*lines*2);
       break;
@@ -423,9 +424,10 @@ static void verfy_graph(const int lines, const int edge[lines*2], const int heig
   PRINT_R0("Verifing a regular graph... ");
   
   for(int i=0;i<lines;i++){
-    if(DISTANCE(edge[i*2], edge[i*2+1], height) > low_length)
-      ERROR("Over length in line %d: length = %d, distance = %d\n",
-	    i+1, low_length, DISTANCE(edge[i*2], edge[i*2+1], height));
+    if(edge[i*2] != NO_EDGE)
+      if(DISTANCE(edge[i*2], edge[i*2+1], height) > low_length)
+	ERROR("Over length in line %d: length = %d, distance = %d\n",
+	      i+1, low_length, DISTANCE(edge[i*2], edge[i*2+1], height));
   }
   
   PRINT_R0("OK\n");
@@ -538,8 +540,9 @@ static void output_params(const int max_degree, const int groups, const int low_
 static void output_file(FILE *fp, const int lines, const int height, const int edge[lines*2])
 {
   for(int i=0;i<lines;i++)
-    fprintf(fp, "%d,%d %d,%d\n", WIDTH(edge[i*2], height), HEIGHT(edge[i*2], height),
-	    WIDTH(edge[i*2+1], height), HEIGHT(edge[i*2+1], height));
+    if(edge[i*2] != NO_EDGE)
+      fprintf(fp, "%d,%d %d,%d\n", WIDTH(edge[i*2], height), HEIGHT(edge[i*2], height),
+	      WIDTH(edge[i*2+1], height), HEIGHT(edge[i*2+1], height));
 }
 
 int main(int argc, char *argv[])
@@ -579,15 +582,15 @@ int main(int argc, char *argv[])
   bool enable_whd        = (width != NOT_N_DEFINED && height != NOT_N_DEFINED && max_degree != NOT_N_DEFINED);
   
   // Check arguments
-  if(low_length == NOT_N_DEFINED)                         ERROR("Must need -R\n");
-  else if(enable_hill_climbing && enable_max_temp)        ERROR("Both -Y and -w cannot be used.\n");
-  else if(enable_hill_climbing && enable_min_temp)        ERROR("Both -Y and -c cannot be used.\n");
-  else if(enable_hill_climbing && enable_detect_temp)     ERROR("Both -Y and -d cannot be used.\n");
-  else if(!enable_infname && !enable_whd)                 ERROR("Must set -f or \"-W and -H and -D\"\n");
-  else if(enable_halfway && !enable_infname)              ERROR("Must set both -M and -f\n");
+  if(low_length == NOT_N_DEFINED)                       ERROR("Must need -R\n");
+  else if(enable_hill_climbing && enable_max_temp)      ERROR("Both -Y and -w cannot be used.\n");
+  else if(enable_hill_climbing && enable_min_temp)      ERROR("Both -Y and -c cannot be used.\n");
+  else if(enable_hill_climbing && enable_detect_temp)   ERROR("Both -Y and -d cannot be used.\n");
+  else if(!enable_infname && !enable_whd)               ERROR("Must set -f or \"-W and -H and -D\"\n");
+  else if(enable_halfway && !enable_infname)            ERROR("Must set both -M and -f\n");
   if(!enable_max_temp) max_temp = 100.0;
   if(!enable_min_temp) min_temp = 0.217147;
-  if(max_temp == min_temp)                                ERROR("The same values in -w and -c.\n");
+  if(max_temp == min_temp)                              ERROR("The same values in -w and -c.\n");
   if(enable_detect_temp) ncalcs = DEFAULT_DETECT_NCALS;
   
   srandom(random_seed);
@@ -666,7 +669,7 @@ int main(int argc, char *argv[])
     ERROR("Not grid graph (width %d x height %d != nodes %d).\n", based_width, based_height, based_nodes);
 
   if(!enable_infname)
-    create_lattice(based_nodes, based_lines, based_width, based_height, max_degree, low_length, edge);
+    create_lattice(based_nodes, based_lines, based_width, based_height, max_degree, degree, low_length, edge);
 
   int *rotate_hash = malloc(nodes * sizeof(int));
   create_rotate_hash(nodes, height, width, groups, rotate_hash);

@@ -10,8 +10,8 @@ static void clear_buffers(uint64_t* restrict A, uint64_t* restrict B, const int 
 }
 
 #ifdef _OPENMP
-static int top_down_step(const int level, const int nodes, const int num_frontier,
-                         const int degree, const int* restrict adjacency, int* restrict frontier,
+static int top_down_step(const int level, const int nodes, const int num_frontier, const int max_degree,
+			 const int* restrict degree, const int* restrict adjacency, int* restrict frontier,
                          int* restrict next, int* restrict distance, char* restrict bitmap)
 {
   int count = 0;
@@ -22,8 +22,8 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
 #pragma omp for nowait
      for(int i=0;i<num_frontier;i++){
        int v = frontier[i];
-       for(int j=0;j<degree;j++){
-         int n = *(adjacency + v * degree + j);  // adjacency[v][j];
+       for(int j=0;j<degree[v];j++){
+         int n = *(adjacency + v * max_degree + j);  // adjacency[v][j];
          if(bitmap[n] == NOT_VISITED){
            bitmap[n]   = VISITED;
 	   distance[n] = level;
@@ -40,15 +40,15 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
   return count;
 }
 #else
-static int top_down_step(const int level, const int nodes, const int num_frontier,
-                         const int degree, const int* restrict adjacency, int* restrict frontier,
+static int top_down_step(const int level, const int nodes, const int num_frontier, const int max_degree,
+			 const int* restrict degree, const int* restrict adjacency, int* restrict frontier,
                          int* restrict next, int* restrict distance, char* restrict bitmap)
 {
   int count = 0;
   for(int i=0;i<num_frontier;i++){
     int v = frontier[i];
-    for(int j=0;j<degree;j++){
-      int n = *(adjacency + v * degree + j);  // int n = adjacency[v][j];
+    for(int j=0;j<degree[v];j++){
+      int n = *(adjacency + v * max_degree + j);  // int n = adjacency[v][j];
       if(bitmap[n] == NOT_VISITED){
 	bitmap[n]   = VISITED;
 	distance[n] = level;
@@ -61,9 +61,9 @@ static int top_down_step(const int level, const int nodes, const int num_frontie
 }
 #endif
 
-static bool bfs(const int nodes, const int degree, const int adjacency[nodes][degree],
-		const int based_nodes, const int height, const int based_height, const int groups,
-		int *diameter, double *ASPL)
+static bool bfs(const int nodes, const int max_degree, const int* restrict degree,
+		const int adjacency[nodes][max_degree], const int based_nodes, const int height,
+		const int based_height, const int groups, int *diameter, double *ASPL)
 {
   char *bitmap  = malloc(sizeof(char) * nodes);
   int *frontier = malloc(sizeof(int)  * nodes);
@@ -84,7 +84,7 @@ static bool bfs(const int nodes, const int degree, const int adjacency[nodes][de
     bitmap[s1]   = VISITED;
     
     while(1){
-      num_frontier = top_down_step(level++, nodes, num_frontier, degree,
+      num_frontier = top_down_step(level++, nodes, num_frontier, max_degree, degree, 
                                    (int *)adjacency, frontier, next, distance, bitmap);
       if(num_frontier == 0) break;
       
@@ -119,7 +119,7 @@ static bool bfs(const int nodes, const int degree, const int adjacency[nodes][de
   return true;
 }
 
-static bool matrix_op(const int nodes, const int degree, const int* restrict adjacency,
+static bool matrix_op(const int nodes, const int max_degree, const int* restrict degree, const int* restrict adjacency,
                       const int based_nodes, const int height, const int based_height,
 		      const int groups, int *diameter, double *ASPL, const int* rotate_hash)
 {
@@ -146,8 +146,8 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
 #endif
       for(int i=0;i<nodes;i++){
 	int ii = rotate_hash[i];
-        for(int j=0;j<degree;j++){
-          int n = *(adjacency + i * degree + j);  // int n = adjacency[i][j];
+        for(int j=0;j<degree[ii];j++){
+          int n = *(adjacency + i * max_degree + j);  // int n = adjacency[i][j];
 	  int nn = rotate_hash[n];
           for(int k=0;k<chunk;k++)
             B[ii*chunk+k] |= A[nn*chunk+k];
@@ -189,17 +189,17 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
   return true;
 }
 
-bool evaluation(const int nodes, const int max_degree, const int *degree, const int groups,
+bool evaluation(const int nodes, const int max_degree, const int* restrict degree, const int groups,
 		const int* restrict adjacency, const int based_nodes,const int height,
 		const int based_height, int *diameter, double *ASPL, const bool enable_bfs, const int* rotate_hash)
 {
   timer_start(TIMER_APSP);
   bool flag;
   if(enable_bfs)
-    flag = bfs(nodes, max_degree, (const int (*)[max_degree])adjacency, based_nodes, height, 
+    flag = bfs(nodes, max_degree, degree, (const int (*)[max_degree])adjacency, based_nodes, height, 
 	       based_height, groups, diameter, ASPL);
   else
-    flag = matrix_op(nodes, max_degree, adjacency, based_nodes, height,
+    flag = matrix_op(nodes, max_degree, degree, adjacency, based_nodes, height,
 		     based_height, groups, diameter, ASPL, rotate_hash);
   timer_stop(TIMER_APSP);
   return flag;

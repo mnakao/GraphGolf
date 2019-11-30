@@ -83,7 +83,7 @@ extern void timer_clear(const int n);
 extern void timer_start(const int n);
 extern void timer_stop(const int n);
 extern double timer_read(const int n);
-extern bool evaluation(const int nodes, const int max_degree, const int *degree, const int groups, const int* restrict adjacency,
+extern bool evaluation(const int nodes, const int max_degree, const int* restrict degree, const int groups, const int* restrict adjacency,
 		       const int based_nodes, const int height, const int based_height, int *diameter, double *ASPL, const bool enable_bfs,
 		       const int *rotate_hash);
 extern void copy_edge(int *restrict buf1, const int *restrict buf2, const int n);
