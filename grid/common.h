@@ -30,6 +30,7 @@ int rank, procs, threads;
 #define TIMER_APSP      2
 #define TIMER_CHECK     3
 #define NOT_USED       -1
+#define NO_EDGE        -1
 #define D_2G_OPT        2
 #define D_1G_OPT        1
 
@@ -57,17 +58,16 @@ int rank, procs, threads;
 #define OUTPUT_EDGE()  do{output_edge(lines, edge, height);}while(0)
 
 extern void swap(int *a, int *b);
-extern long long sa(const int nodes, const int lines, const int degree, const int based_nodes, const long long ncalcs, const double cooling_rate, const int low_diam,
-		    const double low_ASPL, const bool enable_bfs, const bool enable_hill_climbing, const bool enable_detect_temp,
+extern long long sa(const int nodes, const int lines, const int max_degree, int *degree, const int based_nodes, const long long ncalcs,
+		    const double cooling_rate, const int low_diam, const double low_ASPL, const bool enable_bfs, const bool enable_hill_climbing, const bool enable_detect_temp,
 		    double *max_diff_energy, const double max_temp, const double min_temp, const double fixed_temp, int edge[lines*2],
 		    int *diam, double *ASPL, const int cooling_cyclie, long long *num_accepts, const int width, const int based_width,
 		    const int height, const int based_height, const int low_length, const int groups, const int *rotate_hash, const bool enable_fixed_temp);
-extern void check_current_edge(const int nodes, const int lines, const int edge[lines*2], const double low_ASPL, const int low_diam, const int groups,
-			       const int height, const int based_height, const bool enable_bfs, const int *rotate_hash);
-extern double estimated_elapse_time(const int nodes, const int lines, const int edge[lines*2],
+extern void check_current_edge(const int nodes, const int lines, const int max_degree, int *degree, const int edge[lines*2], const double low_ASPL, const int low_diam,
+			       const int groups, const int height, const int based_height, const bool enable_bfs, const int *rotate_hash);
+extern double estimated_elapse_time(const int nodes, const int lines, const int max_degree, int *degree, const int edge[lines*2],
 				    const int height, const int width, const int based_height,
 				    const int groups, const int low_length, const bool enable_bfs, const int *rotate_hash);
-extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);
 extern bool has_duplicated_vertex(const int e00, const int e01, const int e10, const int e11);
 extern bool check_loop(const int lines, const int edge[lines][2]);
 extern bool check_duplicate_all_edge(const int lines, const int edge[lines][2]);
@@ -75,24 +75,23 @@ extern bool check_duplicate_tmp_edge(const int g_opt, const int groups, int tmp_
 extern bool check_duplicate_current_edge(const int lines, const int edge[lines][2], const int tmp_lines,
 					 const int tmp_edge[tmp_lines][2], const int tmp_line[2],
 					 const int groups, const int g_opt, const bool is_center);
-extern void create_adjacency(const int nodes, const int lines, const int degree,
-                             const int edge[lines][2], int adjacency[nodes][degree]);
+extern void create_adjacency(const int nodes, const int lines, const int max_degree,
+                             const int edge[lines][2], int adjacency[nodes][max_degree]);
 extern int getRandom(const int max);
 extern void timer_clear_all();
 extern void timer_clear(const int n);
 extern void timer_start(const int n);
 extern void timer_stop(const int n);
 extern double timer_read(const int n);
-extern bool evaluation(const int nodes, const int degree, const int groups, const int* restrict adjacency,
+extern bool evaluation(const int nodes, const int max_degree, const int *degree, const int groups, const int* restrict adjacency,
 		       const int based_nodes, const int height, const int based_height, int *diameter, double *ASPL, const bool enable_bfs,
 		       const int *rotate_hash);
 extern void copy_edge(int *restrict buf1, const int *restrict buf2, const int n);
 extern void output_edge(const int lines, const int edge[lines*2], const int height);
 extern bool check_symmetric_edge(const int lines, const int edge[lines][2], const int height, const int width,
 				 const int based_height, const int groups);
-extern void exchange_edge(const int nodes, const int lines, const int degree, int edge[lines][2],
+extern void exchange_edge(const int nodes, const int lines, const int max_degree, int *degree, int edge[lines][2],
 			  const int height, const int width, const int groups, const int low_length, const long long ii);
-//extern bool check_vector(const int groups, const int lines, const int height, const int edge[lines][2]);
 extern int DISTANCE(const int v, const int w, const int height);
 extern int WIDTH (const int v, const int height);
 extern int HEIGHT(const int v, const int height);

@@ -10,7 +10,7 @@ static void print_help(char *argv)
 static void set_args(const int argc, char **argv, char *infname, int *low_length, char *outfname, 
 		     int *random_seed, long long *ncalcs, double *max_temp, double *min_temp, int *groups,
 		     int *cooling_cycle, bool *enable_hill_climbing, bool *enable_detect_temp, bool *enable_bfs,
-		     bool *enable_halfway, double *fixed_temp, int *width, int *height, int *degree)
+		     bool *enable_halfway, double *fixed_temp, int *width, int *height, int *max_degree)
 {
   if(argc < 3)
     print_help(argv[0]);
@@ -34,8 +34,8 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
         ERROR("-H value > 0\n");
       break;
     case 'D':
-      *degree = atoi(optarg);
-      if(*degree <= 0)
+      *max_degree = atoi(optarg);
+      if(*max_degree <= 0)
         ERROR("-D value > 0\n");
       break;
     case 'R':
@@ -145,7 +145,7 @@ static void simple_exchange_edge(const int height, const int low_length, const i
 }
 
 #ifdef _OPENMP
-static int top_down_step(const int nodes, const int num_frontier, const int degree,
+static int top_down_step(const int nodes, const int num_frontier, const int max_degree,
 			 const int* restrict adjacency, int* restrict frontier,
 			 int* restrict next, char* restrict bitmap)
 {
@@ -157,8 +157,8 @@ static int top_down_step(const int nodes, const int num_frontier, const int degr
 #pragma omp for nowait
      for(int i=0;i<num_frontier;i++){
        int v = frontier[i];
-       for(int j=0;j<degree;j++){
-         int n = *(adjacency + v * degree + j);  // adjacency[v][j];
+       for(int j=0;j<max_degree;j++){
+         int n = *(adjacency + v * max_degree + j);  // adjacency[v][j];
 	 if(bitmap[n] == NOT_VISITED){
            bitmap[n] = VISITED;
            local_frontier[local_count++] = n;
@@ -174,15 +174,15 @@ static int top_down_step(const int nodes, const int num_frontier, const int degr
   return count;
 }
 #else
-static int top_down_step(const int nodes, const int num_frontier, const int degree,
+static int top_down_step(const int nodes, const int num_frontier, const int max_degree,
 			 const int* restrict adjacency, int* restrict frontier,
                          int* restrict next, char* restrict bitmap)
 {
   int count = 0;
   for(int i=0;i<num_frontier;i++){
     int v = frontier[i];
-    for(int j=0;j<degree;j++){
-      int n = *(adjacency + v * degree + j);  // int n = adjacency[v][j];
+    for(int j=0;j<max_degree;j++){
+      int n = *(adjacency + v * max_degree + j);  // int n = adjacency[v][j];
       if(bitmap[n] == NOT_VISITED){
         bitmap[n] = VISITED;
         next[count++] = n;
@@ -194,7 +194,7 @@ static int top_down_step(const int nodes, const int num_frontier, const int degr
 }
 #endif
 
-static int simple_bfs(const int nodes, const int degree, int *adjacency)
+static int simple_bfs(const int nodes, const int max_degree, int *adjacency)
 {
   char *bitmap  = malloc(sizeof(char) * nodes);
   int *frontier = malloc(sizeof(int)  * nodes);
@@ -208,7 +208,7 @@ static int simple_bfs(const int nodes, const int degree, int *adjacency)
   bitmap[root] = VISITED;
 
   while(1){
-    num_frontier = top_down_step(nodes, num_frontier, degree,
+    num_frontier = top_down_step(nodes, num_frontier, max_degree,
 				 adjacency, frontier, next, bitmap);
     if(num_frontier == 0) break;
     
@@ -230,12 +230,12 @@ static int simple_bfs(const int nodes, const int degree, int *adjacency)
 
 // Inherited from http://research.nii.ac.jp/graphgolf/c/create-lattice.c
 static void create_lattice(const int nodes, const int lines, const int width, const int height,
-			   const int degree, const int low_length, int edge[lines*2])
+			   const int max_degree, const int low_length, int edge[lines*2])
 {
   int i = 0;
   for(int x=0;x<width/2;x++){
     for(int y=0;y<height;y++){
-      for(int k=0;k<degree;k++){
+      for(int k=0;k<max_degree;k++){
         edge[i*2]   = y + 2 * x * height;
         edge[i*2+1] = edge[2*i] + height;
         i++;
@@ -245,7 +245,7 @@ static void create_lattice(const int nodes, const int lines, const int width, co
   
   if(width%2 == 1){
     for(int y=0;y<height/2;y++){
-      for(int k=0;k<degree;k++){
+      for(int k=0;k<max_degree;k++){
         edge[i*2]   = (width - 1) * height + 2 * y;
         edge[i*2+1] = edge[i*2] + 1;
         i++;
@@ -254,7 +254,7 @@ static void create_lattice(const int nodes, const int lines, const int width, co
 
     /* add self-loop */
     if(height%2 == 1){
-      for(int k=0;k<degree/2;k++){
+      for(int k=0;k<max_degree/2;k++){
         edge[i*2] = edge[i*2+1] = nodes - 1;
         i++;
       }
@@ -285,15 +285,15 @@ static void create_lattice(const int nodes, const int lines, const int width, co
 
   // Make an unconnected graph a connected graph
   // Note that the connected graph after this operation may have loops.
-  int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-  create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
-  min_num = simple_bfs(nodes, degree, (int *)adjacency);
+  int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
+  create_adjacency(nodes, lines, max_degree, (const int (*)[2])edge, adjacency);
+  min_num = simple_bfs(nodes, max_degree, (int *)adjacency);
 
   while(1){
     memcpy(tmp_edge, edge, sizeof(int)*lines*2);
     simple_exchange_edge(height, low_length, lines, tmp_edge);
-    create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
-    int tmp_num = simple_bfs(nodes, degree, (int *)adjacency);
+    create_adjacency(nodes, lines, max_degree, (const int (*)[2])tmp_edge, adjacency);
+    int tmp_num = simple_bfs(nodes, max_degree, (int *)adjacency);
     if(tmp_num == 0){
       memcpy(edge, tmp_edge, sizeof(int)*lines*2);
       break;
@@ -370,8 +370,8 @@ static int max_node_num(const int lines, const int edge[lines*2])
 }
 
 static void create_symmetric_edge(int *edge, const int based_nodes, const int based_lines,
-				  const int groups, const int degree, const int nodes, const int lines,
-				  const int height, const int width, const int based_height,
+				  const int groups, const int max_degree, int *degree, const int nodes,
+				  const int lines, const int height, const int width, const int based_height,
 				  const int low_length)
 {
   for(int i=0;i<based_lines;i++)
@@ -394,15 +394,15 @@ static void create_symmetric_edge(int *edge, const int based_nodes, const int ba
   }
 
   int *tmp_edge = malloc(lines*2*sizeof(int));
-  int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-  create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
-  int min_num = simple_bfs(nodes, degree, (int *)adjacency);
+  int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
+  create_adjacency(nodes, lines, max_degree, (const int (*)[2])edge, adjacency);
+  int min_num = simple_bfs(nodes, max_degree, (int *)adjacency);
 
   while(1){
     memcpy(tmp_edge, edge, sizeof(int)*lines*2);
-    exchange_edge(nodes, lines, degree, (int (*)[2])tmp_edge, height, width, groups, low_length, 0);
-    create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
-    int tmp_num = simple_bfs(nodes, degree, (int *)adjacency);
+    exchange_edge(nodes, lines, max_degree, degree, (int (*)[2])tmp_edge, height, width, groups, low_length, 0);
+    create_adjacency(nodes, lines, max_degree, (const int (*)[2])tmp_edge, adjacency);
+    int tmp_num = simple_bfs(nodes, max_degree, (int *)adjacency);
     if(tmp_num == 0){
       memcpy(edge, tmp_edge, sizeof(int)*lines*2);
       break;
@@ -418,25 +418,10 @@ static void create_symmetric_edge(int *edge, const int based_nodes, const int ba
   free(adjacency);
 }
 
-static void verfy_graph(const int nodes, const int lines, const int edge[lines*2],
-			const int height, const int low_length)
+static void verfy_graph(const int lines, const int edge[lines*2], const int height, const int low_length)
 {
   PRINT_R0("Verifing a regular graph... ");
   
-  int n[nodes];
-  for(int i=0;i<nodes;i++)
-    n[i] = 0;
-
-  for(int i=0;i<lines;i++){
-    n[edge[i*2  ]]++;
-    n[edge[i*2+1]]++;
-  }
-
-  int degree = 2 * lines / nodes;
-  for(int i=0;i<nodes;i++)
-    if(degree != n[i])
-      ERROR("NG\nNot regular graph. degree = %d n[%d] = %d.\n", degree, i, n[i]);
-
   for(int i=0;i<lines;i++){
     if(DISTANCE(edge[i*2], edge[i*2+1], height) > low_length)
       ERROR("Over length in line %d: length = %d, distance = %d\n",
@@ -452,16 +437,16 @@ static int dist(const int x1, const int y1, const int x2, const int y2)
 }
 
 static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int m, const int n,
-                                     const int degree, const int length)
+                                     const int max_degree, const int length)
 {
   int moore[m*n], hist[m*n], mh[m*n];
-  int mn = m * n, current = degree, ii;
+  int mn = m * n, current = max_degree, ii;
   double sum = 0;
 
   moore[0] = 1;
-  moore[1] = degree + 1;
+  moore[1] = max_degree + 1;
   for(ii=2;;ii++){
-    current = current * (degree - 1);
+    current = current * (max_degree - 1);
     moore[ii] = moore[ii-1] + current;
     if(moore[ii] >= mn){
       moore[ii] = mn;
@@ -502,7 +487,7 @@ static void lower_bound_of_diam_aspl(int *low_diam, double *low_ASPL, const int 
   *low_ASPL = sum/((double)mn*(mn-1));
 }
 
-static void output_params(const int degree, const int groups, const int low_length, const int random_seed,
+static void output_params(const int max_degree, const int groups, const int low_length, const int random_seed,
 			  const double max_temp, const double min_temp, const long long ncalcs,
 			  const int cooling_cycle, const double cooling_rate, const char *infname,
 			  const char *outfname, const double average_time, const bool enable_hill_climbing,
@@ -544,7 +529,7 @@ static void output_params(const int degree, const int groups, const int low_leng
   PRINT_R0("   Estimated elapse time: %f sec.\n", average_time * ncalcs);
   if(infname[0] != NOT_C_DEFINED)
     PRINT_R0("Input filename: %s\n", infname);
-  PRINT_R0("   (w x h, d, r) = (%d x %d, %d, %d)\n", width, height, degree, low_length);
+  PRINT_R0("   (w x h, d, r) = (%d x %d, %d, %d)\n", width, height, max_degree, low_length);
   if(outfname[0] != NOT_C_DEFINED)
     PRINT_R0("Output filename: %s\n", outfname);
   PRINT_R0("---\n");
@@ -563,12 +548,13 @@ int main(int argc, char *argv[])
   char hostname[MPI_MAX_PROCESSOR_NAME];
   char infname[MAX_FILENAME_LENGTH] = {NOT_C_DEFINED}, outfname[MAX_FILENAME_LENGTH] = {NOT_C_DEFINED};
   int random_seed = 0, cooling_cycle = 1, groups = 1;
-  int namelen, based_lines, lines, based_width, based_height, based_nodes, nodes, *edge;
-  int diam  = NOT_N_DEFINED, degree = NOT_N_DEFINED, low_diam   = NOT_N_DEFINED;
-  int width = NOT_N_DEFINED, height = NOT_N_DEFINED, low_length = NOT_N_DEFINED;
+  int namelen, based_lines, lines, based_width, based_height, based_nodes, nodes;
+  int diam  = NOT_N_DEFINED, max_degree = NOT_N_DEFINED, low_diam   = NOT_N_DEFINED;
+  int width = NOT_N_DEFINED, height     = NOT_N_DEFINED, low_length = NOT_N_DEFINED;
   long long ncalcs = DEFAULT_NCALCS, num_accepts = 0;
   double ASPL     = NOT_N_DEFINED, low_ASPL = NOT_N_DEFINED, cooling_rate = NOT_N_DEFINED, max_diff_energy = NOT_N_DEFINED;
   double max_temp = NOT_N_DEFINED, min_temp = NOT_N_DEFINED, fixed_temp   = NOT_N_DEFINED;
+  int *edge = NULL, *degree = NULL;
   FILE *fp = NULL;
   
   MPI_Init(&argc, &argv);
@@ -582,7 +568,7 @@ int main(int argc, char *argv[])
   // Set arguments
   set_args(argc, argv, infname, &low_length, outfname, &random_seed, &ncalcs, &max_temp,
 	   &min_temp, &groups, &cooling_cycle, &enable_hill_climbing, &enable_detect_temp,
-	   &enable_bfs, &enable_halfway, &fixed_temp, &width, &height, &degree);
+	   &enable_bfs, &enable_halfway, &fixed_temp, &width, &height, &max_degree);
 
   // Set other arguments
   bool enable_max_temp   = (max_temp    != NOT_N_DEFINED);
@@ -590,7 +576,7 @@ int main(int argc, char *argv[])
   bool enable_fixed_temp = (fixed_temp  != NOT_N_DEFINED);
   bool enable_infname    = (infname[0]  != NOT_C_DEFINED);
   bool enable_outfname   = (outfname[0] != NOT_C_DEFINED);
-  bool enable_whd        = (width != NOT_N_DEFINED && height != NOT_N_DEFINED && degree != NOT_N_DEFINED);
+  bool enable_whd        = (width != NOT_N_DEFINED && height != NOT_N_DEFINED && max_degree != NOT_N_DEFINED);
   
   // Check arguments
   if(low_length == NOT_N_DEFINED)                         ERROR("Must need -R\n");
@@ -606,6 +592,7 @@ int main(int argc, char *argv[])
   
   srandom(random_seed);
   if(enable_infname){
+    ERROR("NOT implement yet\n");
     based_lines = count_lines(infname);
     lines       = (enable_halfway)? based_lines : based_lines * groups;
     edge        = malloc(sizeof(int)*lines*2); // int edge[lines][2];
@@ -638,15 +625,18 @@ int main(int argc, char *argv[])
       width  = based_width  * 2;
     }
 
-    nodes  = based_nodes * groups;
-    degree = 2 * lines / nodes;
+    nodes      = based_nodes * groups;
+    max_degree = 2 * lines / nodes;
   }
   else{
     nodes       = width * height;
     based_nodes = nodes / groups;
-    lines       = nodes * degree / 2;
+    lines       = nodes * max_degree / 2;
     based_lines = lines / groups;
     edge        = malloc(sizeof(int)*lines*2); // int edge[lines][2];
+    degree      = malloc(sizeof(int)*nodes);   // int degree[nodes];
+    for(int i=0;i<nodes;i++)
+      degree[i] = max_degree;
     
     if(groups == 1){
       based_width  = width;
@@ -665,30 +655,31 @@ int main(int argc, char *argv[])
   if(groups == 4 && (based_width != based_height))
     ERROR("When g = 4, width(%d) must be equal to height(%d).\n", based_width, based_height);
   else if(groups == 4 && width%2 != 0 && height%2 != 0)
-    ERROR("When g = 4, width(%d) and height(%d) are divisible by 2.\n", width, height);
+    ERROR("When g = 4, width(%d) and height(%d) must be divisible by 2.\n", width, height);
   else if(groups == 2 && height%2 != 0)
-    ERROR("When g = 2, height(%d) os divisible by 2.\n", height);
+    ERROR("When g = 2, height(%d) must be divisible by 2.\n", height);
   else if(nodes%groups != 0)
     ERROR("nodes(%d) must be divisible by groups(%d)\n", nodes, groups);
   else if(lines%groups != 0)
-    ERROR("(nodes*degree/2) must be divisible by groups(%d)\n", groups);
+    ERROR("(nodes*max_degree/2) must be divisible by groups(%d)\n", groups);
   else if(based_width*based_height != based_nodes)
     ERROR("Not grid graph (width %d x height %d != nodes %d).\n", based_width, based_height, based_nodes);
 
   if(!enable_infname)
-    create_lattice(based_nodes, based_lines, based_width, based_height, degree, low_length, edge);
+    create_lattice(based_nodes, based_lines, based_width, based_height, max_degree, low_length, edge);
 
   int *rotate_hash = malloc(nodes * sizeof(int));
   create_rotate_hash(nodes, height, width, groups, rotate_hash);
   
   if(!enable_halfway && groups != 1)
-    create_symmetric_edge(edge, based_nodes, based_lines, groups, degree, nodes,
+    create_symmetric_edge(edge, based_nodes, based_lines, groups, max_degree, degree, nodes,
 			  lines, height, width, based_height, low_length);
 
-  verfy_graph(nodes, lines, edge, height, low_length);
-  lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, degree, low_length);
-  check_current_edge(nodes, lines, edge, low_ASPL, low_diam, groups, height, based_height, enable_bfs, rotate_hash);
-  double average_time = estimated_elapse_time(nodes, lines, edge, height, width, based_height, groups,
+  verfy_graph(lines, edge, height, low_length);
+  lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, max_degree, low_length);
+  check_current_edge(nodes, lines, max_degree, degree, edge, low_ASPL, low_diam, groups, height, based_height,
+		     enable_bfs, rotate_hash);
+  double average_time = estimated_elapse_time(nodes, lines, max_degree, degree, edge, height, width, based_height, groups,
 					      low_length, enable_bfs, rotate_hash);
   if(enable_hill_climbing){
     fixed_temp = max_temp = min_temp = 0.0;
@@ -707,14 +698,14 @@ int main(int argc, char *argv[])
       ERROR("Cannot open %s\n", outfname);
   }
 
-  output_params(degree, groups, low_length, random_seed, max_temp, min_temp, ncalcs,
+  output_params(max_degree, groups, low_length, random_seed, max_temp, min_temp, ncalcs,
 		cooling_cycle, cooling_rate, infname, outfname, average_time,
 		enable_hill_climbing, width, height, enable_bfs, enable_fixed_temp, fixed_temp);
 
   // Optimization
   timer_clear_all();
   timer_start(TIMER_SA);
-  long long step = sa(nodes, lines, degree, based_nodes, ncalcs, cooling_rate, low_diam, low_ASPL, enable_bfs,
+  long long step = sa(nodes, lines, max_degree, degree, based_nodes, ncalcs, cooling_rate, low_diam, low_ASPL, enable_bfs,
 		      enable_hill_climbing, enable_detect_temp, &max_diff_energy, max_temp,
 		      min_temp, fixed_temp, edge, &diam, &ASPL, cooling_cycle, &num_accepts, width,
 		      based_width, height, based_height, low_length, groups, rotate_hash, enable_fixed_temp);
@@ -745,7 +736,7 @@ int main(int argc, char *argv[])
     fclose(fp);
   }
 
-  verfy_graph(nodes, lines, edge, height, low_length);
+  verfy_graph(lines, edge, height, low_length);
 
   MPI_Finalize();
   return 0;

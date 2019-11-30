@@ -134,7 +134,7 @@ static bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const 
   return true;
 }
 
-void exchange_edge(const int nodes, const int lines, const int degree, int edge[lines][2],
+void exchange_edge(const int nodes, const int lines, const int max_degree, int *degree, int edge[lines][2],
 		   const int height, const int width, const int groups, const int low_length, const long long ii)
 {
   int tmp_line[groups*2], based_lines = lines/groups, based_nodes = nodes/groups;
@@ -151,7 +151,7 @@ void exchange_edge(const int nodes, const int lines, const int degree, int edge[
         continue;
       }
       else if((tmp_line[0] - tmp_line[1]) % based_lines == 0){
-        if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups,
+        if(edge_1g_opt(edge, nodes, lines, max_degree, based_nodes, based_lines, height, width, groups,
 		       tmp_line[0], low_length, ii))
 	  return;
 	else
@@ -167,7 +167,7 @@ void exchange_edge(const int nodes, const int lines, const int degree, int edge[
 		   HEIGHT(edge[tmp_line[1]][0], height) + HEIGHT(edge[tmp_line[1]][1], height) == (height-1));
     bool diameter_flag = ((flag0 || flag1) && groups%2==0);
     if(diameter_flag){
-      if(edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, height, width, groups,
+      if(edge_1g_opt(edge, nodes, lines, max_degree, based_nodes, based_lines, height, width, groups,
 		     tmp_line[0], low_length, ii))
         return;
       else
@@ -221,8 +221,8 @@ void exchange_edge(const int nodes, const int lines, const int degree, int edge[
 }
 
 static bool accept(const double new_ASPL, const double current_ASPL, const int new_diam, const int current_diam,
-		   const double fixed_temp, const double temp, const int nodes, const int degree,
-		   const bool enable_hill_climbing, const bool enable_detect_temp, double *max_diff_energy, long long *total_accepts,
+		   const double fixed_temp, const double temp, const int nodes, const bool enable_hill_climbing,
+		   const bool enable_detect_temp, double *max_diff_energy, long long *total_accepts,
 		   long long *accepts, long long *rejects, const double max_temp, const double min_temp,
 		   const int groups, const bool enable_fixed_temp, const long long ii)
 {
@@ -267,7 +267,8 @@ static bool accept(const double new_ASPL, const double current_ASPL, const int n
   }
 }
 
-long long sa(const int nodes, const int lines, const int degree, const int based_nodes, const long long ncalcs, const double cooling_rate,
+long long sa(const int nodes, const int lines, const int max_degree, int *degree, const int based_nodes,
+	     const long long ncalcs, const double cooling_rate,
 	     const int low_diam,  const double low_ASPL, const bool enable_bfs, const bool enable_hill_climbing,
 	     const bool enable_detect_temp, double *max_diff_energy, const double max_temp, const double min_temp,
 	     const double fixed_temp, int edge[lines*2], int *diam, double *ASPL, const int cooling_cycle,
@@ -278,10 +279,10 @@ long long sa(const int nodes, const int lines, const int degree, const int based
   double temp = max_temp;
   int (*best_edge)[2] = malloc(sizeof(int)*lines*2);
   int (*tmp_edge)[2]  = malloc(sizeof(int)*lines*2);
-  int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
+  int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
   
-  create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
-  evaluation(nodes, degree, groups, (const int* restrict)adjacency,
+  create_adjacency(nodes, lines, max_degree, (const int (*)[2])edge, adjacency);
+  evaluation(nodes, max_degree, degree, groups, (const int* restrict)adjacency,
 	     based_nodes, height, based_height, diam, ASPL, enable_bfs, rotate_hash);
 
   double current_ASPL = *ASPL, best_ASPL = *ASPL, tmp_ASPL;
@@ -302,14 +303,14 @@ long long sa(const int nodes, const int lines, const int degree, const int based
 
     while(1){
       copy_edge((int *)tmp_edge, (int *)edge, lines*2);
-      exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, low_length, ii);
-      create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
-      if(evaluation(nodes, degree, groups, (const int* restrict)adjacency,
+      exchange_edge(nodes, lines, max_degree, degree, tmp_edge, height, width, groups, low_length, ii);
+      create_adjacency(nodes, lines, max_degree, (const int (*)[2])tmp_edge, adjacency);
+      if(evaluation(nodes, max_degree, degree, groups, (const int* restrict)adjacency,
 		    based_nodes, height, based_height, &tmp_diam, &tmp_ASPL, enable_bfs, rotate_hash))
 	break;
     }
 
-    if(accept(tmp_ASPL, current_ASPL, tmp_diam, current_diam, fixed_temp, temp, nodes, degree,
+    if(accept(tmp_ASPL, current_ASPL, tmp_diam, current_diam, fixed_temp, temp, nodes, 
 	      enable_hill_climbing, enable_detect_temp, max_diff_energy, total_accepts,
 	      &accepts, &rejects, max_temp, min_temp, groups, enable_fixed_temp, ii)){
       current_ASPL = tmp_ASPL;
@@ -347,23 +348,22 @@ long long sa(const int nodes, const int lines, const int degree, const int based
   return ii;
 }
 
-double estimated_elapse_time(const int nodes, const int lines, const int edge[lines*2],
+double estimated_elapse_time(const int nodes, const int lines, const int max_degree, int *degree, const int edge[lines*2],
 			     const int height, const int width, const int based_height, const int groups,
 			     const int low_length, const bool enable_bfs, const int *rotate_hash)
 {
   int based_nodes = nodes / groups;
-  int degree = 2 * lines / nodes;
   int diam;    // Not use
   double ASPL; // Not use
-  int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
-  int (*tmp_edge)[2]       = malloc(sizeof(int)*lines*2);      // int tmp_edge[lines][2];
+  int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
+  int (*tmp_edge)[2]           = malloc(sizeof(int)*lines*2);          // int tmp_edge[lines][2];
   
   timer_start(TIMER_ESTIMATED);
   for(int i=0;i<ESTIMATED_TIMES;i++){
     copy_edge((int *)tmp_edge, edge, lines*2);
-    exchange_edge(nodes, lines, degree, tmp_edge, height, width, groups, low_length, i);
-    create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
-    evaluation(nodes, degree, groups, (const int* restrict)adjacency,
+    exchange_edge(nodes, lines, max_degree, degree, tmp_edge, height, width, groups, low_length, i);
+    create_adjacency(nodes, lines, max_degree, (const int (*)[2])tmp_edge, adjacency);
+    evaluation(nodes, max_degree, degree, groups, (const int* restrict)adjacency,
 	       based_nodes, height, based_height, &diam, &ASPL, enable_bfs, rotate_hash);
   }
   timer_stop(TIMER_ESTIMATED);
@@ -375,18 +375,17 @@ double estimated_elapse_time(const int nodes, const int lines, const int edge[li
 }
 
 // This function is mainly useful when groupe is 1.
-void check_current_edge(const int nodes, const int lines, const int edge[lines*2], const double low_ASPL,
-			const int low_diam, const int groups, const int height, const int based_height,
-			const bool enable_bfs, const int *rotate_hash)
+void check_current_edge(const int nodes, const int lines, const int max_degree, int *degree, const int edge[lines*2],
+			const double low_ASPL, const int low_diam, const int groups, const int height,
+			const int based_height,	const bool enable_bfs, const int *rotate_hash)
 {
   int based_nodes = nodes / groups;
-  int degree = 2 * lines / nodes;
   int diam;
   double ASPL;
-  int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
+  int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
 
-  create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
-  if(! evaluation(nodes, degree, groups, (const int* restrict)adjacency,
+  create_adjacency(nodes, lines, max_degree, (const int (*)[2])edge, adjacency);
+  if(! evaluation(nodes, max_degree, degree, groups, (const int* restrict)adjacency,
 		  based_nodes, height, based_height, &diam, &ASPL, enable_bfs, rotate_hash))
     ERROR("The input file has a node which is never reached by another node.\n");
 

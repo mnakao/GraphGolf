@@ -11,8 +11,8 @@ void printb(const uint64_t v)
   } while (mask >>= 1);
 }
 
-void create_adjacency(const int nodes, const int lines, const int degree,
-                      const int edge[lines][2], int adjacency[nodes][degree])
+void create_adjacency(const int nodes, const int lines, const int max_degree,
+                      const int edge[lines][2], int adjacency[nodes][max_degree])
 {
   int count[nodes];
   for(int i=0;i<nodes;i++)
