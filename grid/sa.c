@@ -1,4 +1,9 @@
 #include "common.h"
+static int count_mutate_graph[] = {0, 0, 0};
+static int kind_mutate_graph;
+#define EXCHANGE_EDGE 0
+#define ADD_EDGE      1
+#define DELETE_EDGE   2
 
 static double uniform_rand()
 {
@@ -136,7 +141,7 @@ static bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const 
 void exchange_edge(const int nodes, const int lines, const int max_degree, const int *degree, int edge[lines][2],
 		   const int height, const int width, const int groups, const int low_length, const long long ii)
 {
-  int tmp_line[groups*2], based_lines = lines/groups, based_nodes = nodes/groups;
+  int tmp_line[groups*2], based_lines = lines/groups, based_nodes = nodes/groups, hoge = 1;
   assert(lines%groups == 0);
   assert(nodes%groups == 0);
 
@@ -180,9 +185,11 @@ void exchange_edge(const int nodes, const int lines, const int max_degree, const
       if(tmp_line[i*2  ] >= lines) tmp_line[i*2  ] -= lines;
       if(tmp_line[i*2+1] >= lines) tmp_line[i*2+1] -= lines;
     }
-    
-    int r = getRandom(3);
+
+    int r = (hoge == 0)? 0 : getRandom(2);
     if(r == 0){ // Exchange edge
+      hoge = 0;
+      kind_mutate_graph = EXCHANGE_EDGE;
       int tmp_edge[groups*2][2];
       for(int i=0;i<groups;i++){
 	for(int j=0;j<2;j++){
@@ -226,72 +233,77 @@ void exchange_edge(const int nodes, const int lines, const int max_degree, const
 	}
       }
     }
-    else if(r == 1){ // Delete edge
-      if(degree[edge[tmp_line[0]][0]] > 1 && degree[edge[tmp_line[0]][1]] > 1){
-	for(int i=0;i<groups;i++){
-	  edge[tmp_line[i*2]][0] = NO_EDGE;
-	  edge[tmp_line[i*2]][1] = NO_EDGE;
+    else{
+      if(getRandom(2) == 0){     // Delete edge
+	kind_mutate_graph = DELETE_EDGE;
+	if(degree[edge[tmp_line[0]][0]] > 1 && degree[edge[tmp_line[0]][1]] > 1){
+	  for(int i=0;i<groups;i++){
+	    edge[tmp_line[i*2]][0] = NO_EDGE;
+	    edge[tmp_line[i*2]][1] = NO_EDGE;
+	  }
+	}
+	else if(degree[edge[tmp_line[1]][0]] > 1 && degree[edge[tmp_line[1]][1]] > 1){
+	  for(int i=0;i<groups;i++){
+	    edge[tmp_line[i*2+1]][0] = NO_EDGE;
+	    edge[tmp_line[i*2+1]][1] = NO_EDGE;
+	  }
+	}
+	else{
+	  continue;
 	}
       }
-      else if(degree[edge[tmp_line[1]][0]] > 1 && degree[edge[tmp_line[1]][1]] > 1){
-	for(int i=0;i<groups;i++){
-	  edge[tmp_line[i*2+1]][0] = NO_EDGE;
-	  edge[tmp_line[i*2+1]][1] = NO_EDGE;
+      else{ // Add edge
+	kind_mutate_graph = ADD_EDGE;
+	int tmp_edge[groups][2];
+	int e0_v = edge[tmp_line[0]][0]; int e0_w = edge[tmp_line[0]][1];
+	int e1_v = edge[tmp_line[1]][0]; int e1_w = edge[tmp_line[1]][1];
+	if(degree[e0_v] < max_degree && degree[e1_v] < max_degree && DISTANCE(e0_v, e1_v, height) <= low_length){
+	  for(int i=0;i<groups;i++){
+	    tmp_edge[i][0] = edge[tmp_line[i*2  ]][0];
+	    tmp_edge[i][1] = edge[tmp_line[i*2+1]][0];
+	  }
 	}
-      }
-      else{
-	continue;
-      }
-    }
-    else{ // Add edge
-      int tmp_edge[groups][2];
-      int e0_v = edge[tmp_line[0]][0]; int e0_w = edge[tmp_line[0]][1];
-      int e1_v = edge[tmp_line[1]][0]; int e1_w = edge[tmp_line[1]][1];
-      if(degree[e0_v] < max_degree && degree[e1_v] < max_degree && DISTANCE(e0_v, e1_v, height) <= low_length){
-	for(int i=0;i<groups;i++){
-	  tmp_edge[i][0] = edge[tmp_line[i*2  ]][0];
-	  tmp_edge[i][1] = edge[tmp_line[i*2+1]][0];
+	else if(degree[e0_w] < max_degree && degree[e1_w] < max_degree && DISTANCE(e0_w, e1_w, height) <= low_length){
+	  for(int i=0;i<groups;i++){
+	    tmp_edge[i][0] = edge[tmp_line[i*2  ]][1];
+	    tmp_edge[i][1] = edge[tmp_line[i*2+1]][1];
+	  }
 	}
-      }
-      else if(degree[e0_w] < max_degree && degree[e1_w] < max_degree && DISTANCE(e0_w, e1_w, height) <= low_length){
-	for(int i=0;i<groups;i++){
-	  tmp_edge[i][0] = edge[tmp_line[i*2  ]][1];
-	  tmp_edge[i][1] = edge[tmp_line[i*2+1]][1];
+	else if(degree[e0_v] < max_degree && degree[e1_w] < max_degree && DISTANCE(e0_v, e1_w, height) <= low_length){
+	  for(int i=0;i<groups;i++){
+	    tmp_edge[i][0] = edge[tmp_line[i*2  ]][0];
+	    tmp_edge[i][1] = edge[tmp_line[i*2+1]][1];
+	  }
 	}
-      }
-      else if(degree[e0_v] < max_degree && degree[e1_w] < max_degree && DISTANCE(e0_v, e1_w, height) <= low_length){
-	for(int i=0;i<groups;i++){
-	  tmp_edge[i][0] = edge[tmp_line[i*2  ]][0];
-	  tmp_edge[i][1] = edge[tmp_line[i*2+1]][1];
+	else if(degree[e0_w] < max_degree && degree[e1_v] < max_degree && DISTANCE(e0_w, e1_v, height) <= low_length){
+	  for(int i=0;i<groups;i++){
+	    tmp_edge[i][0] = edge[tmp_line[i*2  ]][1];
+	    tmp_edge[i][1] = edge[tmp_line[i*2+1]][0];
+	  }
 	}
-      }
-      else if(degree[e0_w] < max_degree && degree[e1_v] < max_degree && DISTANCE(e0_w, e1_v, height) <= low_length){
-	for(int i=0;i<groups;i++){
-	  tmp_edge[i][0] = edge[tmp_line[i*2  ]][1];
-	  tmp_edge[i][1] = edge[tmp_line[i*2+1]][0];
+	else{
+	  continue;
 	}
-      }
-      else{
-	continue;
-      }
-      
-      if(!check_duplicate_tmp_edge(D_1G_OPT, groups, tmp_edge)) continue;
-      if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups,
-				       (const int (*)[2])tmp_edge, tmp_line, groups, D_1G_OPT, false))
-	continue;
+	
+	if(!check_duplicate_tmp_edge(D_1G_OPT, groups, tmp_edge)) continue;
+	if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups,
+					 (const int (*)[2])tmp_edge, tmp_line, groups, D_1G_OPT, false))
+	  continue;
 
-      // search NO_EDGE
-      int n = 0;
-      for(int i=0;i<based_lines;i++)
-	if(edge[i][0] == NO_EDGE)
-	  n = i;
-      
-      for(int i=0;i<groups;i++)
-	for(int j=0;j<2;j++)
-	  edge[n+based_lines*i][j] = tmp_edge[i][j];
+	// search NO_EDGE
+	int n = 0;
+	for(int i=0;i<based_lines;i++)
+	  if(edge[i][0] == NO_EDGE)
+	    n = i;
+	
+	for(int i=0;i<groups;i++)
+	  for(int j=0;j<2;j++)
+	    edge[n+based_lines*i][j] = tmp_edge[i][j];
+      }
     }
     break;
   }
+  count_mutate_graph[kind_mutate_graph]++;
 }
 
 static bool accept(const double new_ASPL, const double current_ASPL, const int new_diam, const int current_diam,
@@ -353,6 +365,7 @@ long long sa(const int nodes, const int lines, const int max_degree, int *degree
   double temp = max_temp;
   int (*best_edge)[2] = malloc(sizeof(int)*lines*2);
   int (*tmp_edge)[2]  = malloc(sizeof(int)*lines*2);
+  int *tmp_degree     = malloc(sizeof(int)*max_degree*nodes);
   int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
   
   create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])edge, adjacency);
@@ -377,26 +390,10 @@ long long sa(const int nodes, const int lines, const int max_degree, int *degree
 
     while(1){
       copy_edge((int *)tmp_edge, (int *)edge, lines*2);
-      create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])tmp_edge, adjacency);
-      exchange_edge(nodes, lines, max_degree, degree, tmp_edge, height, width, groups, low_length, ii);
-      create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])tmp_edge, adjacency);
-      /*
-      printf("--- %lld\n", ii);
-      for(int j=0;j<lines;j++){
-	printf("%d %d\n", edge[j*2], edge[j*2+1]);
-	if((edge[j*2] == NO_EDGE && edge[j*2+1] != NO_EDGE) || (edge[j*2] != NO_EDGE && edge[j*2+1] == NO_EDGE))
-	  EXIT(0);
-      }
-      printf("---\n");
-      for(int j=0;j<nodes;j++){
-	printf("[%d] ", j);
-	for(int i=0;i<degree[j];i++){
-	  printf("%2d ", adjacency[j][i]);
-	}
-	printf("\n");
-      }
-      */
-      if(evaluation(nodes, max_degree, degree, groups, (const int* restrict)adjacency,
+      memcpy(tmp_degree, degree, sizeof(int)*max_degree*nodes);
+      exchange_edge(nodes, lines, max_degree, tmp_degree, tmp_edge, height, width, groups, low_length, ii);
+      create_adjacency(nodes, lines, max_degree, tmp_degree, (const int (*)[2])tmp_edge, adjacency);
+      if(evaluation(nodes, max_degree, tmp_degree, groups, (const int* restrict)adjacency,
 		    based_nodes, height, based_height, &tmp_diam, &tmp_ASPL, enable_bfs, rotate_hash))
 	break;
     }
@@ -407,6 +404,7 @@ long long sa(const int nodes, const int lines, const int max_degree, int *degree
       current_ASPL = tmp_ASPL;
       current_diam = tmp_diam;
       copy_edge((int *)edge, (int *)tmp_edge, lines*2);
+      memcpy(degree, tmp_degree, sizeof(int)*max_degree*nodes);
       if((best_diam > tmp_diam) ||
 	 (best_diam == tmp_diam && best_ASPL > tmp_ASPL)){
 	copy_edge((int *)best_edge, (int *)edge, lines*2);
@@ -436,6 +434,8 @@ long long sa(const int nodes, const int lines, const int max_degree, int *degree
   free(tmp_edge);
   free(adjacency);
 
+  PRINT_R0("EXCHANGE: %d, DELETE: %d, ADD: %d\n",
+	   count_mutate_graph[EXCHANGE_EDGE], count_mutate_graph[DELETE_EDGE], count_mutate_graph[ADD_EDGE]);
   return ii;
 }
 
