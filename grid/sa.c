@@ -187,7 +187,6 @@ void exchange_edge(const int nodes, const int lines, const int max_degree, const
     }
 
     int r = (hoge == 0)? 0 : getRandom(2);
-    printf("r = %d\n", r);
     if(r == 0){ // Exchange edge
       hoge = 0;
       kind_mutate_graph = EXCHANGE_EDGE;
