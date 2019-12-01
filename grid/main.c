@@ -370,6 +370,20 @@ static int max_node_num(const int lines, const int edge[lines*2])
   return max;
 }
 
+static void verfy_graph(const int lines, const int edge[lines*2], const int height, const int low_length)
+{
+  PRINT_R0("Verifing a regular graph... ");
+
+  for(int i=0;i<lines;i++){
+    if(edge[i*2] != NO_EDGE)
+      if(DISTANCE(edge[i*2], edge[i*2+1], height) > low_length)
+        ERROR("Over length in line %d: length = %d, distance = %d\n",
+              i+1, low_length, DISTANCE(edge[i*2], edge[i*2+1], height));
+  }
+
+  PRINT_R0("OK\n");
+}
+
 static void create_symmetric_edge(int *edge, const int based_nodes, const int based_lines,
 				  const int groups, const int max_degree, int *degree, const int nodes,
 				  const int lines, const int height, const int width, const int based_height,
@@ -394,16 +408,18 @@ static void create_symmetric_edge(int *edge, const int based_nodes, const int ba
     }
   }
 
-  int *tmp_edge = malloc(lines*2*sizeof(int));
+  int *tmp_edge   = malloc(lines*2*sizeof(int));
+  int *tmp_degree = malloc(nodes*sizeof(int));
   int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
   create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])edge, adjacency);
   int min_num = simple_bfs(nodes, max_degree, degree, (int *)adjacency);
 
   while(1){
-    memcpy(tmp_edge, edge, sizeof(int)*lines*2);
-    exchange_edge(nodes, lines, max_degree, degree, (int (*)[2])tmp_edge, height, width, groups, low_length, 0);
-    create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])tmp_edge, adjacency);
-    int tmp_num = simple_bfs(nodes, max_degree, degree, (int *)adjacency);
+    memcpy(tmp_edge,   edge,   sizeof(int)*lines*2);
+    memcpy(tmp_degree, degree, sizeof(int)*nodes);
+    exchange_edge(nodes, lines, max_degree, tmp_degree, (int (*)[2])tmp_edge, height, width, groups, low_length, 0);
+    create_adjacency(nodes, lines, max_degree, tmp_degree, (const int (*)[2])tmp_edge, adjacency);
+    int tmp_num = simple_bfs(nodes, max_degree, tmp_degree, (int *)adjacency);
     if(tmp_num == 0){
       memcpy(edge, tmp_edge, sizeof(int)*lines*2);
       break;
@@ -411,26 +427,14 @@ static void create_symmetric_edge(int *edge, const int based_nodes, const int ba
     else{
       if(tmp_num <= min_num){
 	min_num = tmp_num;
-	memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+	memcpy(edge,   tmp_edge,   sizeof(int)*lines*2);
+	memcpy(degree, tmp_degree, sizeof(int)*nodes);
       }
     }
   }
   free(tmp_edge);
+  free(tmp_degree);
   free(adjacency);
-}
-
-static void verfy_graph(const int lines, const int edge[lines*2], const int height, const int low_length)
-{
-  PRINT_R0("Verifing a regular graph... ");
-  
-  for(int i=0;i<lines;i++){
-    if(edge[i*2] != NO_EDGE)
-      if(DISTANCE(edge[i*2], edge[i*2+1], height) > low_length)
-	ERROR("Over length in line %d: length = %d, distance = %d\n",
-	      i+1, low_length, DISTANCE(edge[i*2], edge[i*2+1], height));
-  }
-  
-  PRINT_R0("OK\n");
 }
 
 static int dist(const int x1, const int y1, const int x2, const int y2)

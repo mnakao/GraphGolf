@@ -186,7 +186,8 @@ void exchange_edge(const int nodes, const int lines, const int max_degree, const
       if(tmp_line[i*2+1] >= lines) tmp_line[i*2+1] -= lines;
     }
 
-    int r = (hoge == 0)? 0 : getRandom(2);
+    int r  = (hoge == 0)? 0 : getRandom(2);
+    int rr = getRandom(2);
     if(r == 0){ // Exchange edge
       hoge = 0;
       kind_mutate_graph = EXCHANGE_EDGE;
@@ -196,7 +197,7 @@ void exchange_edge(const int nodes, const int lines, const int max_degree, const
 	  tmp_edge[i*2  ][j] = edge[tmp_line[i*2  ]][j];
 	  tmp_edge[i*2+1][j] = edge[tmp_line[i*2+1]][j];
 	}
-	swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][getRandom(2)]);
+	swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][rr]);
       }
 
       bool flag = false;
