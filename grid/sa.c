@@ -187,6 +187,7 @@ void exchange_edge(const int nodes, const int lines, const int max_degree, const
     }
 
     int r = (hoge == 0)? 0 : getRandom(2);
+    printf("r = %d\n", r);
     if(r == 0){ // Exchange edge
       hoge = 0;
       kind_mutate_graph = EXCHANGE_EDGE;
@@ -365,7 +366,7 @@ long long sa(const int nodes, const int lines, const int max_degree, int *degree
   double temp = max_temp;
   int (*best_edge)[2] = malloc(sizeof(int)*lines*2);
   int (*tmp_edge)[2]  = malloc(sizeof(int)*lines*2);
-  int *tmp_degree     = malloc(sizeof(int)*max_degree*nodes);
+  int *tmp_degree     = malloc(sizeof(int)*nodes);
   int (*adjacency)[max_degree] = malloc(sizeof(int)*nodes*max_degree); // int adjacency[nodes][max_degree];
   
   create_adjacency(nodes, lines, max_degree, degree, (const int (*)[2])edge, adjacency);
@@ -390,7 +391,7 @@ long long sa(const int nodes, const int lines, const int max_degree, int *degree
 
     while(1){
       copy_edge((int *)tmp_edge, (int *)edge, lines*2);
-      memcpy(tmp_degree, degree, sizeof(int)*max_degree*nodes);
+      memcpy(tmp_degree, degree, sizeof(int)*nodes);
       exchange_edge(nodes, lines, max_degree, tmp_degree, tmp_edge, height, width, groups, low_length, ii);
       create_adjacency(nodes, lines, max_degree, tmp_degree, (const int (*)[2])tmp_edge, adjacency);
       if(evaluation(nodes, max_degree, tmp_degree, groups, (const int* restrict)adjacency,
@@ -404,7 +405,7 @@ long long sa(const int nodes, const int lines, const int max_degree, int *degree
       current_ASPL = tmp_ASPL;
       current_diam = tmp_diam;
       copy_edge((int *)edge, (int *)tmp_edge, lines*2);
-      memcpy(degree, tmp_degree, sizeof(int)*max_degree*nodes);
+      memcpy(degree, tmp_degree, sizeof(int)*nodes);
       if((best_diam > tmp_diam) ||
 	 (best_diam == tmp_diam && best_ASPL > tmp_ASPL)){
 	copy_edge((int *)best_edge, (int *)edge, lines*2);
