@@ -196,7 +196,7 @@ void exchange_edge(const int nodes, const int lines, const int max_degree, const
 	  tmp_edge[i*2  ][j] = edge[tmp_line[i*2  ]][j];
 	  tmp_edge[i*2+1][j] = edge[tmp_line[i*2+1]][j];
 	}
-	swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][0]);
+	swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][getRandom(2)]);
       }
 
       bool flag = false;
@@ -204,21 +204,6 @@ void exchange_edge(const int nodes, const int lines, const int max_degree, const
 	if(DISTANCE(tmp_edge[i][0], tmp_edge[i][1], height) > low_length)
 	  flag = true;
 
-      if(flag){
-	for(int i=0;i<groups;i++){
-	  for(int j=0;j<2;j++){
-	    tmp_edge[i*2  ][j] = edge[tmp_line[i*2  ]][j];
-	    tmp_edge[i*2+1][j] = edge[tmp_line[i*2+1]][j];
-	  }
-	  swap(&tmp_edge[i*2][1], &tmp_edge[i*2+1][1]);
-	}
-	
-	flag = false;
-	for(int i=0;i<2;i++)
-	  if(DISTANCE(tmp_edge[i][0], tmp_edge[i][1], height) > low_length)
-	    flag = true;
-      }
-      
       if(flag) continue;
       else if(!check_duplicate_tmp_edge(D_2G_OPT, groups, tmp_edge))
 	continue;
@@ -281,9 +266,7 @@ void exchange_edge(const int nodes, const int lines, const int max_degree, const
 	    tmp_edge[i][1] = edge[tmp_line[i*2+1]][0];
 	  }
 	}
-	else{
-	  continue;
-	}
+	else continue;
 	
 	if(!check_duplicate_tmp_edge(D_1G_OPT, groups, tmp_edge)) continue;
 	if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups,
