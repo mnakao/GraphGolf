@@ -151,6 +151,7 @@ void exchange_edge(const int nodes, const int lines, const int max_degree, const
       tmp_line[1] = getRandom(lines);
       
       if(tmp_line[0] == tmp_line[1]) continue;
+      else if(edge[tmp_line[0]][0] == edge[tmp_line[1]][1]) continue;
       else if(edge[tmp_line[0]][0] == NO_EDGE || edge[tmp_line[1]][0] == NO_EDGE) continue;
       else if(has_duplicated_vertex(edge[tmp_line[0]][0], edge[tmp_line[0]][1], edge[tmp_line[1]][0], edge[tmp_line[1]][1])){
         continue;
