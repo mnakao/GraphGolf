@@ -370,7 +370,8 @@ static int max_node_num(const int lines, const int edge[lines*2])
   return max;
 }
 
-static void verfy_graph(const int lines, const int edge[lines*2], const int height, const int low_length)
+static void verfy_graph(const int nodes, const int lines, const int edge[lines*2], const int height,
+			const int low_length, const int max_degree)
 {
   PRINT_R0("Verifing a regular graph... ");
 
@@ -381,6 +382,19 @@ static void verfy_graph(const int lines, const int edge[lines*2], const int heig
               i+1, low_length, DISTANCE(edge[i*2], edge[i*2+1], height));
   }
 
+  int degree[nodes];
+  for(int i=0;i<nodes;i++)
+    degree[i] = 0;
+
+  for(int i=0;i<lines;i++){
+    int n1 = edge[i*2  ];
+    int n2 = edge[i*2+1];
+    if(n1 != NO_EDGE){
+      degree[n1]++; if(degree[n1] > max_degree)  ERROR("Degree is over %d\n", degree[n1]);
+      degree[n2]++; if(degree[n2] > max_degree)  ERROR("Degree is over %d\n", degree[n2]);
+    }
+  }
+  
   PRINT_R0("OK\n");
 }
 
@@ -680,7 +694,7 @@ int main(int argc, char *argv[])
     create_symmetric_edge(edge, based_nodes, based_lines, groups, max_degree, degree, nodes,
 			  lines, height, width, based_height, low_length);
 
-  verfy_graph(lines, edge, height, low_length);
+  verfy_graph(nodes, lines, edge, height, low_length, max_degree);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, max_degree, low_length);
   check_current_edge(nodes, lines, max_degree, degree, edge, low_ASPL, low_diam, groups, height, based_height,
 		     enable_bfs, rotate_hash);
@@ -741,7 +755,7 @@ int main(int argc, char *argv[])
     fclose(fp);
   }
 
-  verfy_graph(lines, edge, height, low_length);
+  verfy_graph(nodes, lines, edge, height, low_length, max_degree);
 
   MPI_Finalize();
   return 0;

@@ -23,8 +23,22 @@ void create_adjacency(const int nodes, const int lines, const int max_degree, in
     if(n1 != NO_EDGE){
       adjacency[n1][degree[n1]++] = n2;
       adjacency[n2][degree[n2]++] = n1;
+      //#ifdef NDEBUG
+      if(degree[n1] > max_degree || degree[n2] > max_degree)
+	ERROR("uga0\n");
+      //#endif
     }
   }
+  /*
+  int groups = 4;
+  int based_lines = lines / groups;
+  for(int i=0;i<based_lines;i++){
+    int d0[] = {degree[edge[i][0]], degree[edge[i+based_lines][0]], degree[edge[i+based_lines*2][0]], degree[edge[i+based_lines*3][0]]};
+    int	d1[] = {degree[edge[i][1]], degree[edge[i+based_lines][1]], degree[edge[i+based_lines*2][1]], degree[edge[i+based_lines*3][1]]};
+    if(d0[0] != d0[1] || d0[2] != d0[3] || d0[0] != d0[2]) ERROR("uga1\n");
+    if(d1[0] != d1[1] || d1[2] != d1[3] || d1[0] != d1[2]) ERROR("uga2\n");
+  }
+  */
 }
 
 bool has_duplicated_vertex(const int e00, const int e01, const int e10, const int e11)
@@ -112,6 +126,7 @@ bool check_symmetric_edge(const int lines, const int edge[lines][2], const int h
   else if(groups == 4){
     // 90 degrees
     for(int i=0;i<based_lines;i++){
+      if(edge[i][0] == NO_EDGE) continue;
       for(int j=0;j<2;j++)
 	tmp_edge[j] = ROTATE(edge[i][j], height, width, groups, 90);
       if(!has_duplicated_edge(tmp_edge[0], tmp_edge[1], edge[based_lines+i][0], edge[based_lines+i][1])){

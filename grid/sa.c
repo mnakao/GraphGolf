@@ -45,7 +45,7 @@ static bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const 
     int t = start_line + based_lines * i;
     tmp_line[i] = (t < lines)? t : t - lines;
   }
-
+  return false;
   if(edge[tmp_line[0]][0] == edge[tmp_line[groups-1]][1] ||
      edge[tmp_line[0]][1] == edge[tmp_line[groups-1]][0])  // A cycle is composed of four edges.
     return false;
@@ -268,25 +268,29 @@ void exchange_edge(const int nodes, const int lines, const int max_degree, const
 	  }
 	}
 	else continue;
-	
+
 	if(!check_duplicate_tmp_edge(D_1G_OPT, groups, tmp_edge)) continue;
 	if(!check_duplicate_current_edge(lines, (const int (*)[2])edge, groups,
 					 (const int (*)[2])tmp_edge, tmp_line, groups, D_1G_OPT, false))
 	  continue;
-
+	if(groups == 4 && (tmp_edge[0][0] == tmp_edge[3][1] || tmp_edge[0][1] == tmp_edge[3][0]))
+	   continue; // A cycle is composed of four edges (Degree is added by 2)
+	   
 	// search NO_EDGE
 	int n = 0;
 	for(int i=0;i<based_lines;i++)
 	  if(edge[i][0] == NO_EDGE)
 	    n = i;
-	
+
 	for(int i=0;i<groups;i++)
 	  for(int j=0;j<2;j++)
 	    edge[n+based_lines*i][j] = tmp_edge[i][j];
+
       }
     }
     break;
   }
+
   count_mutate_graph[kind_mutate_graph]++;
 }
 
@@ -376,6 +380,7 @@ long long sa(const int nodes, const int lines, const int max_degree, int *degree
       copy_edge((int *)tmp_edge, (int *)edge, lines*2);
       memcpy(tmp_degree, degree, sizeof(int)*nodes);
       exchange_edge(nodes, lines, max_degree, tmp_degree, tmp_edge, height, width, groups, low_length, ii);
+      assert(check_symmetric_edge(lines, tmp_edge, height, width, based_height, groups));
       create_adjacency(nodes, lines, max_degree, tmp_degree, (const int (*)[2])tmp_edge, adjacency);
       if(evaluation(nodes, max_degree, tmp_degree, groups, (const int* restrict)adjacency,
 		    based_nodes, height, based_height, &tmp_diam, &tmp_ASPL, enable_bfs, rotate_hash))
