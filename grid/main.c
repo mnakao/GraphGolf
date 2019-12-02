@@ -777,5 +777,8 @@ int main(int argc, char *argv[])
   verfy_graph(nodes, lines, edge, height, low_length, max_degree);
 
   MPI_Finalize();
+  free(edge);
+  free(degree);
+  free(rotate_hash);
   return 0;
 }

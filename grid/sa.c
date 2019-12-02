@@ -421,6 +421,7 @@ long long sa(const int nodes, const int lines, const int max_degree, int *degree
   
   free(best_edge);
   free(tmp_edge);
+  free(tmp_degree);
   free(adjacency);
 
   PRINT_R0("EXCHANGE: %d, DELETE: %d, ADD: %d\n",
