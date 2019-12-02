@@ -306,6 +306,25 @@ static void create_lattice(const int nodes, const int lines, const int width, co
       }
     }
   }
+
+  // Remove loops again
+  if(count_loop(lines, edge) != 0){
+    while(1){
+      memcpy(tmp_edge, edge, sizeof(int)*lines*2);
+      simple_exchange_edge(height, low_length, lines, tmp_edge);
+      int tmp_num = count_loop(lines, tmp_edge);
+      if(tmp_num == 0){
+	memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+	break;
+      }
+      else{
+	if(tmp_num <= min_num){
+	  min_num = tmp_num;
+        memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+	}
+      }
+    }
+  }
   free(tmp_edge);
   free(adjacency);
 
