@@ -177,14 +177,14 @@ static bool matrix_op(const int nodes, const int degree, const int* restrict adj
   MPI_Allreduce(MPI_IN_PLACE, &sum,     1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   sum += (double)nodes * (nodes - 1);
 
+  free(A);
+  free(B);
   if(*diameter > nodes){
     //     PRINT_R0("This graph is not connected graph.\n");
     return false;
   }
 
   *ASPL = sum / (((double)nodes-1)*nodes);
-  free(A);
-  free(B);
 
   return true;
 }
