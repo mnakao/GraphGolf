@@ -189,6 +189,8 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   int restored_adj_value[groups*4], restored_adj_idx_y[groups*4], restored_adj_idx_x[groups*4];
   int restored_edge[groups*4], restored_line[groups*2];
 
+  // TODO : Giving randomness to a new graph before evaluation.
+  
   create_adj(nodes, lines, degree, (const int (*)[2])edge, adj);
   while(1){
     int start_line = getRandom(lines);

@@ -261,33 +261,15 @@ static void create_lattice(const int nodes, const int lines, const int width, co
     }
   }
 
-  for(int i=0;i<lines;i++)  // Give randomness
+  for(int i=0;i<lines*INITIAL_TIMES;i++)  // Give randomness
     simple_exchange_edge(height, low_length, lines, edge);
-
-  // Remove loops
-  int *tmp_edge = malloc(lines*2*sizeof(int));
-  int min_num   = count_loop(lines, edge);
-  while(1){
-    memcpy(tmp_edge, edge, sizeof(int)*lines*2);
-    simple_exchange_edge(height, low_length, lines, tmp_edge);
-    int tmp_num = count_loop(lines, tmp_edge);
-    if(tmp_num == 0){
-      memcpy(edge, tmp_edge, sizeof(int)*lines*2);
-      break;
-    }
-    else{
-      if(tmp_num <= min_num){
-        min_num = tmp_num;
-        memcpy(edge, tmp_edge, sizeof(int)*lines*2);
-      }
-    }
-  }
 
   // Make an unconnected graph a connected graph
   // Note that the connected graph after this operation may have loops.
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
-  min_num = simple_bfs(nodes, degree, (int *)adjacency);
+  int min_num = simple_bfs(nodes, degree, (int *)adjacency);
+  int *tmp_edge = malloc(lines*2*sizeof(int));
 
   while(1){
     memcpy(tmp_edge, edge, sizeof(int)*lines*2);
@@ -302,6 +284,26 @@ static void create_lattice(const int nodes, const int lines, const int width, co
       if(tmp_num <= min_num){
 	min_num = tmp_num;
 	memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+      }
+    }
+  }
+
+  // Remove loops
+  min_num = count_loop(lines, edge);
+  if(min_num != 0){
+    while(1){
+      memcpy(tmp_edge, edge, sizeof(int)*lines*2);
+      simple_exchange_edge(height, low_length, lines, tmp_edge);
+      int tmp_num = count_loop(lines, tmp_edge);
+      if(tmp_num == 0){
+	memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+	break;
+      }
+      else{
+	if(tmp_num <= min_num){
+	  min_num = tmp_num;
+	  memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+	}
       }
     }
   }
@@ -395,22 +397,27 @@ static void create_symmetric_edge(int *edge, const int based_nodes, const int ba
 
   int *tmp_edge = malloc(lines*2*sizeof(int));
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
+
+  for(int i=0;i<lines*INITIAL_TIMES;i++) // Give randomness
+    exchange_edge(nodes, lines, degree, (int (*)[2])edge, height, width, groups, low_length, 0);
+
   create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
   int min_num = simple_bfs(nodes, degree, (int *)adjacency);
-
-  while(1){
-    memcpy(tmp_edge, edge, sizeof(int)*lines*2);
-    exchange_edge(nodes, lines, degree, (int (*)[2])tmp_edge, height, width, groups, low_length, 0);
-    create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
-    int tmp_num = simple_bfs(nodes, degree, (int *)adjacency);
-    if(tmp_num == 0){
-      memcpy(edge, tmp_edge, sizeof(int)*lines*2);
-      break;
-    }
-    else{
-      if(tmp_num <= min_num){
-	min_num = tmp_num;
+  if(min_num != 0){
+    while(1){
+      memcpy(tmp_edge, edge, sizeof(int)*lines*2);
+      exchange_edge(nodes, lines, degree, (int (*)[2])tmp_edge, height, width, groups, low_length, 0);
+      create_adjacency(nodes, lines, degree, (const int (*)[2])tmp_edge, adjacency);
+      int tmp_num = simple_bfs(nodes, degree, (int *)adjacency);
+      if(tmp_num == 0){
 	memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+	break;
+      }
+      else{
+	if(tmp_num <= min_num){
+	  min_num = tmp_num;
+	  memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+	}
       }
     }
   }
