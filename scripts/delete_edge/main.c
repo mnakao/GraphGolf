@@ -25,8 +25,8 @@ static void set_args(const int argc, char **argv, char *infname, int *low_length
       break;
     case 'e':
       *deleted_edges = atoi(optarg);
-      if(*deleted_edges <= 0)
-	ERROR("-e value > 0\n");
+      if(*deleted_edges < 0)
+	ERROR("-e value >= 0\n");
       break;
     case 'W':
       *width = atoi(optarg);
