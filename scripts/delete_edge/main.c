@@ -402,7 +402,7 @@ static void delete_edges(const int lines, const int deleted_edges, const int hei
     if(flag) continue;
 
     for(int i=0;i<groups;i++){
-      printf("Delete%d,%d(%d) %d,%d(%d)\n",
+      printf("Delete: %d,%d(%d) %d,%d(%d)\n",
 	     WIDTH(edge[(r+based_lines*i)*2  ], height), HEIGHT(edge[(r+based_lines*i)*2  ], height), edge[(r+based_lines*i)*2  ],
 	     WIDTH(edge[(r+based_lines*i)*2+1], height), HEIGHT(edge[(r+based_lines*i)*2+1], height), edge[(r+based_lines*i)*2+1]);
       REVERSE(&edge[(r+based_lines*i)*2  ]);
@@ -754,6 +754,11 @@ int main(int argc, char *argv[])
   for(int i=0;i<lines*INITIAL_TIMES;i++)  // Give randomness for deleted edges
     exchange_edge(nodes, lines, (int (*)[2])edge, height, width, groups, low_length, 0);
 
+  for(int i=0;i<lines;i++)
+    if(IS_EDGE(edge[i*2]))
+    printf("%d,%d %d,%d\n", WIDTH(edge[i*2], height), HEIGHT(edge[i*2], height),
+	   WIDTH(edge[i*2+1], height), HEIGHT(edge[i*2+1], height));
+  EXIT(0);
   verfy_graph(nodes, lines, edge, height, low_length, max_degree);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, max_degree, low_length);
   check_current_edge(nodes, lines, max_degree, degree, edge, low_ASPL, low_diam, groups, height, based_height,

@@ -40,6 +40,7 @@ void create_adjacency(const int nodes, const int lines, const int max_degree, in
   for(int i=0;i<lines;i++){
     int n1 = edge[i][0];
     int n2 = edge[i][1];
+    if(IS_EDGE(n1) != IS_EDGE(n2)) ERROR("uga %d %d\n", n1, n2);
     if(IS_EDGE(n1)){
       adjacency[n1][degree[n1]++] = n2;
       adjacency[n2][degree[n2]++] = n1;
