@@ -751,6 +751,31 @@ int main(int argc, char *argv[])
   if(deleted_edges != 0)
     delete_edges(lines, deleted_edges, height, nodes, groups, based_lines, edge);
 
+  for(int i=0;i<lines*INITIAL_TIMES;i++)  // Give randomness for deleted edges
+    simple_exchange_edge(height, low_length, lines, edge);
+
+  // Remove loops
+  int *tmp_edge = malloc(lines*2*sizeof(int));
+  int min_num   = count_loop(lines, edge);
+  if(min_num != 0){
+    while(1){
+      memcpy(tmp_edge, edge, sizeof(int)*lines*2);
+      simple_exchange_edge(height, low_length, lines, tmp_edge);
+      int tmp_num = count_loop(lines, tmp_edge);
+      if(tmp_num == 0){
+        memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+        break;
+      }
+      else{
+        if(tmp_num <= min_num){
+          min_num = tmp_num;
+          memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+        }
+      }
+    }
+  }
+  free(tmp_edge);
+  
   verfy_graph(nodes, lines, edge, height, low_length, max_degree);
   lower_bound_of_diam_aspl(&low_diam, &low_ASPL, width, height, max_degree, low_length);
   check_current_edge(nodes, lines, max_degree, degree, edge, low_ASPL, low_diam, groups, height, based_height,
