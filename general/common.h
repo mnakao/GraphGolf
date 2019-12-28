@@ -96,6 +96,11 @@ extern bool edge_1g_opt(int (*edge)[2], const int nodes, const int lines, const 
 			const int based_lines, const int groups, const int start_line, const int add_centers, int* restrict adj,
 			int *kind_opt, int* restrict restored_adj_edge, int* restrict restored_adj_line, int* restrict restored_adj_val,
 			int* restrict restored_adj_idx_y, int* restrict restored_adj_idx_x, const bool is_simple_graph, const int ii);
+extern void exchange_edge_2opt(const int nodes, const int lines, const int groups, const int degree,
+			       const int based_nodes, int edge[lines][2], const int added_centers,
+			       int* restrict adj, int *kind_opt, int* restrict restored_edge, int* restrict restored_line,
+			       int* restrict restored_adj_value, int* restrict restored_adj_idx_y,
+			       int* restrict restored_adj_idx_x, const bool is_simple_graph, const int ii);
 extern bool has_duplicated_edge(const int e00, const int e01, const int e10, const int e11);
 extern bool check_loop(const int lines, int (*edge)[2]);
 extern bool check_duplicate_tmp_edge(const int, const int lines, int (*edge)[2]);

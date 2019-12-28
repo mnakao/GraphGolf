@@ -189,14 +189,16 @@ static void create_symmetric_edge(int (*edge)[2], const int based_nodes, const i
   int restored_adj_value[groups*4], restored_adj_idx_y[groups*4], restored_adj_idx_x[groups*4];
   int restored_edge[groups*4], restored_line[groups*2];
 
-  // TODO : Giving randomness to a new graph before evaluation.
-  
   create_adj(nodes, lines, degree, (const int (*)[2])edge, adj);
+  for(int i=0;i<100;i++)
+    exchange_edge_2opt(nodes, lines, groups, degree, based_nodes, edge, 0, (int *)adj,
+                       &kind_opt, restored_edge, restored_line, restored_adj_value,
+                       restored_adj_idx_y, restored_adj_idx_x, is_simple_graph, 0);
+  
   while(1){
-    int start_line = getRandom(lines);
-    edge_1g_opt(edge, nodes, lines, degree, based_nodes, based_lines, groups, start_line, 0,
-		(int *)adj, &kind_opt, restored_edge, restored_line, restored_adj_value,
-		restored_adj_idx_y, restored_adj_idx_x, is_simple_graph, NOT_USED);
+    exchange_edge_2opt(nodes, lines, groups, degree, based_nodes, edge, 0, (int *)adj,
+		       &kind_opt, restored_edge, restored_line, restored_adj_value,
+                       restored_adj_idx_y, restored_adj_idx_x, is_simple_graph, 0);
     if(!is_simple_graph)
       create_adj(nodes, lines, degree, (const int (*)[2])edge, adj);
     if(evaluation(nodes, based_nodes, groups, lines, degree, (int *)adj, &diam, &ASPL, 0, algo))

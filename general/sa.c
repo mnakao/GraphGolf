@@ -214,11 +214,11 @@ bool has_duplicated_vertex(const int e00, const int e01, const int e10, const in
   return (e00 == e10 || e01 == e11 || e00 == e11 || e01 == e10);
 }
 
-static void exchange_edge_2opt(const int nodes, const int lines, const int groups, const int degree,
-			       const int based_nodes, int edge[lines][2], const int added_centers,
-			       int* restrict adj, int *kind_opt, int* restrict restored_edge, int* restrict restored_line,
-			       int* restrict restored_adj_value, int* restrict restored_adj_idx_y,
-			       int* restrict restored_adj_idx_x, const bool is_simple_graph, const int ii)
+void exchange_edge_2opt(const int nodes, const int lines, const int groups, const int degree,
+			const int based_nodes, int edge[lines][2], const int added_centers,
+			int* restrict adj, int *kind_opt, int* restrict restored_edge, int* restrict restored_line,
+			int* restrict restored_adj_value, int* restrict restored_adj_idx_y,
+			int* restrict restored_adj_idx_x, const bool is_simple_graph, const int ii)
 {
   int tmp_line[groups*2], tmp_edge[groups*2][2], r;
   int based_lines = lines / groups;
