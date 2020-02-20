@@ -229,6 +229,20 @@ bool check_duplicate_all_edge(const int lines, const int edge[lines][2])
   return flag;
 }
 
+int count_duplicate_all_edge(const int lines, const int edge[lines][2])
+{
+  int num = 0;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for(int i=0;i<lines;i++)
+    for(int j=i+1;j<lines;j++)
+      if(has_duplicated_edge(edge[i][0], edge[i][1], edge[j][0], edge[j][1]))
+	num++;
+
+  return num;
+}
+
 bool check_duplicate_tmp_edge(const int g_opt, const int groups, int tmp_edge[groups*g_opt][2])
 {
   timer_start(TIMER_CHECK);

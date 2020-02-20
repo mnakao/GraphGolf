@@ -264,8 +264,6 @@ static void create_lattice(const int nodes, const int lines, const int width, co
   for(int i=0;i<lines*INITIAL_TIMES;i++)  // Give randomness
     simple_exchange_edge(height, low_length, lines, edge);
 
-  // Make an unconnected graph a connected graph
-  // Note that the connected graph after this operation may have loops.
   int (*adjacency)[degree] = malloc(sizeof(int)*nodes*degree); // int adjacency[nodes][degree];
   create_adjacency(nodes, lines, degree, (const int (*)[2])edge, adjacency);
   int min_num = simple_bfs(nodes, degree, (int *)adjacency);
@@ -307,6 +305,27 @@ static void create_lattice(const int nodes, const int lines, const int width, co
       }
     }
   }
+
+  // Remove duplicated edges
+  min_num = count_duplicate_all_edge(lines, (const int (*)[2])edge);
+  if(min_num != 0){
+    while(1){
+      memcpy(tmp_edge, edge, sizeof(int)*lines*2);
+      simple_exchange_edge(height, low_length, lines, tmp_edge);
+      int tmp_num = count_duplicate_all_edge(lines, (const int (*)[2])tmp_edge);
+      if(tmp_num == 0){
+        memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+        break;
+      }
+      else{
+        if(tmp_num <= min_num){
+          min_num = tmp_num;
+          memcpy(edge, tmp_edge, sizeof(int)*lines*2);
+        }
+      }
+    }
+  }
+  
   free(tmp_edge);
   free(adjacency);
 

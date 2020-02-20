@@ -72,6 +72,7 @@ extern bool has_duplicated_edge(const int e00, const int e01, const int e10, con
 extern bool has_duplicated_vertex(const int e00, const int e01, const int e10, const int e11);
 extern bool check_loop(const int lines, const int edge[lines][2]);
 extern bool check_duplicate_all_edge(const int lines, const int edge[lines][2]);
+extern int count_duplicate_all_edge(const int lines, const int edge[lines][2]);
 extern bool check_duplicate_tmp_edge(const int g_opt, const int groups, int tmp_edge[groups*g_opt][2]);
 extern bool check_duplicate_current_edge(const int lines, const int edge[lines][2], const int tmp_lines,
 					 const int tmp_edge[tmp_lines][2], const int tmp_line[2],
