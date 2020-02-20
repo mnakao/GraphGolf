@@ -1,8 +1,12 @@
 CC=gcc
-all: a.out
-a.out: main.o
-	$(CC) main.o -o a.out
-main.o: main.c
-	$(CC) main.c -c
+all: mesh torus
+mesh: mesh.o
+	$(CC) mesh.o -o mesh
+mesh.o: mesh.c
+	$(CC) mesh.c -c
+torus: torus.o
+	$(CC) torus.o -o torus
+torus.o: torus.c
+	$(CC) torus.c -c
 clean:
-	rm -f a.out *.o
+	rm -f torus mesh *.o
