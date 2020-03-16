@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#define DIMS 3
-#define N1   8
-#define N2   8
-#define N3   4
+#define DIMS 4
+#define N1   10
+#define N2   10
+#define N3   10
+#define N4   10
 
 int main()
 {
@@ -72,42 +73,42 @@ int main()
   }
 
 #elif DIMS == 4
-  fprintf(stderr, "%d x %d x %d x %d, degree = %d\n", N, N, N, N, 8);
+  fprintf(stderr, "%d x %d x %d x %d, degree = %d\n", N4, N3, N2, N1, 8);
   
-  int n[N][N][N][N], edge[(N*N*N*N*8)/2][2];
-  for(int m=0;m<N;m++)
-    for(int k=0;k<N;k++)
-      for(int j=0;j<N;j++)
-	for(int i=0;i<N;i++)
-	  n[m][k][j][i] = m * (N * N * N) + k * (N * N) + j * N + i;
+  int n[N4][N3][N2][N1], edge[(N4*N3*N2*N1*8)/2][2];
+  for(int m=0;m<N4;m++)
+    for(int k=0;k<N3;k++)
+      for(int j=0;j<N2;j++)
+	for(int i=0;i<N1;i++)
+	  n[m][k][j][i] = m * (N3 * N2 * N1) + k * (N2 * N1) + j * N1 + i;
   
-  for(int m=0;m<N;m++){
-    for(int k=0;k<N;k++){
-      for(int j=0;j<N;j++){
-	for(int i=0;i<N;i++){
+  for(int m=0;m<N4;m++){
+    for(int k=0;k<N3;k++){
+      for(int j=0;j<N2;j++){
+	for(int i=0;i<N1;i++){
 	  int c = n[m][k][j][i];
-	  d[3] = c / (N*N*N);
-	  d[2] = (c - d[3]*(N*N*N)) / (N*N);
-	  d[1] = (c - d[3]*(N*N*N) - d[2]*(N*N)) / N;
-	  d[0] = c % N;
-	  if(d[0] != N - 1){
+	  d[3] = c / (N3*N2*N1);
+	  d[2] = (c - d[3]*(N3*N2*N1)) / (N2*N1);
+	  d[1] = (c - d[3]*(N3*N2*N1) - d[2]*(N2*N1)) / N1;
+	  d[0] = c % N1;
+	  if(d[0] != N1 - 1){
 	    edge[lines][0] = c;
 	    edge[lines][1] = c + 1;
 	    lines++;
 	  }
-	  if(d[1] != N - 1){
+	  if(d[1] != N2 - 1){
 	    edge[lines][0] = c;
-	    edge[lines][1] = c + N;
+	    edge[lines][1] = c + N1;
 	    lines++;
 	  }
-	  if(d[2] != N - 1){
+	  if(d[2] != N3 - 1){
 	    edge[lines][0] = c;
-	    edge[lines][1] = c + N * N;
+	    edge[lines][1] = c + N2 * N1;
 	    lines++;
 	  }
-	  if(d[3] != N - 1){
+	  if(d[3] != N4 - 1){
             edge[lines][0] = c;
-            edge[lines][1] = c + N * N * N;
+            edge[lines][1] = c + N3 * N2 * N1;
             lines++;
           }
         }
