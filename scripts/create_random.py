@@ -41,7 +41,7 @@ def main(args):
 	g = nx.random_regular_graph(degree, nnodes, 0)
 	if nx.is_connected(g):
 		hops = nx.shortest_path_length(g, weight=None)
-		diam, aspl = max_avg_for_matrix(hops)
+		diam, aspl = max_avg_for_matrix(dict(hops))
 	else:
 		diam, aspl = float("inf"), float("inf")
 
@@ -94,6 +94,7 @@ def max_avg_for_matrix(data):
 	cnt = 0
 	sum = 0.0
 	max = 0.0
+
 	for i in data:
 		for j in data[i]:
 			if i != j:
